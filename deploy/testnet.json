@@ -1,0 +1,124 @@
+{
+  "network": "testnet",
+  "rpc": "https://test.rpc.fastnear.com",
+  "explorer": "https://testnet.nearblocks.io",
+  "accounts": {
+    "root": "pratala.testnet",
+    "treasury": "pratala.testnet",
+    "farmer1": "pratala-farmer1-69f5.testnet",
+    "agent1": "pratala-agent1-69f5.testnet",
+    "coop1": "pratala-coop1-69f5.testnet",
+    "warehouse1": "pratala-warehouse1-69f5.testnet",
+    "buyer1": "pratala-buyer1-69f5.testnet",
+    "investor2": "pratala-investor2-69f5.testnet",
+    "lots": "lots.pratala.testnet",
+    "pusdc": "pusdc.pratala.testnet"
+  },
+  "contracts": {
+    "pusdc": {
+      "account_id": "pusdc.pratala.testnet",
+      "wasm": "smart-contract/target/near/pusdc/pusdc.wasm",
+      "wasm_bytes": 173885,
+      "wasm_sha256": "1c8a1ffae261f0afe95b10929a0a7d12b934478280d02bd66c853190eba833e6",
+      "init_args": {
+        "owner_id": "pratala.testnet",
+        "total_supply": "1000000000000",
+        "metadata": {
+          "spec": "ft-1.0.0",
+          "name": "Pratala Test USDC",
+          "symbol": "pUSDC",
+          "icon": null,
+          "reference": null,
+          "reference_hash": null,
+          "decimals": 6
+        }
+      },
+      "deploy_tx": "FJoDcztLLtj8uRz54N8FJyi7Mtoh3sBcgdVCPmnDWWJm"
+    },
+    "lots": {
+      "account_id": "lots.pratala.testnet",
+      "wasm": "smart-contract/target/near/harvest_lot/harvest_lot.wasm",
+      "wasm_bytes": 371281,
+      "wasm_sha256": "d899e42d1bda5fb2a497c506c24e7a7eced24d82d55492b717e29132526802ab",
+      "init_args": {
+        "owner_id": "pratala.testnet",
+        "usdc_contract": "pusdc.pratala.testnet",
+        "treasury": "pratala.testnet",
+        "fee_bps": 200
+      },
+      "deploy_tx": "GBNPRFsgSia9WHygGfkiZfdYt18S1taxzQbEVbVrK5u1"
+    }
+  },
+  "lots": {
+    "lot1": {
+      "lot_id": "lot-1",
+      "crop": "rice",
+      "variety": "IR64",
+      "region": "Karawang, Jawa Barat",
+      "projected_kg": 1000,
+      "harvest_month": "2027-01",
+      "target": "Settled"
+    },
+    "lot2": {
+      "lot_id": "lot-2",
+      "crop": "rice",
+      "variety": "Ciherang",
+      "region": "Subang, Jawa Barat",
+      "projected_kg": 800,
+      "harvest_month": "2027-01",
+      "target": "Listed"
+    },
+    "lot3": {
+      "lot_id": "lot-3",
+      "crop": "corn",
+      "variety": "Bisi 18",
+      "region": "Lampung Selatan, Lampung",
+      "projected_kg": 1500,
+      "harvest_month": "2027-01",
+      "target": "FieldVerified"
+    }
+  },
+  "txs": {
+    "accounts.root": "H1hpGZ1KDtWs1JdFohMc9AS2SgwYSHJ8XN3hgUhEQt7g",
+    "accounts.farmer1": "71FYtfnXYL3P4zuJwv9h2NDbZnWf5xNQZSNKnJ9erkKA",
+    "accounts.agent1": "3pNzCNCtFjaqvUzHQvTzWLUPBX4iS2ZmwcpkgySh87zc",
+    "accounts.coop1": "AzjUAxJCuR2hxvaadzjECeqZRKRisXp9zZTmP7Cw6Hv8",
+    "accounts.warehouse1": "7pxpQmVQGN1io9LXuEe4Jjut6CYfzxMg2pf3CFi5acsC",
+    "accounts.buyer1": "8hVCkgaLX6AvnE8FStSDbmMQBmoG5AkbtVEAutdKBc5z",
+    "accounts.investor2": "CNeBTgEogjdERvjJ58BUwnnFrHgxnzTBKjnRui7A6PQM",
+    "accounts.topup.coop1": "8hAh5H6k8bPmatPHL1T9RmFKWG1CdzxBci43kUVE71on",
+    "accounts.lots": "4X4cgmS4mj2itRtonmdRxB9aiZFfdPKyFy9jLGhFrGvF",
+    "accounts.pusdc": "2jJXNwLQyVf4UED9pRXBNVxUrKkrDzS8t9oPPGNTfdAy",
+    "deploy.pusdc": "FJoDcztLLtj8uRz54N8FJyi7Mtoh3sBcgdVCPmnDWWJm",
+    "deploy.lots": "GBNPRFsgSia9WHygGfkiZfdYt18S1taxzQbEVbVrK5u1",
+    "seed.role.FieldAgent": "BMhyvhmdzW8Lmwim2M8f5azAbZBNFpHAoVmmcudNDPoF",
+    "seed.role.Coop": "FQnHohVoisVNFwUsPHRmNUhPyq3KVC3BgzssxTMXrXw1",
+    "seed.role.Warehouse": "3SZ8LUj1pxVuB6bw3kVJ9uaLCb4yXFkpYcgSFyM7srgM",
+    "seed.storage.farmer1": "6omxNX8q745QbyDU7J6whfZBLA5cK28JqfsBPnYPi8KJ",
+    "seed.storage.agent1": "7jy6aELtAhZi87H2w2tZAdzdTyT2Grw7s1Gxmo6tgaDe",
+    "seed.storage.coop1": "Fu1L7iKPsMuAQtFDPWFgGSuaEtwt6uDAd3azrAa9M52d",
+    "seed.storage.warehouse1": "DFespPqbZhNvFQmisCW6Kik1qKfDsModZ5KEj6opZTkR",
+    "seed.storage.buyer1": "7sPaBX4ZU3XSiexumz2V5ndd2rnD7UrQC6wDJR5T3FJU",
+    "seed.storage.investor2": "D1UwsiXiK8tGMuWxuC9hxa9n6XbvzXYQFEnoHRmvu9w2",
+    "seed.storage.lots": "B23n6SUQ7cy6wtFVKrxFPRyfiE3k61VvjYVpyH2Q6zsw",
+    "seed.faucet.buyer1": "9JyUYK7CzZUQBcjsJp6sX8oZrARKZDE5QgVzBc2SfNqC",
+    "seed.lot1.register": "4ATbuKsWQEFzw7HHFc2KbcuXoBhBoAN1n99oRrwPkpnd",
+    "seed.lot1.attest_field": "DsVywM8ENePAFpT8KhiVwnQ5Goxo7ovJJZARHYQrJq5d",
+    "seed.lot1.attest_coop": "7qCaVWdZJXCKgPYuzPDdkuP7Mk2iRqmv9F6vRRcGWH2x",
+    "seed.lot1.list": "BRHwFa7jHyH3xdsXrzdyw7GKzbxWA5TkAAa2NSAyo6s5",
+    "seed.lot1.fund": "J7P7FaMRdkKWETTTUXSxyn7Vat5XBfML7tJgZpVxHmZ4",
+    "seed.lot1.weigh_in": "9PYqnwCARXLXgosZ543XjYwVG1CXnKGx1onqfMnBjfUi",
+    "seed.lot1.claim_payout": "GAajL7i1kHuUa27yMHxCMXpGpPCLeXHLwFmknkN1vkV5",
+    "seed.lot1.claim_fee": "8283S9YeippcrbQCcybLyaNvieZxaX79opqeY8h9w3bm",
+    "seed.lot1.nft_transfer": "DzWxhaF7cgqdunxLHV44ucxMvVRoHvePM67tUKQnqH7y",
+    "seed.lot1.claim_refund": "9RooWbkTrR47kgWWiFBRurbw4GjpJDEgxA6hFPK1UauW",
+    "seed.lot2.register": "EogrYrpCrtus6P2aSUJNBHvQFD4HeRQNPa1uY6SJjio5",
+    "seed.lot2.attest_field": "CJTRynGa5sniSKdzTq3gts3BBy5wKfb29bD2uRdXCsYN",
+    "seed.lot2.attest_coop": "HEwuxachuGutUYXJqzWk2yCbiWrq9Ke2ubqPUJkNihN7",
+    "seed.lot2.list": "6F3NhJfHNABfhZiKxsMNLKx4JnJKhau63fsht6ZStM7H",
+    "seed.lot3.register": "2uzot1AVhd7i2mZb1fK6e7fpjxR6XzY58277NtTXu84y",
+    "seed.lot3.attest_field": "Dz2mJDhcaH7fYMLGJwtp2ZKUspf7M46qsH2WWMTjYvXa"
+  },
+  "actor_suffix": "69f5",
+  "updated_at": "2026-11-07T16:17:04Z"
+}
