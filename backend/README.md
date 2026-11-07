@@ -1,132 +1,100 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Pratala API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Off-chain service for Pratala: NEP-413 sign-in, profiles, plots, evidence photos, NEAR AI evidence checks, a Postgres mirror of the lots contract, the payment ledger with CSV export, notifications, the farm-input marketplace and the NEAR Intents 1Click proxy.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The chain is the source of truth. This service only **reads** NEAR (RPC view calls and transaction status) and never signs or sends transactions. The web app reads chain state directly and still works when this API is down.
 
-## Description
+Stack: NestJS 12 (ESM), Prisma 7.10.1 with `@prisma/adapter-pg`, Postgres 16, near-api-js 7.4.0, `openai` 7.53.0 (NEAR AI Cloud), Vitest, oxlint.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Run with Docker (API + Postgres)
 
-## Project setup
+From the repository root:
 
 ```bash
-$ pnpm install
+cp backend/.env.example backend/.env     # optional; defaults boot without it
+docker compose up -d --build
+curl -s localhost:4100/api/health
 ```
 
-## Compile and run the project
+Expected (before the contracts are deployed):
+
+```json
+{"ok":true,"db":"ok","chain":{"network":"testnet","rpc":"ok","lotsContract":"missing","pusdcContract":"missing",...},"ai":{"configured":false,"model":"Qwen/Qwen3-VL-30B-A3B-Instruct","tier":"private-tee"},...}
+```
+
+The container runs `prisma migrate deploy` and then starts the API on port **4100**. Postgres is exposed on host port **5433**. Uploads live in the `uploads` volume. Optional demo listings: `docker compose exec api node dist/seed/run.js` (or set `SEED_DEMO=true`). Stop with `docker compose down` (add `-v` to delete data).
+
+If `JWT_SECRET` is not set, the API generates a random one at boot and logs a warning: sessions then reset whenever it restarts.
+
+## Run locally (Node 24, pnpm 12)
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+cd backend
+cp .env.example .env
+docker compose -f ../docker-compose.yml up -d postgres
+pnpm install                 # also runs prisma generate
+pnpm db:deploy               # apply migrations
+pnpm db:seed                 # 3 demo farm-input listings
+pnpm start:dev               # http://localhost:4100/api, Swagger at /api/docs
 ```
 
-## Run tests
+## Checks
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+pnpm lint          # oxlint (type-aware)
+pnpm typecheck     # tsc --noEmit
+pnpm test          # unit: decimalToBaseUnits, CSV + money format, EVENT_JSON parser + ledger projections, plotHash, AI parser, AI service (openai mocked)
+pnpm test:e2e      # supertest against the compose Postgres; NEAR RPC replaced by an in-memory fake, no network
+pnpm build
 ```
 
-## Deployment
+E2E needs Postgres running and migrated (`docker compose up -d postgres && pnpm db:deploy`). It signs a NEP-413 payload with a freshly generated ed25519 `KeyPair` and mocks only the RPC access-key lookup.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Environment
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+All variables are listed with comments in [`.env.example`](.env.example) and validated with zod at boot (`src/config/env.ts`).
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | (required) | Postgres URL |
+| `PORT` | `4100` | HTTP port |
+| `JWT_SECRET` | random per process | Signs the `pratala_session` cookie |
+| `AUTH_RECIPIENT` / `AUTH_MESSAGE` | `lots.pratala.testnet` / `Sign in to Pratala` | NEP-413 payload fields |
+| `NEAR_NETWORK`, `NEAR_RPC_URL` | `testnet`, `https://test.rpc.fastnear.com` | Chain |
+| `LOTS_CONTRACT_ID`, `PUSDC_CONTRACT_ID` | `lots.pratala.testnet`, `pusdc.pratala.testnet` | Contracts (see `deploy/testnet.json`) |
+| `EXPLORER_BASE` | `https://testnet.nearblocks.io` | Explorer links (`/txns/<hash>`) |
+| `FRONTEND_ORIGIN` | `http://localhost:3000` | CORS origin(s), comma-separated, credentials on |
+| `PUBLIC_API_URL` | `http://localhost:4100` | Base for evidence URIs; `https://` makes the cookie `Secure` |
+| `STORAGE_DRIVER`, `UPLOAD_DIR`, `S3_*` | `local`, `./data/uploads` | Evidence store (local disk or S3/MinIO) |
+| `NEAR_INTENTS_API_KEY`, `NEAR_INTENTS_BASE_URL` | empty, 1Click v0 | Intents proxy |
+| `NEAR_AI_API_KEY`, `NEAR_AI_BASE_URL`, `NEAR_AI_VISION_MODEL`, `NEAR_AI_FALLBACK_MODEL` | empty, `https://cloud-api.near.ai/v1`, `Qwen/Qwen3-VL-30B-A3B-Instruct`, `z-ai/glm-5.3-flash` | AI evidence check |
+| `INDEXER_POLL_MS` | `30000` | Reconcile `get_lots` into the mirror (0 = off) |
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Endpoints (prefix `/api`)
 
-## Observability
+Full shapes: [`docs/INTERFACES.md` §5](../docs/INTERFACES.md). Interactive docs: `/api/docs`.
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+| Area | Routes |
+| --- | --- |
+| Health | `GET /health` |
+| Auth (NEP-413) | `POST /auth/challenge`, `POST /auth/verify`, `POST /auth/logout`, `GET /auth/me` |
+| Users | `GET/PUT /users/me`, `GET /users/:accountId` |
+| Plots | `POST /plots`, `GET /plots/mine`, `GET /plots/:id` |
+| Evidence | `POST /evidence` (multipart `file` ≤ 8 MB, `kind`, `lotId?`, `plotId?`), `GET /evidence/:sha256` |
+| AI | `POST /ai/check`, `GET /ai/check/:id` |
+| Lots | `GET /lots`, `GET /lots/:lotId`, `GET /lots/:lotId/history`, `GET /lots/:lotId/metadata.json` |
+| Indexer | `POST /tx` |
+| Payments | `GET /payments`, `GET /payments/export.csv` |
+| Notifications | `GET /notifications`, `POST /notifications/:id/read` |
+| Marketplace | `GET/POST /listings`, `GET/PUT /listings/:id`, `POST /orders`, `POST /orders/:id/confirm`, `GET /orders/mine` |
+| Intents | `GET /intents/tokens`, `POST /intents/quote`, `POST /intents/deposit/submit`, `GET /intents/status` |
+| Stats | `GET /stats` |
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+## How the pieces fit
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+- **Sign-in**: `POST /auth/challenge` stores 32 random bytes (5 min, single use). The wallet signs `{message, recipient, nonce}` (NEP-413). `POST /auth/verify` consumes the challenge, then `verifyMessage` from `near-api-js/nep413` checks the signature and that the key is a full-access key of the account. A JWT goes into the httpOnly, SameSite=Lax cookie `pratala_session`. `GET /auth/me` adds on-chain roles (`get_roles`, cached 60 s; `Admin` = contract owner).
+- **Indexer**: the web app calls `POST /tx {txHash, signerId}` after each transaction. The API fetches the transaction with receipts at `FINAL` (`EXPERIMENTAL_tx_status`), parses every `EVENT_JSON:` log from successful receipts of the lots/pUSDC contracts (events from any other account are ignored), and stores them idempotently (unique on `txHash + receiptId + event + index`). From those events it derives payment rows and inbox notifications. A timer also copies `get_lots` into the mirror every `INDEXER_POLL_MS`.
+- **Orders**: `POST /orders` returns `memo = "order:<uuid>"` and the exact `ft_transfer` to sign. `POST /orders/:id/confirm {txHash}` checks on-chain that the transaction is a successful pUSDC `ft_transfer` from the buyer to the seller with that amount and memo.
+- **Graceful degradation**: with the contracts missing, `/health` reports `missing`, `/lots` returns `[]`, `/stats` counts from the mirror, the reconcile timer logs one warning every 5 minutes, and nothing crash-loops. With no NEAR AI key, `/ai/check` returns 503 `ai_unavailable`.
 
-To add it to this project, run this and approve the code it prints at [observe.nestjs.com/link](https://observe.nestjs.com/link) - signing up for free if you have no account:
-
-```bash
-$ npx @nestjs/observe link
-```
-
-It installs `@nestjs/observe`, wires it into `AppModule` and `main.ts`, and writes the app key and secret into `.env`, which every `nest start` script (`start`, `start:dev`, `start:debug`) then loads. In production, set `OBSERVE_APP_KEY` and `OBSERVE_APP_SECRET` in the environment instead.
-
-Or do it by hand:
-
-```bash
-$ pnpm install @nestjs/observe
-```
-
-Then follow the [setup guide](https://docs.nestjs.com/observability/sdk) - it takes a single import and an app key.
-
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+More: [`docs/PAYMENTS.md`](../docs/PAYMENTS.md), [`docs/INTENTS.md`](../docs/INTENTS.md), [`docs/AI-VERIFICATION.md`](../docs/AI-VERIFICATION.md).
