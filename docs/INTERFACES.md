@@ -144,16 +144,31 @@ Faucet UI = one transaction to pUSDC with two actions: `storage_deposit {}` (if 
 | `GET /stats` | — | `Stats` + `{ farmers, verifiers }` |
 
 ```ts
-interface AiCheck { id: string; evidenceId: string; model: string; provider: "near-ai-cloud"; chatId: string | null;
+interface AiCheck { id: string; evidenceId: string; kind: string; model: string; tier: "private-tee" | "anonymised" | "unknown";
+  provider: "near-ai-cloud"; chatId: string | null;
   verdict: "pass" | "review" | "fail"; confidence: number; findings: string[];
   extracted: { crop?: string; stage?: string; kg?: number; grade?: string };
-  summaryId: string; summaryEn: string; responseHash: string; signatureAvailable: boolean; verifyUrl: string; createdAt: string }
-interface LotEvent { id: string; lotId: string | null; event: string; data: object; txHash: string; signerId: string; blockTimestamp: string }
+  summaryId: string; summaryEn: string; responseHash: string; requestHash: string | null;
+  signatureAvailable: boolean; signature: { text; signature; signing_address; signing_algo; signature_kind? } | null;
+  verifyUrl: string /* https://cloud.near.ai/verify?model=<id>#receipt=<base64url> */; createdAt: string }
+interface LotEvent { id: string; lotId: string | null; event: string; data: object; txHash: string; signerId: string; blockTimestamp: string
+  /* history only: */ receiptId?: string; explorerUrl?: string | null }
 interface Payment { id: string; lotId: string | null; orderId: string | null; type: "FUNDING"|"PAYOUT"|"REFUND"|"FEE"|"INPUT_PURCHASE";
   fromAccount: string; toAccount: string; amount: string /* decimal pUSDC, e.g. "396.90" */; status: "PENDING"|"PAID"|"REFUNDED"|"FAILED";
   txHash: string | null; explorerUrl: string | null; createdAt: string }
 ```
 
 CSV columns: `date_utc,lot_id,crop,type,from_account,to_account,amount_pusdc,status,tx_hash,explorer_url,note` (UTF-8 BOM, CRLF).
+
+### 5.1 Backend implementation notes (additive to the table above)
+
+- **Errors** are JSON `{ statusCode, error, message?, issues? }`. `error` is a stable code where one exists (`ai_unavailable`, `ai_upstream_error`, `chain_unavailable`, `tx_not_found`, `transfer_mismatch`), otherwise the human message (intents keeps the prototype's `{error:"<message>"}` texts). Validation failures: 400 with `issues[]`.
+- **`GET /health`**: `chain` = `{ network, rpc: "ok"|"unreachable", lotsContract|pusdcContract: "ok"|"missing"|"unknown", lotsContractId, pusdcContractId }`, `ai` adds `tier`, plus `time`. HTTP 503 when `db` is `"down"`.
+- **Amounts in API responses** are decimal pUSDC strings with at least 2 dp and no lossy rounding (`"396.90"`, `"0.000001"`); `Payment`, `Order` and `InputListing` also carry the exact `amountBase` / `priceBase` (U128 string). `Payment` adds `note` and `occurredAt` (block time of the last status change; CSV `date_utc` uses it, format `YYYY-MM-DD HH:MM:SS` UTC).
+- **Plots**: `plotHash = sha256(canonical JSON {"areaM2":int,"evidence":[sorted lowercase sha256],"farmer","lat":"5dp","lng":"5dp"})`, `gpsHash = sha256("<lat 5dp>,<lng 5dp>")`. Non-owners get `lat/lng` rounded to 0.01° (`coordinatesPrecision`).
+- **Orders**: response adds `transfer: { receiverId: PUSDC_CONTRACT_ID, methodName: "ft_transfer", args: { receiver_id, amount, memo }, deposit: "1", gas }` (what the wallet signs) and `explorerUrl`. `POST /tx` with `context.orderId` also confirms the order and returns `order`.
+- **Listings**: `priceUsdc` is accepted as a decimal string/number and returned as a decimal string.
+- **Stats** adds `source: "chain" | "mirror"`.
+- `POST /auth/logout` returns `{ ok: true }`. `GET /notifications?unread=true` filters unread; items are `{ id, accountId, type, lotId, title, body, data, read, readAt, createdAt }` (copy in the recipient's profile locale).
 
 The frontend reads **chain state directly via RPC** and uses the API only for off-chain data (evidence, AI checks, history, payments, notifications, profiles). Every page must still render if the API is down.
