@@ -310,7 +310,7 @@ export const id = {
   checkout: {
     title: "Danai lot",
     tabPusdc: "Bayar dengan pUSDC",
-    tabIntents: "Bayar dari chain lain",
+    tabIntents: "Dari chain lain",
     step1: "Masuk",
     step2: "Saldo",
     step3: "Konfirmasi",

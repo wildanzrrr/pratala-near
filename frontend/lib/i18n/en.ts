@@ -308,7 +308,7 @@ export const en: Dictionary = {
   checkout: {
     title: "Fund lot",
     tabPusdc: "Pay with pUSDC",
-    tabIntents: "Pay from another chain",
+    tabIntents: "Other chains",
     step1: "Sign in",
     step2: "Balance",
     step3: "Confirm",

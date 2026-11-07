@@ -164,9 +164,10 @@ export function ConnectSheet() {
 }
 
 function WalletIcon({ src, name, size = 40 }: { src?: string; name: string; size?: number }) {
-  return src ? (
+  const [failed, setFailed] = useState(false);
+  return src && !failed ? (
     // eslint-disable-next-line @next/next/no-img-element -- icons come from the NEAR Connect manifest (any origin)
-    <img src={src} alt="" width={size} height={size} className="shrink-0 rounded-md bg-sunken object-contain" />
+    <img src={src} alt="" width={size} height={size} onError={() => setFailed(true)} className="shrink-0 rounded-md bg-sunken object-contain" />
   ) : (
     <span
       aria-hidden

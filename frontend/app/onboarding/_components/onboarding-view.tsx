@@ -16,7 +16,6 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { CopyButton } from "@/components/common/copy-button";
-import { LanguageToggle } from "@/components/layout/language-toggle";
 import { PageBody } from "@/components/layout/page-header";
 import { ConnectGate } from "@/components/wallet/connect-gate";
 import { RolePicker } from "@/app/onboarding/_components/role-picker";
@@ -85,7 +84,6 @@ export function OnboardingView() {
             <h1 className="text-3xl sm:text-4xl">{t("onboarding.title")}</h1>
             <p className="text-ink-2">{t("onboarding.lead")}</p>
           </div>
-          <LanguageToggle />
         </div>
         <ol className="grid grid-cols-3 gap-2" aria-label={t("onboarding.lead")}>
           {steps.map((label, i) => (
