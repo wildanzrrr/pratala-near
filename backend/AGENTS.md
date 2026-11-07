@@ -25,7 +25,9 @@
 ## Project facts the skills depend on
 
 - **NestJS 12, ESM only.** Relative imports end in `.js`; no `__dirname` (use `import.meta.dirname`). Tests run on **Vitest** (`vi.fn()`, not `jest.fn()`), lint is **oxlint** (`pnpm lint`). Nest 12 docs index: https://docs.nestjs.com/llms.txt.
-- **Validation** uses Zod schemas through `ZodValidationPipe` (`src/common/zod.pipe.ts`); no class-validator DTOs.
+- **Validation** uses Zod 4 schemas through Nest 12's global `StandardSchemaValidationPipe` (`@Body({ schema })`, `@Query({ schema })`, `@Param('x', { schema })`); Swagger bodies come from `ApiZodBody(schema)` in `src/common/zod.ts`. No class-validator DTOs.
+- **Errors** leave as `{ statusCode, error, message?, issues? }` (`src/common/filters/http-exception.filter.ts`); use `apiError(status, 'snake_code')` for machine-readable codes.
+- **E2E** (`pnpm test:e2e`) needs the compose Postgres (`docker compose up -d postgres && pnpm db:deploy`) and overrides `NearRpcService` with a fake; never hit real RPC/1Click/NEAR AI in tests.
 - **Prisma 7.10.1 exactly** (npm `latest` is an 8.0 RC — do not upgrade). Generator `prisma-client` outputs to `src/generated/prisma` (git-ignored, run `pnpm prisma generate`); driver adapter `@prisma/adapter-pg`; connection URL lives in `prisma.config.ts`, not in `schema.prisma`.
 - **near-api-js 7.4.0**: `JsonRpcProvider` for view calls / `viewTransactionStatusWithReceipts`; `verifyMessage` from `near-api-js/nep413`.
 - **Chain may be absent.** Contracts may not be deployed: every chain call must degrade (empty arrays, `chain.lotsContract: "missing"`), never crash or crash-loop.
