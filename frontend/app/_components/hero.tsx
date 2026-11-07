@@ -41,7 +41,7 @@ export function Hero() {
             alt="Petani menanam padi di sawah tergenang di Indonesia"
             priority
             sizes="(min-width: 60rem) 30rem, 100vw"
-            className="aspect-[4/5] h-auto w-full object-cover md:aspect-[4/5]"
+            className="aspect-[4/3] h-auto w-full object-cover md:aspect-[4/5]"
             placeholder="blur"
           />
         </div>

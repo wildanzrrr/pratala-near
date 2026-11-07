@@ -1,3 +1,5 @@
+import { Info } from "@phosphor-icons/react/dist/ssr";
+
 import { T } from "@/components/i18n/t";
 
 import type { MessageKey } from "@/lib/i18n/types";
@@ -26,8 +28,11 @@ export function SettlementExample() {
           <p className="text-ink-2">
             <T k="landing.mathLead" />
           </p>
-          <p className="mt-2 border-l-2 border-attention-foreground/50 pl-3 text-sm text-muted-foreground">
-            <T k="landing.mathNote" />
+          <p className="mt-2 flex gap-2 text-sm text-muted-foreground">
+            <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-attention-foreground" />
+            <span>
+              <T k="landing.mathNote" />
+            </span>
           </p>
         </div>
         <table className="tnum w-full border-collapse self-start text-sm sm:text-base">
