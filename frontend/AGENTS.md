@@ -61,9 +61,9 @@ Max **800 lines** per `.ts`/`.tsx`. A file at 801 lines is a bug. Split into sub
 
 - **Chain first.** Read chain state through `lib/near/contracts.ts` (JSON-RPC view calls). Use the backend API (`lib/api.ts`) only for off-chain data (evidence, AI checks, history, payments, notifications, profiles). Every page must render with the API down.
 - Every call gets its own hook in `hooks/queries/` with a hierarchical key factory (`lotKeys.detail(id)`). Components import hooks, never `useQuery` inline.
-- Mutations live in `hooks/mutations/`. After a successful transaction: `POST /api/tx` (ignore failure), invalidate the exact keys touched, toast a plain-language status with a "Lihat bukti" explorer link (`lib/tx-feedback.ts`).
+- Mutations live in `hooks/mutations/`. After a successful transaction: `POST /api/tx` (ignore failure), invalidate the exact keys touched, toast a plain-language status with a "View proof" explorer link (`lib/tx-feedback.ts`).
 - Contract-not-deployed and API-offline are **states**, not crashes: `ContractNotDeployedError` → `<NotDeployedState/>`, `ApiUnavailableError` → `<ApiOfflineBanner/>`.
-- `NEXT_PUBLIC_DEMO_FIXTURES=1` renders sample lots from `lib/fixtures.ts`, always labelled "Contoh". Fixtures and live data are never mixed in one view.
+- `NEXT_PUBLIC_DEMO_FIXTURES=1` renders sample lots from `lib/fixtures.ts`, always labelled "Sample". Fixtures and live data are never mixed in one view.
 
 ## 5. Server vs client
 
@@ -82,8 +82,8 @@ Max **800 lines** per `.ts`/`.tsx`. A file at 801 lines is a bug. Split into sub
 
 ## 7. Copy & language
 
-- Bahasa Indonesia is the default, English is a toggle. All user-facing strings live in `lib/i18n.ts` (typed dictionary); no hard-coded copy in components.
-- Farmer and verifier screens never show "seed phrase", "gas", "yocto", "wallet/dompet" jargon, raw hashes as primary content, or token decimals. Say "Akun", "Tanda tangan", "Lihat bukti".
+- The UI is **English only** — no second dictionary, no language toggle. All UI strings (including `alt`, `aria-label`, toasts and zod messages) live in `lib/i18n/en.ts`, which is the source of truth for the `Dictionary` type; read them with `useT()` / `<T k=…/>` in components and `serverT()` on the server. No hard-coded copy in components. Route `metadata` and JSON-LD text may sit in the route file, in English. No non-English copy anywhere, comments included (place names such as Karawang and the brand Pratala excepted).
+- Farmer and verifier screens never show "seed phrase", "gas", "yocto", "wallet" jargon, raw hashes as primary content, or token decimals. Say "Account", "Sign", "View proof".
 - Money: pUSDC with 6 decimals as BigInt (`lib/near/format.ts`), with "≈ Rp" at the **demo rate** (`NEXT_PUBLIC_DEMO_IDR_RATE`), always labelled as a demo rate.
 - No invented metrics, testimonials or partner logos. Stats come from `get_stats` or render "—".
 

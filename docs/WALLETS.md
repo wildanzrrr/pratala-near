@@ -20,7 +20,7 @@ The app creates **one** `NearConnector` per page load (`network` from `NEXT_PUBL
 2. **Other options** — every remaining manifest wallet that declares support for the current network; wallets without testnet support are listed (collapsed) as "not available on testnet yet".
 3. A one-paragraph note on the function-call key (§3) so the first approval is not a surprise.
 
-The sheet never says "seed phrase" except to say farmers don't need one: *"Akun Pratala Anda dijaga oleh dompet MPC — tidak ada seed phrase untuk petani."*
+The sheet never says "seed phrase" or "wallet" in its own copy; it explains the MPC benefit in plain words: *"Pick an account provider below. HOT keeps your key split across several parties, so there is no secret phrase to write down."*
 
 ### Testnet caveat (verified 2026-11-07)
 
@@ -58,7 +58,7 @@ At sign-in the wallet is asked once to add a **limited access key** for the lots
 | owner settings (`add_role`, `set_fee_bps`, …) | lots | 0 | **wallet** (deliberately outside `FC_METHODS`) |
 | attestations, price, claims | lots | 0 | **FC key, silent** |
 
-What a function-call key **cannot** do: move NEAR or tokens, attach any deposit, call other contracts, add/delete keys, or spend more than its 0.25 NEAR gas allowance. If the allowance runs out or the key was deleted on-chain, the plugin falls back to the wallet (and removes a dead key). Signing out removes the local key. The account menu shows "Tanda tangan otomatis aktif" when a key is present.
+What a function-call key **cannot** do: move NEAR or tokens, attach any deposit, call other contracts, add/delete keys, or spend more than its 0.25 NEAR gas allowance. If the allowance runs out or the key was deleted on-chain, the plugin falls back to the wallet (and removes a dead key). Signing out removes the local key. The account menu shows "Automatic signing on" when a key is present.
 
 ## 4. Backend session — NEP-413
 

@@ -35,7 +35,7 @@ The stamp sits at the top of `tokens.css`; project memory in `frontend/.hallmark
 | `--pt-muted` | `oklch(48% 0.018 152)` | Captions (5.8:1 on paper) |
 | `--pt-green` | `oklch(42% 0.085 154)` | Brand: primary actions, links, wordmark (prototype `#315d40`) |
 | `--pt-green-deep` | `oklch(29% 0.045 160)` | Dark band: testnet banner |
-| `--pt-lime` | `oklch(91% 0.14 119)` | The one accent — highlighter marks, current step, "Siap didanai" (prototype `#d8ef81`) |
+| `--pt-lime` | `oklch(91% 0.14 119)` | The one accent — highlighter marks, current step, "Open for funding" (prototype `#d8ef81`) |
 | `--pt-rust` | `oklch(52% 0.12 42)` | Attention: refunds, under-delivery (prototype `#b96747`) |
 | `--pt-focus` | `oklch(50% 0.15 150)` | `:focus-visible` ring, instant (4.96:1) |
 
@@ -56,9 +56,9 @@ Every neutral is tinted toward the green anchor; nothing is pure black, white or
 
 - **Paper, ink and a green stamp.** The people who must trust this are farmers and co-op officers who already keep paper ledgers. The surfaces read like a well-kept book; the lime is a highlighter, used for "this needs you" moments only.
 - **Narrative Workflow on the landing.** The product *is* a five-step sequence (register → field visit → co-op review → fund → weigh-in), so the page is that sequence, each step tagged with the on-chain status it produces. No invented metrics: the stat strip reads `get_stats` live and shows "—" until the contract has data; the settlement table is the contract's rule worked through with the reference numbers and labelled as an example.
-- **Honesty in the chrome.** The N12 banner says "testnet · pUSDC is test money" on every page; the Intents tab says a quote is all it is; fixture mode stamps "Contoh" on every sample.
+- **Honesty in the chrome.** The N12 banner says "testnet · pUSDC is test money" on every page; the Intents tab says a quote is all it is; fixture mode stamps "Sample" on every sample.
 - **Phone first.** 44 px+ targets, bottom navigation with labels, bottom-sheet dialogs, camera-first evidence capture. Verified at 320 / 375 / 414 / 768 px with device-emulated screenshots.
-- **No crypto words for farmers.** "Akun", "Tanda tangan", "Lihat bukti", "biaya penyimpanan data". Amounts are pUSDC with "≈ Rp" at a fixed **demo rate**, always labelled.
+- **No crypto words for farmers.** "Account", "Sign", "View proof", "Data storage fee". The UI is English only, written in plain words. Amounts are pUSDC with "≈ Rp" at a fixed **demo rate**, always labelled.
 
 ## 4. Screen map
 
@@ -69,11 +69,11 @@ Every neutral is tinted toward the green anchor; nothing is pure black, white or
 | `/lot/[id]` | everyone — the pay link | Stepper, trust panel (3 signed layers, photos, hashes, AI badge), funding/escrow/claims rail, money trail, ownership history, share; JSON-LD + OG image |
 | `/checkout/[id]` | buyers | pUSDC steps (sign in → balance/registration → `ft_transfer_call`) · NEAR Intents dry quote |
 | `/receipt/[txHash]` | anyone | Printable receipt from RPC + NEP-297 events |
-| `/onboarding` | new users | Connect → role (Petani / Pembeli / Verifikator / Toko tani) → profile → optional NEP-413 sign-in |
+| `/onboarding` | new users | Connect → role (Farmer / Buyer / Verifier / Farm-input supplier) → profile → optional NEP-413 sign-in |
 | `/farmer` · `/farmer/new` | farmers | Claimable payouts, lots, inbox, plots · 3-step registration wizard |
 | `/verify` | field agents, co-ops, warehouses | Role-adaptive queues, camera-first task sheets, AI check, silent attestations, weigh-in preview |
 | `/portfolio` | buyers | Held NFTs, claimable refunds, NFT transfer, CSV |
-| `/supplier` | farm shops | Listings CRUD, orders |
+| `/supplier` | farm-input suppliers | Listings CRUD, orders |
 | `/exports` | bookkeepers | Ledger table + CSV |
 | `/admin` | contract owner | Roles, fee, treasury, pause |
 | `/faucet` | testers | 1,000 test pUSDC in one transaction |
@@ -83,4 +83,4 @@ Every neutral is tinted toward the green anchor; nothing is pure black, white or
 
 `components/lot` (LotCard, StatusBadge, StatusStepper, TransferNftButton, ShareButton) · `components/trust` (TrustPanel, AiCheckBadge) · `components/money` (Money/Rupiah/MoneyBlock, MoneyTimeline, EscrowPanel, ClaimButton, AmountInput, TxStatusLine) · `components/evidence` (EvidenceUploader) · `components/wallet` (ConnectSheet, AccountMenu, ConnectGate) · `components/layout` (AppShell, SiteHeader N12, BottomBar, SiteFooter Ft4, PageHeader) · `components/common` (EmptyState, NotDeployedState, ApiOfflineBanner, SampleBanner, RoleGate, ResponsiveDialog, Inbox).
 
-Every interactive control has default, hover, focus-visible, active, disabled, loading (spinner + disabled), error and success (TxStatusLine / toast with "Lihat bukti").
+Every interactive control has default, hover, focus-visible, active, disabled, loading (spinner + disabled), error and success (TxStatusLine / toast with "View proof").
