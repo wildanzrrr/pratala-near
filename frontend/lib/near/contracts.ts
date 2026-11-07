@@ -85,6 +85,7 @@ async function view<T>(contractId: string, method: string, args: Record<string, 
 
 export const getLot = (lotId: string) => view<LotView | null>(LOTS(), "get_lot", { lot_id: lotId });
 
+/** List views return at most 100 items (INTERFACES §3). */
 export const getLots = (fromIndex = 0, limit = 100) =>
   view<LotView[]>(LOTS(), "get_lots", { from_index: fromIndex, limit });
 
@@ -151,6 +152,8 @@ export interface RegisterLotArgs {
   gps_hash: string;
   area_m2?: number | null;
   media_uri?: string | null;
+  /** NEP-177 reference (e.g. API metadata.json URL) */
+  reference?: string | null;
 }
 
 export const tx = {
@@ -238,6 +241,10 @@ export const tx = {
     ],
   }),
 };
+
+/** NFT transfers are allowed only after funding and while no claim is in flight. */
+export const TRANSFERABLE: readonly Status[] = ["Funded", "Settled", "Refunded"];
+export const canTransfer = (lot: Pick<LotView, "status" | "claim_lock">) => TRANSFERABLE.includes(lot.status) && !lot.claim_lock;
 
 /* ── outcome helpers ───────────────────────────────────────── */
 

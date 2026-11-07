@@ -39,6 +39,7 @@ const base = {
   plot_hash: hash("5d"),
   gps_hash: hash("9f"),
   claim_lock: false,
+  fee_bps: 0,
   claims: { farmer: "0", holder: "0", treasury: "0" },
   actual_kg: null,
   grade: null,
@@ -78,6 +79,7 @@ export const FIXTURE_LOTS: LotView[] = [
     area_m2: 8000,
     price_per_kg: "2100000",
     status: "Funded",
+    fee_bps: 200,
     attestations: [field("contoh-penyuluh.testnet", t0 + 3 * day), coop("contoh-koperasi.testnet", t0 + 6 * day)],
     escrow: "1260000000",
     funder: "contoh-pembeli.testnet",
@@ -98,6 +100,7 @@ export const FIXTURE_LOTS: LotView[] = [
     area_m2: 2200,
     price_per_kg: "450000",
     status: "Settled",
+    fee_bps: 200,
     attestations: [
       field("contoh-penyuluh.testnet", t0 - 40 * day),
       coop("contoh-koperasi.testnet", t0 - 38 * day),
