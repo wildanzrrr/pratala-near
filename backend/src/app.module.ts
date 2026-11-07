@@ -8,6 +8,8 @@ import { AppConfigModule } from './config/config.module.js';
 import { NearModule } from './common/near/near.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { HealthModule } from './health/health.module.js';
+import { AuthModule } from './auth/auth.module.js';
+import { UsersModule } from './users/users.module.js';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { HealthModule } from './health/health.module.js';
       }),
     }),
     HealthModule,
+    AuthModule,
+    UsersModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
