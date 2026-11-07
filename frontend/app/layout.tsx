@@ -1,5 +1,9 @@
 import { IBM_Plex_Mono, IBM_Plex_Sans, Newsreader } from "next/font/google";
 
+import { AppShell } from "@/components/layout/app-shell";
+import { createMetadata, jsonLdScript, siteJsonLd } from "@/lib/seo";
+import { Providers } from "@/providers/providers";
+
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
@@ -26,9 +30,7 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Pratala",
-};
+export const metadata: Metadata = createMetadata();
 
 export const viewport: Viewport = {
   themeColor: "#f5f2ea",
@@ -39,7 +41,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="id" className={`${display.variable} ${body.variable} ${mono.variable} antialiased`}>
-      <body className="flex min-h-dvh flex-col">{children}</body>
+      <body className="flex min-h-dvh flex-col">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(siteJsonLd()) }} />
+        <Providers>
+          <AppShell>{children}</AppShell>
+        </Providers>
+      </body>
     </html>
   );
 }

@@ -5,6 +5,7 @@
  */
 export const id = {
   common: {
+    skip: "Lewati ke konten",
     brand: "pratala",
     demoRate: "kurs demo",
     approx: "≈",

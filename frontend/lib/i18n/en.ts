@@ -3,6 +3,7 @@ import type { Dictionary } from "@/lib/i18n/types";
 /** English. Must match the shape of lib/i18n/id.ts (enforced by `Dictionary`). */
 export const en: Dictionary = {
   common: {
+    skip: "Skip to content",
     brand: "pratala",
     demoRate: "demo rate",
     approx: "≈",

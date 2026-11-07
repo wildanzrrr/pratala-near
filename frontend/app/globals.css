@@ -24,6 +24,7 @@
   --color-band-foreground: var(--pt-on-dark);
   --color-band-muted: var(--pt-muted-on-dark);
   --color-sunken: var(--pt-paper-3);
+  --color-ink-2: var(--pt-ink-2);
   --color-rule-strong: var(--pt-rule-strong);
   --color-destructive-foreground: var(--pt-paper-2);
   --ease-out: var(--pt-ease-out);
