@@ -21,6 +21,8 @@ export class NotificationsService {
       id: n.id,
       accountId: n.accountId,
       type: n.type,
+      /** alias of `type` (frontend AppNotification.kind) */
+      kind: n.type,
       lotId: n.lotId,
       title: n.title,
       body: n.body,

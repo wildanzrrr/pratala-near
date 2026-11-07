@@ -32,6 +32,7 @@ export class PlotsService {
       region: p.region,
       plotHash: p.plotHash,
       gpsHash: p.gpsHash,
+      evidenceIds: p.evidence.map((e) => e.id),
       evidence: p.evidence.map((e) => this.evidence.toView(e)),
       createdAt: p.createdAt.toISOString(),
     };
