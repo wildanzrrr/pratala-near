@@ -47,7 +47,7 @@ Main post (≤ 280 characters):
 
 > Rice farmers in Indonesia sell to middlemen who set the price.
 >
-> Pratala: buyers pre-fund a verified harvest on NEAR. At weigh-in the farmer withdraws 396.90 pUSDC in one tap. The refund for the 100 kg shortfall goes to the lot NFT's holder.
+> Pratala: buyers pre-fund a verified harvest on NEAR. At weigh-in the farmer withdraws 396.90 pUSDC; any shortfall is refunded to whoever holds the lot NFT.
 >
 > Built at NEAR HACKATHON @NEARProtocol #NEARHackathon
 
@@ -60,4 +60,4 @@ Reply thread:
 3. "Try it on testnet: <live URL> · code + 5-minute walkthrough: <repo URL>"
 4. "Next: pilot with one cooperative in Karawang. Question for builders: how would you replace our allowlisted verifiers with something less trusted, without making it harder for farmers? @NearLegion @NearBuilders"
 
-Before posting, check: it says built at NEAR HACKATHON, tags @NEARProtocol and #NEARHackathon, and attaches the video. It leads with the user problem, shows one action → result moment (the 396.90 withdrawal), says concretely what NEAR does, and ends with a link and a question. The human posts it. Agents do not post to X.
+Before posting, check: it says built at NEAR HACKATHON, tags @NEARProtocol and #NEARHackathon, and attaches the video. It leads with the user problem, shows one action → result moment (weigh-in → farmer withdraws 396.90), says concretely what NEAR does, and ends with a link and a question. The human posts it. Agents do not post to X.
