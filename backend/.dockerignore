@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+data
+uploads
+src/generated
+.env
+.env.*
+!.env.example
+.claude
+*.tsbuildinfo
+test
