@@ -1,4 +1,4 @@
-# AI evidence check ("Pemeriksaan AI")
+# AI evidence check
 
 Pratala can ask a vision model on **NEAR AI Cloud** to look at an evidence photo before a verifier signs an attestation. The result is **advisory**: it helps a field agent, cooperative or warehouse notice problems, but only their signed on-chain attestation changes a lot's status.
 

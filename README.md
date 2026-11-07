@@ -47,7 +47,7 @@ cp frontend/.env.example frontend/.env.local
 pnpm -C frontend install && pnpm -C frontend dev
 ```
 
-Until the contracts are deployed, pages show "Kontrak belum dideploy". Set `NEXT_PUBLIC_DEMO_FIXTURES=1` in `frontend/.env.local` to preview the UI with three sample lots labelled "Contoh".
+Until the contracts are deployed, pages show "Contracts not deployed yet". Set `NEXT_PUBLIC_DEMO_FIXTURES=1` in `frontend/.env.local` to preview the UI with three sample lots labelled "Sample".
 
 ## Deploy to testnet (requires approval — changes chain state)
 
