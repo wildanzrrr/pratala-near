@@ -1,0 +1,63 @@
+name: frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Public, placeholder values baked into the build; no secrets needed.
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_NEAR_NETWORK: testnet
+      NEXT_PUBLIC_RPC_URL: https://test.rpc.fastnear.com
+      NEXT_PUBLIC_LOTS_CONTRACT_ID: lots.pratala.testnet
+      NEXT_PUBLIC_PUSDC_CONTRACT_ID: pusdc.pratala.testnet
+      NEXT_PUBLIC_API_URL: http://localhost:4100/api
+      NEXT_PUBLIC_EXPLORER_BASE: https://testnet.nearblocks.io
+      NEXT_PUBLIC_AUTH_RECIPIENT: pratala.testnet
+      NEXT_PUBLIC_DEMO_IDR_RATE: "16000"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build

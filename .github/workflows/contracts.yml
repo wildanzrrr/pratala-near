@@ -1,0 +1,75 @@
+name: contracts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "smart-contract/**"
+      - ".github/workflows/contracts.yml"
+  pull_request:
+    paths:
+      - "smart-contract/**"
+      - ".github/workflows/contracts.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contracts-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: smart-contract
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_NEAR_VERSION: 0.23.0
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # Matches smart-contract/rust-toolchain.toml (1.95.0 + wasm target + rustfmt/clippy).
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.95.0
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: smart-contract -> target
+
+      - uses: cargo-bins/cargo-binstall@main
+
+      - name: Install cargo-near
+        run: cargo binstall -y --force "cargo-near@${CARGO_NEAR_VERSION}"
+
+      - name: Versions
+        run: rustc --version && cargo --version && cargo near --version
+
+      - name: Format
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      # Unit tests + near-sandbox integration tests (the tests build both wasm themselves).
+      - name: Test
+        run: cargo test --workspace
+
+      - name: Build release wasm
+        run: make build
+
+      - name: Wasm sizes
+        run: ls -l target/near/*/*.wasm
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contracts-wasm
+          path: smart-contract/target/near/*/*.wasm
+          if-no-files-found: error

@@ -1,0 +1,41 @@
+name: scripts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "deploy/**"
+      - ".github/workflows/scripts.yml"
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "deploy/**"
+      - ".github/workflows/scripts.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bash -n
+        run: for f in scripts/*.sh; do bash -n "$f"; done
+
+      # shellcheck is preinstalled on ubuntu-latest runners.
+      - name: shellcheck
+        run: shellcheck --version && shellcheck -x -P scripts scripts/*.sh
+
+      - name: deploy/testnet.json(.example) is valid JSON
+        run: for f in deploy/*.json*; do jq -e . "$f" > /dev/null; done
+
+      # 05 must fail cleanly (exit 2) when nothing is deployed, without touching the network.
+      - name: verify script handles a missing deploy file
+        run: |
+          set +e
+          DEPLOY_FILE=/tmp/none.json scripts/05-verify-demo.sh
+          test $? -eq 2

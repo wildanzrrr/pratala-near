@@ -1,0 +1,123 @@
+name: backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "docker-compose.yml"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "docker-compose.yml"
+      - ".github/workflows/backend.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: pratala
+          POSTGRES_PASSWORD: pratala
+          POSTGRES_DB: pratala
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pratala"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    # Placeholder, non-secret values: CI never talks to testnet keys, NEAR AI or 1Click credentials.
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://pratala:pratala@localhost:5432/pratala?schema=public
+      PORT: "4100"
+      JWT_SECRET: ci-only-not-a-secret-0123456789abcdef
+      AUTH_RECIPIENT: pratala.testnet
+      NEAR_NETWORK: testnet
+      NEAR_RPC_URL: https://test.rpc.fastnear.com
+      LOTS_CONTRACT_ID: lots.pratala.testnet
+      PUSDC_CONTRACT_ID: pusdc.pratala.testnet
+      EXPLORER_BASE: https://testnet.nearblocks.io
+      FRONTEND_ORIGIN: http://localhost:3000
+      UPLOAD_DIR: ./data/uploads
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: backend/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Prisma generate + migrate
+        if: hashFiles('backend/prisma/schema.prisma') != ''
+        run: |
+          pnpm exec prisma generate
+          pnpm exec prisma migrate deploy
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: E2E tests (Postgres service)
+        run: pnpm run --if-present test:e2e
+
+      - name: Build
+        run: pnpm build
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate docker-compose.yml
+        if: hashFiles('docker-compose.yml') != ''
+        working-directory: .
+        run: |
+          # compose may reference .env; on the runner use the committed, secret-free example
+          [ -f .env ] || cp .env.example .env
+          docker compose -f docker-compose.yml config --quiet
+
+      - uses: docker/setup-buildx-action@v3
+        if: hashFiles('backend/Dockerfile') != ''
+
+      - name: Build backend image
+        if: hashFiles('backend/Dockerfile') != ''
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/Dockerfile
+          push: false
+          tags: pratala-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
