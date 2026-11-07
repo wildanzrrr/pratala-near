@@ -280,6 +280,9 @@ export const en: Dictionary = {
     model: "Model {model} on NEAR AI Cloud",
   },
   money: {
+    splitTitle: "Payout split",
+    returned: "Returned to the lot holder",
+    released: "Split at weigh-in",
     timelineTitle: "Money trail",
     funding: "Funding received",
     escrow: "Held by the contract",

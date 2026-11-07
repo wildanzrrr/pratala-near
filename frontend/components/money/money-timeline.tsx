@@ -82,7 +82,7 @@ export function MoneyTimeline({ lot }: { lot: LotView }) {
       icon: LockSimple,
       title: t("money.escrow"),
       amount: lot.status === "Funded" ? lot.escrow : undefined,
-      detail: lot.status === "Funded" ? undefined : funded ? t("money.claimed") : t("money.notYet"),
+      detail: lot.status === "Funded" ? undefined : settled ? t("money.released") : refunded ? t("money.returned") : t("money.notYet"),
       done: funded,
     },
     {

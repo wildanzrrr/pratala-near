@@ -282,6 +282,9 @@ export const id = {
     model: "Model {model} di NEAR AI Cloud",
   },
   money: {
+    splitTitle: "Pembagian dana",
+    returned: "Dikembalikan ke pemegang lot",
+    released: "Sudah dibagi saat panen ditimbang",
     timelineTitle: "Alur dana",
     funding: "Pendanaan masuk",
     escrow: "Ditahan kontrak",

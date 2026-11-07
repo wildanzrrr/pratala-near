@@ -60,7 +60,7 @@ export function FundingPanel({ lot }: { lot: LotView }) {
 
       {lot.status === "Settled" || lot.status === "Refunded" ? (
         <div className="flex flex-col gap-3 rounded-md border border-border bg-card p-4">
-          <h2 className="font-sans text-base font-medium">{t("money.timelineTitle")}</h2>
+          <h2 className="font-sans text-base font-medium">{t("money.splitTitle")}</h2>
           <ClaimLine label={t("money.farmerClaim")} amount={lot.claims.farmer} />
           <ClaimLine label={t("money.holderClaim")} amount={lot.claims.holder} />
           <ClaimLine label={t("money.treasuryClaim")} amount={lot.claims.treasury} />
