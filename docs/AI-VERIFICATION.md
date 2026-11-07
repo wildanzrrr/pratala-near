@@ -13,7 +13,7 @@ Pratala can ask a vision model on **NEAR AI Cloud** to look at an evidence photo
 | `COOP_REVIEW` | judge whether the photo is plausible support for the expected crop; flag edited or unrelated images |
 | `WEIGH_IN` | read the net kg and grade from the scale or ticket, only if clearly legible; check it is a plausible warehouse scene |
 
-The prompt also includes the photo's EXIF GPS and capture time (read on upload with `exifr`) and the registered plot location, and asks for a finding if they are more than 2 km apart. The model must answer with JSON `{ verdict: pass|review|fail, confidence, findings[], extracted{crop, stage, kg, grade}, summary_id, summary_en }`. The API parses it defensively: an unknown verdict becomes `review`, and output it cannot parse becomes `review` with confidence 0 and a "human must review" summary. The summary comes in Bahasa Indonesia (`summaryId`) for farmers and in English (`summaryEn`).
+The prompt also includes the photo's EXIF GPS and capture time (read on upload with `exifr`) and the registered plot location, and asks for a finding if they are more than 2 km apart. The model must answer with JSON `{ verdict: pass|review|fail, confidence, findings[], extracted{crop, stage, kg, grade}, summary_en }` (one plain-English summary; the UI is English-only). The API parses it defensively: an unknown verdict becomes `review`, and output it cannot parse becomes `review` with confidence 0 and a "human must review" summary. The stored and returned check carries that summary as `summaryEn`.
 
 ## Model and privacy tier
 

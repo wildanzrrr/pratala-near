@@ -13,7 +13,7 @@ export interface PromptContext {
 const SCHEMA = `Respond with ONLY one JSON object, no markdown, matching:
 {"verdict":"pass"|"review"|"fail","confidence":0.0-1.0,"findings":["short factual observation", "..."],
  "extracted":{"crop":string|null,"stage":string|null,"kg":number|null,"grade":string|null},
- "summary_id":"1-2 kalimat dalam Bahasa Indonesia sederhana untuk petani","summary_en":"1-2 sentences in English"}
+ "summary_en":"1-2 plain English sentences a farmer can understand"}
 Use "review" whenever you are unsure. Never invent numbers you cannot read in the image.`;
 
 const TASK: Record<AiKind, string> = {
@@ -23,7 +23,7 @@ Which crop is visible, and roughly what growth stage (land prep, seedling, veget
   FIELD_VISIT: `A field agent photographed this plot during a verification visit.
 Check: is the scene a real outdoor field consistent with the expected crop? Visible growth stage?
 Any signs of crop damage, flooding, pests or an empty/fallow field that contradict a harvest projection?`,
-  COOP_REVIEW: `A cooperative (Gapoktan) reviewer submitted this photo (field, harvest or document) to support a lot.
+  COOP_REVIEW: `A cooperative / farmer-group reviewer submitted this photo (field, harvest or document) to support a lot.
 Check: is it plausible supporting evidence for the expected crop? Note anything that looks edited, unrelated or inconsistent.`,
   WEIGH_IN: `This photo should show a warehouse weigh-in: a scale display or weighbridge ticket, possibly with sacks of grain.
 Read the net weight in kilograms (extracted.kg) and any quality grade (extracted.grade) ONLY if clearly legible.

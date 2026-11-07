@@ -5,7 +5,6 @@ export interface ParsedAiResult {
   confidence: number;
   findings: string[];
   extracted: { crop?: string; stage?: string; kg?: number; grade?: string };
-  summaryId: string;
   summaryEn: string;
   parseOk: boolean;
 }
@@ -15,19 +14,16 @@ const VERDICTS: Record<string, Verdict> = {
   passed: 'pass',
   ok: 'pass',
   valid: 'pass',
-  lulus: 'pass',
   review: 'review',
   uncertain: 'review',
   unsure: 'review',
   needs_review: 'review',
   'needs review': 'review',
-  periksa: 'review',
   fail: 'fail',
   failed: 'fail',
   invalid: 'fail',
   reject: 'fail',
   rejected: 'fail',
-  gagal: 'fail',
 };
 
 /** First balanced {...} block, ignoring braces inside strings. */
@@ -88,7 +84,6 @@ const FALLBACK: ParsedAiResult = {
   confidence: 0,
   findings: ['The AI response could not be parsed; a human must review this evidence.'],
   extracted: {},
-  summaryId: 'Hasil pemeriksaan AI tidak dapat dibaca. Petugas akan memeriksa bukti ini secara manual.',
   summaryEn: 'The AI check result could not be read. A human will review this evidence.',
   parseOk: false,
 };
@@ -141,8 +136,7 @@ export function parseAiContent(content: unknown): ParsedAiResult {
     confidence: confidence(obj.confidence),
     findings,
     extracted,
-    summaryId: str(obj.summary_id ?? obj.summaryId, 600) ?? FALLBACK.summaryId,
-    summaryEn: str(obj.summary_en ?? obj.summaryEn, 600) ?? FALLBACK.summaryEn,
+    summaryEn: str(obj.summary_en ?? obj.summaryEn ?? obj.summary, 600) ?? FALLBACK.summaryEn,
     parseOk: true,
   };
 }

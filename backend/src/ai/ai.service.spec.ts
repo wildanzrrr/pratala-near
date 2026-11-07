@@ -27,7 +27,7 @@ const completionBody = JSON.stringify({
         content:
           '```json\n{"verdict":"pass","confidence":0.82,"findings":["Flooded rice paddy","Seedlings in rows"],' +
           '"extracted":{"crop":"rice","stage":"seedling","kg":null,"grade":null},' +
-          '"summary_id":"Foto menunjukkan sawah padi muda.","summary_en":"Photo shows a young rice paddy."}\n```',
+          '"summary_en":"Photo shows a young rice paddy."}\n```',
       },
     },
   ],
@@ -112,6 +112,8 @@ describe('AiService (NEAR AI Cloud, openai SDK mocked)', () => {
     expect(body.model).toBe(MODEL);
     expect(body.messages[1].content[1].image_url.url).toMatch(/^data:image\/jpeg;base64,/);
     expect(body.messages[1].content[0].text).toContain('Expected crop: rice');
+    expect(body.messages[1].content[0].text).toContain('"summary_en"');
+    expect(body.messages[1].content[0].text).not.toContain('summary_id');
     expect(opts.headers['x-no-aliasing']).toBe('true');
 
     const sigUrl = String(fetchMock.mock.calls[0][0]);
@@ -127,10 +129,11 @@ describe('AiService (NEAR AI Cloud, openai SDK mocked)', () => {
       verdict: 'pass',
       confidence: 0.82,
       extracted: { crop: 'rice', stage: 'seedling' },
-      summaryId: 'Foto menunjukkan sawah padi muda.',
+      summaryEn: 'Photo shows a young rice paddy.',
       responseHash,
       signatureAvailable: true,
     });
+    expect(view).not.toHaveProperty('summaryId');
     expect(view.verifyUrl).toMatch(
       /^https:\/\/cloud\.near\.ai\/verify\?model=Qwen%2FQwen3-VL-30B-A3B-Instruct#receipt=/,
     );

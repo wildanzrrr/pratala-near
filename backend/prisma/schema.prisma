@@ -152,7 +152,6 @@ model AiCheck {
   confidence         Float
   findings           Json
   extracted          Json
-  summaryId          String
   summaryEn          String
   responseText       String // exact completion body bytes as received (utf-8)
   responseJson       Json

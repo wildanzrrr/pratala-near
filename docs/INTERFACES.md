@@ -148,7 +148,7 @@ interface AiCheck { id: string; evidenceId: string; kind: string; model: string;
   provider: "near-ai-cloud"; chatId: string | null;
   verdict: "pass" | "review" | "fail"; confidence: number; findings: string[];
   extracted: { crop?: string; stage?: string; kg?: number; grade?: string };
-  summaryId: string; summaryEn: string; responseHash: string; requestHash: string | null;
+  summaryEn: string /* single English summary */; responseHash: string; requestHash: string | null;
   signatureAvailable: boolean; signature: { text; signature; signing_address; signing_algo; signature_kind? } | null;
   verifyUrl: string /* https://cloud.near.ai/verify?model=<id>#receipt=<base64url> */; createdAt: string }
 interface LotEvent { id: string; lotId: string | null; event: string; data: object; txHash: string; signerId: string; blockTimestamp: string

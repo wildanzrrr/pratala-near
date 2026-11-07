@@ -29,7 +29,6 @@ export interface AiCheckView {
   confidence: number;
   findings: string[];
   extracted: { crop?: string; stage?: string; kg?: number; grade?: string };
-  summaryId: string;
   summaryEn: string;
   responseHash: string;
   requestHash: string | null;
@@ -86,7 +85,6 @@ export class AiService {
       confidence: row.confidence,
       findings: row.findings as string[],
       extracted: row.extracted as AiCheckView['extracted'],
-      summaryId: row.summaryId,
       summaryEn: row.summaryEn,
       responseHash: row.responseHash,
       requestHash: row.requestHash,
@@ -195,7 +193,6 @@ export class AiService {
         confidence: parsed.confidence,
         findings: parsed.findings,
         extracted: parsed.extracted,
-        summaryId: parsed.summaryId,
         summaryEn: parsed.summaryEn,
         responseText: text,
         responseJson: completion as Prisma.InputJsonValue,
