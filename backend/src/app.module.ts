@@ -18,6 +18,9 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { IndexerModule } from './indexer/indexer.module.js';
 import { ListingsModule } from './listings/listings.module.js';
 import { OrdersModule } from './orders/orders.module.js';
+import { PaymentsModule } from './payments/payments.module.js';
+import { IntentsModule } from './intents/intents.module.js';
+import { StatsModule } from './stats/stats.module.js';
 
 @Module({
   imports: [
@@ -45,6 +48,9 @@ import { OrdersModule } from './orders/orders.module.js';
     IndexerModule,
     ListingsModule,
     OrdersModule,
+    PaymentsModule,
+    IntentsModule,
+    StatsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
