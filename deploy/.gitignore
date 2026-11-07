@@ -1,0 +1,2 @@
+# per-run near-cli output (tx logs); testnet.json itself IS committed after a real deploy
+logs/

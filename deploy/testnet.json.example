@@ -1,0 +1,59 @@
+{
+  "network": "testnet",
+  "rpc": "https://test.rpc.fastnear.com",
+  "explorer": "https://testnet.nearblocks.io",
+  "updated_at": "2026-11-08T00:00:00Z",
+  "actor_suffix": "a1b2",
+  "accounts": {
+    "root": "pratala.testnet",
+    "treasury": "pratala.testnet",
+    "lots": "lots.pratala.testnet",
+    "pusdc": "pusdc.pratala.testnet",
+    "farmer1": "pratala-farmer1-a1b2.testnet",
+    "agent1": "pratala-agent1-a1b2.testnet",
+    "coop1": "pratala-coop1-a1b2.testnet",
+    "warehouse1": "pratala-warehouse1-a1b2.testnet",
+    "buyer1": "pratala-buyer1-a1b2.testnet",
+    "investor2": "pratala-investor2-a1b2.testnet"
+  },
+  "contracts": {
+    "pusdc": {
+      "account_id": "pusdc.pratala.testnet",
+      "wasm": "smart-contract/target/near/pusdc/pusdc.wasm",
+      "wasm_bytes": 0,
+      "wasm_sha256": "<sha256 of the deployed wasm>",
+      "init_args": { "owner_id": "pratala.testnet", "total_supply": "1000000000000", "metadata": { "spec": "ft-1.0.0", "name": "Pratala Test USDC", "symbol": "pUSDC", "decimals": 6 } },
+      "deploy_tx": "<tx hash>"
+    },
+    "lots": {
+      "account_id": "lots.pratala.testnet",
+      "wasm": "smart-contract/target/near/harvest_lot/harvest_lot.wasm",
+      "wasm_bytes": 0,
+      "wasm_sha256": "<sha256 of the deployed wasm>",
+      "init_args": { "owner_id": "pratala.testnet", "usdc_contract": "pusdc.pratala.testnet", "treasury": "pratala.testnet", "fee_bps": 200 },
+      "deploy_tx": "<tx hash>"
+    }
+  },
+  "lots": {
+    "lot1": { "lot_id": "lot-1", "target": "Settled", "crop": "rice", "variety": "IR64", "region": "Karawang, Jawa Barat", "projected_kg": 1000, "price_per_kg": "450000" },
+    "lot2": { "lot_id": "lot-2", "target": "Listed" },
+    "lot3": { "lot_id": "lot-3", "target": "FieldVerified" }
+  },
+  "txs": {
+    "deploy.pusdc": "<tx hash>",
+    "deploy.lots": "<tx hash>",
+    "accounts.lots": "<tx hash>",
+    "accounts.pusdc": "<tx hash>",
+    "seed.role.FieldAgent": "<tx hash>",
+    "seed.lot1.register": "<tx hash>",
+    "seed.lot1.attest_field": "<tx hash>",
+    "seed.lot1.attest_coop": "<tx hash>",
+    "seed.lot1.list": "<tx hash>",
+    "seed.lot1.fund": "<tx hash>",
+    "seed.lot1.weigh_in": "<tx hash>",
+    "seed.lot1.claim_payout": "<tx hash>",
+    "seed.lot1.claim_fee": "<tx hash>",
+    "seed.lot1.nft_transfer": "<tx hash>",
+    "seed.lot1.claim_refund": "<tx hash>"
+  }
+}
