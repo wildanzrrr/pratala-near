@@ -1,0 +1,25 @@
+{
+  "name": "pratala-near",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pratala — verified harvest lots as NEAR NFTs with stablecoin escrow. NEAR Hackathon 2026.",
+  "license": "MIT",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter frontend --filter backend dev",
+    "dev:web": "pnpm --filter frontend dev",
+    "dev:api": "pnpm --filter backend start:dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "contracts:build": "make -C smart-contract build",
+    "contracts:test": "make -C smart-contract test",
+    "db:up": "docker compose up -d postgres",
+    "stack:up": "docker compose up -d --build",
+    "stack:down": "docker compose down"
+  }
+}

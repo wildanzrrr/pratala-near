@@ -1,0 +1,37 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+neardev/
+.near-credentials/
+
+# node
+node_modules/
+.pnpm-store/
+dist/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+.turbo/
+.vercel/
+
+# rust
+target/
+smart-contract/**/target/
+
+# data / uploads
+backend/data/
+*.db
+
+# os / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# agent tooling
+.hallmark/preflight.json
