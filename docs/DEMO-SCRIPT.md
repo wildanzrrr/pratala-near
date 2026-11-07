@@ -45,9 +45,9 @@ Fallbacks if a live step fails on camera: show lot-1 (already Settled) and lot-2
 
 Main post (≤ 280 characters):
 
-> Indonesian rice farmers sell at harvest to a middleman who sets the price.
+> Rice farmers in Indonesia sell to middlemen who set the price.
 >
-> Pratala: a buyer pre-funds a verified harvest on NEAR. At weigh-in the farmer withdraws 396.90 pUSDC in one tap, and the refund for 100 kg short goes to whoever holds the lot NFT.
+> Pratala: buyers pre-fund a verified harvest on NEAR. At weigh-in the farmer withdraws 396.90 pUSDC in one tap. The refund for the 100 kg shortfall goes to the lot NFT's holder.
 >
 > Built at NEAR HACKATHON @NEARProtocol #NEARHackathon
 
