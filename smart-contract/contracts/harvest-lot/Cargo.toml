@@ -23,6 +23,12 @@ near-contract-standards.workspace = true
 
 [dev-dependencies]
 near-sdk = { workspace = true, features = ["unit-testing"] }
+near-sandbox.workspace = true
+near-api.workspace = true
+cargo-near-build.workspace = true
+tokio.workspace = true
+testresult.workspace = true
+anyhow.workspace = true
 
 [lints]
 workspace = true
