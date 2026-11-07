@@ -338,7 +338,7 @@ impl World {
             &self.coop,
             &self.lots,
             "attest_coop",
-            json!({"lot_id": lot_id, "evidence_hash": HASH2, "note": "Gapoktan review ok"}),
+            json!({"lot_id": lot_id, "evidence_hash": HASH2, "note": "Co-op review ok"}),
         )
         .await?;
         self.call_ok(
