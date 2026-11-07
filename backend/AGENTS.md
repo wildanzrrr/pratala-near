@@ -1,33 +1,41 @@
-# AGENTS.md
+# Pratala API — agent rules
 
-## NestJS
+> **MANDATORY.** Read the root [`AGENTS.md`](../AGENTS.md) and [`docs/INTERFACES.md`](../docs/INTERFACES.md) first. This folder ships installed agent skills in `.claude/skills/`, hash-pinned in `skills-lock.json`. Read and apply the matching `SKILL.md` before writing code in that domain. Do NOT skip. Do NOT improvise.
 
-This app's version of NestJS is likely newer than what you know. https://docs.nestjs.com/llms.txt indexes its documentation, with a markdown page per chapter.
+## Agent skills
 
-Nest has first-party packages for these, so check them before adding another library or writing your own:
+| Domain | Skill | When to apply |
+| --- | --- | --- |
+| Modules, DI, guards, pipes, errors, tests | `nestjs-best-practices` | Any `*.module.ts`, `*.controller.ts`, `*.service.ts`, guard, filter, pipe or spec |
+| Controllers, DTOs, Swagger, auth patterns | `nestjs-expert` | New routes, request validation, `@nestjs/swagger` decorators, JWT/cookie auth |
+| Prisma setup, generator, driver adapter | `prisma-orm-setup` (Prisma 7 references) | `prisma.config.ts`, `schema.prisma` generator/datasource, `PrismaService` |
+| Prisma CLI (migrate, generate, seed) | `prisma-cli` | Creating migrations, `migrate deploy` in Docker, `db seed` |
+| Prisma queries | `prisma-client-api` | `findMany`/`upsert`/transactions/filters in services |
+| Postgres | `prisma-postgres`, `prisma-database-setup` (deprecated alias) | Connection strings, Postgres-specific types |
+| NEAR RPC, NEP-413 auth, tx status | `near-api-js` | `common/near/rpc.service.ts`, `auth/`, `indexer/`, `orders/` confirmation |
+| NEAR Intents 1Click | `near-intents` | `intents/` (tokens, quote, deposit/submit, status) |
+| NEAR AI Cloud (TEE inference, signatures) | `near-ai-cloud` | `ai/` (vision check, `/v1/signature/{chat_id}`, model tiers) |
 
-- Databases: [`@nestjs/typeorm`](https://docs.nestjs.com/data/typeorm.md), [`@nestjs/drizzle`](https://docs.nestjs.com/data/drizzle.md), [`@nestjs/mongoose`](https://docs.nestjs.com/data/mongodb.md), [`@nestjs/sequelize`](https://docs.nestjs.com/data/sequelize.md).
-- OpenAPI: [`@nestjs/swagger`](https://docs.nestjs.com/openapi/introduction.md). GraphQL: [`@nestjs/graphql`](https://docs.nestjs.com/graphql/quick-start.md). WebSockets: [`@nestjs/websockets`](https://docs.nestjs.com/websockets/gateways.md). Microservices: [`@nestjs/microservices`](https://docs.nestjs.com/microservices/basics.md).
-- Sign-in: [`@nestjs/authentication`](https://docs.nestjs.com/security/authentication.md). Permissions: [`@nestjs/authorization`](https://docs.nestjs.com/security/authorization.md). Rate limiting: [`@nestjs/throttler`](https://docs.nestjs.com/security/rate-limiting.md).
-- Configuration: [`@nestjs/config`](https://docs.nestjs.com/application/configuration.md). Caching: [`@nestjs/cache-manager`](https://docs.nestjs.com/data/caching.md). Health checks: [`@nestjs/terminus`](https://docs.nestjs.com/reliability/terminus.md). Events inside the app: [`@nestjs/event-emitter`](https://docs.nestjs.com/application/events.md).
-- Email: [`@nestjs/mail`](https://docs.nestjs.com/application/mail.md). Files, S3 included: [`@nestjs/storage`](https://docs.nestjs.com/application/file-storage.md). Translations: [`@nestjs/i18n`](https://docs.nestjs.com/application/i18n.md).
-- Retries, timeouts and circuit breakers: [`@nestjs/resilience`](https://docs.nestjs.com/reliability/resilience.md).
-- Idempotency keys: [`@nestjs/idempotency`](https://docs.nestjs.com/reliability/idempotency.md). Transactional outbox: [`@nestjs/outbox`](https://docs.nestjs.com/reliability/outbox.md). Sending and receiving webhooks: [`@nestjs/webhooks`](https://docs.nestjs.com/http/webhooks.md).
-- Queues: [`@nestjs/bullmq`](https://docs.nestjs.com/application/queues.md). Scheduled jobs: [`@nestjs/schedule`](https://docs.nestjs.com/application/task-scheduling.md).
-- Running a scheduled job on one instance, and locks: [`@nestjs/locks`](https://docs.nestjs.com/reliability/locks.md). Processes that take days: [`@nestjs/workflows`](https://docs.nestjs.com/reliability/workflows.md).
-- Language models, tools and agents: [`@nestjs/ai`](https://docs.nestjs.com/ai/overview.md). MCP servers: [`@nestjs/mcp`](https://docs.nestjs.com/mcp/overview.md).
+### How to use skills
 
-Validation works with Zod, Valibot, ArkType or any other Standard Schema library, with no classes or decorator metadata: `StandardSchemaValidationPipe` with `@Body({ schema })` or `@Param('id', { schema })` (https://docs.nestjs.com/application/validation.md). `class-validator` still works, through `ValidationPipe`.
+1. Before writing code, read the whole `SKILL.md` of every matching skill, then only the `rules/` or `references/` files that apply.
+2. Do not edit files under `.claude/skills/` — the `skills` installer manages them and `skills-lock.json` pins their hashes.
+3. Skills show `npm`/`npx`; here use `pnpm add` / `pnpm exec` / `pnpm dlx`.
 
-`NodeAdapter` from `@nestjs/platform-node` is the fastest HTTP adapter, ahead of Fastify (https://docs.nestjs.com/http/performance.md).
+## Project facts the skills depend on
 
-Nest's packages are ESM only, and this project is ESM too: relative imports end in `.js`, `__dirname` doesn't exist (use `import.meta.dirname`), and tests run on Vitest, so mocks are `vi.fn()`, not `jest.fn()`.
+- **NestJS 12, ESM only.** Relative imports end in `.js`; no `__dirname` (use `import.meta.dirname`). Tests run on **Vitest** (`vi.fn()`, not `jest.fn()`), lint is **oxlint** (`pnpm lint`). Nest 12 docs index: https://docs.nestjs.com/llms.txt.
+- **Validation** uses Zod schemas through `ZodValidationPipe` (`src/common/zod.pipe.ts`); no class-validator DTOs.
+- **Prisma 7.10.1 exactly** (npm `latest` is an 8.0 RC — do not upgrade). Generator `prisma-client` outputs to `src/generated/prisma` (git-ignored, run `pnpm prisma generate`); driver adapter `@prisma/adapter-pg`; connection URL lives in `prisma.config.ts`, not in `schema.prisma`.
+- **near-api-js 7.4.0**: `JsonRpcProvider` for view calls / `viewTransactionStatusWithReceipts`; `verifyMessage` from `near-api-js/nep413`.
+- **Chain may be absent.** Contracts may not be deployed: every chain call must degrade (empty arrays, `chain.lotsContract: "missing"`), never crash or crash-loop.
+- **NEAR AI is optional.** Empty `NEAR_AI_API_KEY` ⇒ `POST /ai/check` returns `503 {error:"ai_unavailable"}`; no other flow depends on it.
+- **1Click is mainnet only.** Quotes default to `dry: true`.
 
-## Production data: NestJS Observe
+## Rules
 
-This app's production telemetry - traces, errors, logs and metrics - goes to [NestJS Observe](https://observe.nestjs.com). Until `ObserveModule` is registered in `src/app.module.ts`, nothing is sent: `npx @nestjs/observe link` sets it up in one step - it installs `@nestjs/observe`, wires it into the app, and writes the key pair (`OBSERVE_APP_KEY`, `OBSERVE_APP_SECRET`) to `.env`.
-
-When a task depends on how the app behaves in production - an error users hit, a slow endpoint, a failing job, whether a release made things worse - work from that data, not from the code alone:
-
-- The Observe MCP server answers those questions directly: errors with their traces and logs, slow operations, jobs, and what a release changed (`find_regressions`, `diff_release`). It is included on the Pro plan and above. In Claude Code: `claude mcp add observe --transport http https://observe-api.nestjs.com/mcp`, and the client opens a browser to approve. Other clients: https://www.observe.nestjs.com/documentation/mcp
-- Without it, the user can open the request or error in the Observe dashboard and click **Copy agent prompt**, which hands over that page's trace, stack and logs as text.
+- Feature folders under `src/<feature>/` (`*.module.ts`, `*.controller.ts`, `*.service.ts`, `*.schemas.ts`, `*.spec.ts`). No barrels. 500-line cap per file.
+- HTTP shapes are defined by `docs/INTERFACES.md` §5. Changing one means editing that file in the same commit.
+- Never send blockchain transactions or deploy from this service. It only reads chain state.
+- Never commit `.env`, `data/` (uploads) or `dist/`.
+- Verify: `pnpm lint && pnpm typecheck && pnpm test && pnpm build`; `docker compose up -d --build` from the repo root then `curl -s localhost:4100/api/health`.

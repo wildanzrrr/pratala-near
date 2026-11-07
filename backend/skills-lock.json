@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "skills": {
+    "near-ai-cloud": {
+      "source": "near/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/near-ai-cloud/SKILL.md",
+      "computedHash": "09a07e45ca82dbaa25327a5c17e6411dc3cb22c02fc6f3340bdf17905f21f8db"
+    },
+    "near-api-js": {
+      "source": "near/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/near-api-js/SKILL.md",
+      "computedHash": "a8eb39a034335345df8c3c9972eee611c76f19d5de734eda2a7eeedc028ea627"
+    },
+    "near-intents": {
+      "source": "near/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/near-intents/SKILL.md",
+      "computedHash": "0f763c182b01e69695f730f359f6ebbbbb732c1ce23f4d71d7a0202060fed18f"
+    },
+    "nestjs-best-practices": {
+      "source": "kadajett/agent-nestjs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nestjs-best-practices/SKILL.md",
+      "computedHash": "58f8a630637be3acce1f118c747d68160346ada8a43d76cb52a5b4c4edaa2d37"
+    },
+    "nestjs-expert": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nestjs-expert/SKILL.md",
+      "computedHash": "e41d939df4f10a6dcaddf4ceb93f81cdcf7463871ee2891b3ce610fc3eaa6d7d"
+    },
+    "prisma-cli": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "skillPath": "prisma-cli/SKILL.md",
+      "computedHash": "aaec1e0169bb8ae74b0e3c4b39a4ed00cef79741df42fb9c93771736fccf378f"
+    },
+    "prisma-client-api": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "skillPath": "prisma-client-api/SKILL.md",
+      "computedHash": "cbbabff961c8e16b2d59f8c1ffb4e7e20be52154e778ab95121e0211d6d09969"
+    },
+    "prisma-database-setup": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "skillPath": "prisma-database-setup/SKILL.md",
+      "computedHash": "0e11bb75ddfba8c6ee3dd776742699f7fe993d530497273232f1ffac80025e15"
+    },
+    "prisma-orm-setup": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "skillPath": "prisma-orm-setup/SKILL.md",
+      "computedHash": "08c8bc188c5a304f549aea607320905c9edc0485692182bf590a56dfc71617ca"
+    },
+    "prisma-postgres": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "skillPath": "prisma-postgres/SKILL.md",
+      "computedHash": "d1622693b450df943ad90194efd2e95637d73aec0edf7e03b1ad17648d29c93b"
+    }
+  }
+}
