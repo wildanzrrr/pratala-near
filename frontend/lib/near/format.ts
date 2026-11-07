@@ -10,7 +10,8 @@ import type { Locale } from "@/lib/i18n/types";
 export const PUSDC_DECIMALS = 6;
 const SCALE = 10n ** BigInt(PUSDC_DECIMALS);
 
-const intlLocale = (locale: Locale) => (locale === "id" ? "id-ID" : "en-US");
+const INTL_LOCALE: Record<Locale, string> = { en: "en-US" };
+const intlLocale = (locale: Locale) => INTL_LOCALE[locale];
 
 export function toBig(value: string | bigint | number | null | undefined): bigint {
   if (value === null || value === undefined || value === "") return 0n;
@@ -19,8 +20,8 @@ export function toBig(value: string | bigint | number | null | undefined): bigin
   return /^-?\d+$/.test(value) ? BigInt(value) : 0n;
 }
 
-/** "450000000" → "450,00" (id) / "450.00" (en). `fractionDigits` 0–6. */
-export function formatUsdc(base: string | bigint | null | undefined, locale: Locale = "id", fractionDigits = 2): string {
+/** "450000000" → "450.00". `fractionDigits` 0–6. */
+export function formatUsdc(base: string | bigint | null | undefined, locale: Locale = "en", fractionDigits = 2): string {
   const value = toBig(base);
   const negative = value < 0n;
   const abs = negative ? -value : value;
@@ -30,7 +31,7 @@ export function formatUsdc(base: string | bigint | null | undefined, locale: Loc
   let text = nf.format(whole);
   if (fractionDigits > 0) {
     const digits = frac.toString().padStart(PUSDC_DECIMALS, "0").slice(0, fractionDigits);
-    text += (locale === "id" ? "," : ".") + digits;
+    text += "." + digits;
   }
   return (negative ? "−" : "") + text;
 }
@@ -53,47 +54,48 @@ export function usdcToDecimal(base: string | bigint): string {
   return frac ? `${whole}.${frac}` : whole.toString();
 }
 
-/** ≈ Rp at the demo rate. Returns e.g. "Rp 7.200.000". */
-export function formatIdr(base: string | bigint | null | undefined, locale: Locale = "id"): string {
+/** ≈ Rp at the demo rate. Returns e.g. "Rp 7,200,000". */
+export function formatIdr(base: string | bigint | null | undefined, locale: Locale = "en"): string {
   const rupiah = (toBig(base) * BigInt(Math.round(env.demoIdrRate))) / SCALE;
   return new Intl.NumberFormat(intlLocale(locale), {
     style: "currency",
     currency: "IDR",
+    currencyDisplay: "narrowSymbol",
     maximumFractionDigits: 0,
   }).format(rupiah);
 }
 
-export function formatNumber(value: number | null | undefined, locale: Locale = "id"): string {
+export function formatNumber(value: number | null | undefined, locale: Locale = "en"): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
   return new Intl.NumberFormat(intlLocale(locale)).format(value);
 }
 
-export function formatKg(value: number | null | undefined, locale: Locale = "id"): string {
+export function formatKg(value: number | null | undefined, locale: Locale = "en"): string {
   return value === null || value === undefined ? "—" : `${formatNumber(value, locale)} kg`;
 }
 
-export function formatArea(m2: number | null | undefined, locale: Locale = "id"): string {
+export function formatArea(m2: number | null | undefined, locale: Locale = "en"): string {
   if (!m2) return "—";
   if (m2 >= 10_000) return `${new Intl.NumberFormat(intlLocale(locale), { maximumFractionDigits: 2 }).format(m2 / 10_000)} ha`;
   return `${formatNumber(m2, locale)} m²`;
 }
 
-export function formatDateTime(ms: number | string | null | undefined, locale: Locale = "id"): string {
+export function formatDateTime(ms: number | string | null | undefined, locale: Locale = "en"): string {
   if (ms === null || ms === undefined || ms === "") return "—";
   const date = new Date(typeof ms === "string" ? ms : Number(ms));
   if (Number.isNaN(date.getTime())) return "—";
   return new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
-export function formatDate(ms: number | string | null | undefined, locale: Locale = "id"): string {
+export function formatDate(ms: number | string | null | undefined, locale: Locale = "en"): string {
   if (ms === null || ms === undefined || ms === "") return "—";
   const date = new Date(typeof ms === "string" ? ms : Number(ms));
   if (Number.isNaN(date.getTime())) return "—";
   return new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "medium" }).format(date);
 }
 
-/** "2026-12" → "Desember 2026". */
-export function formatMonth(yyyyMm: string, locale: Locale = "id"): string {
+/** "2026-12" → "December 2026". */
+export function formatMonth(yyyyMm: string, locale: Locale = "en"): string {
   const [y, m] = yyyyMm.split("-").map(Number);
   if (!y || !m) return yyyyMm;
   return new Intl.DateTimeFormat(intlLocale(locale), { month: "long", year: "numeric" }).format(new Date(Date.UTC(y, m - 1, 15)));

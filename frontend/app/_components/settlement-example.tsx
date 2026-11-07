@@ -9,12 +9,12 @@ import type { MessageKey } from "@/lib/i18n/types";
  * the INTERFACES.md reference numbers. Labelled as an example, not data.
  */
 const ROWS: Array<{ label: MessageKey; value: string; tone?: "farmer" | "holder" | "muted" }> = [
-  { label: "landing.mathFunded", value: "450,00" },
+  { label: "landing.mathFunded", value: "450.00" },
   { label: "landing.mathDelivered", value: "900 kg", tone: "muted" },
-  { label: "landing.mathGross", value: "405,00" },
-  { label: "landing.mathFee", value: "8,10", tone: "muted" },
-  { label: "landing.mathFarmer", value: "396,90", tone: "farmer" },
-  { label: "landing.mathHolder", value: "45,00", tone: "holder" },
+  { label: "landing.mathGross", value: "405.00" },
+  { label: "landing.mathFee", value: "8.10", tone: "muted" },
+  { label: "landing.mathFarmer", value: "396.90", tone: "farmer" },
+  { label: "landing.mathHolder", value: "45.00", tone: "holder" },
 ];
 
 export function SettlementExample() {

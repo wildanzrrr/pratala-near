@@ -35,8 +35,7 @@ export const site = {
     "real-world assets",
     "NEAR Intents",
   ],
-  locale: "id_ID",
-  alternateLocale: "en_US",
+  locale: "en_US",
 } as const;
 
 export type OgImage = { url: string; width: number; height: number; alt: string };
@@ -69,7 +68,6 @@ export function createMetadata(input: SeoInput = {}): Metadata {
       type: input.ogType ?? "website",
       siteName: site.name,
       locale: site.locale,
-      alternateLocale: [site.alternateLocale],
       url: path,
       title,
       description,
@@ -85,7 +83,7 @@ export function siteJsonLd() {
     "@context": "https://schema.org",
     "@graph": [
       { "@type": "Organization", name: site.name, url: site.url, description: site.description },
-      { "@type": "WebSite", name: site.name, url: site.url, inLanguage: ["id", "en"] },
+      { "@type": "WebSite", name: site.name, url: site.url, inLanguage: "en" },
     ],
   };
 }

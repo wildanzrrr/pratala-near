@@ -1,7 +1,10 @@
-import type { Dictionary } from "@/lib/i18n/types";
-
-/** English. Must match the shape of lib/i18n/id.ts (enforced by `Dictionary`). */
-export const en: Dictionary = {
+/**
+ * Product copy — English is the only UI language. This object is the source of
+ * truth for the `Dictionary` type (lib/i18n/types.ts); add keys here first.
+ * Farmer and verifier copy stays plain: "account", "sign", "view proof" — no
+ * seed phrases, gas or token decimals.
+ */
+export const en = {
   common: {
     required: "Required.",
     invalidPhone: "Digits, spaces, + and - only.",
@@ -32,7 +35,6 @@ export const en: Dictionary = {
     print: "Print",
     download: "Download",
     perKg: "per kg",
-    language: "Language",
     lot: "Lot",
     unknown: "—",
     testnet: "testnet",
@@ -44,7 +46,7 @@ export const en: Dictionary = {
     farmer: "My harvests",
     verify: "Verify",
     portfolio: "Portfolio",
-    supplier: "Farm shop",
+    supplier: "Supplier",
     exports: "Ledger",
     admin: "Admin",
     faucet: "Test pUSDC",
@@ -59,18 +61,18 @@ export const en: Dictionary = {
     connect: "Sign in",
     connectLong: "Sign in to Pratala",
     sheetTitle: "Sign in to Pratala",
-    sheetLead: "Your Pratala account is protected by an MPC wallet — no seed phrase for farmers. Pick one below.",
+    sheetLead: "Pick an account provider below. HOT keeps your key split across several parties, so there is no secret phrase to write down.",
     recommended: "Recommended for new users",
     others: "Other options",
     mainnetOnly: "Not available on testnet yet",
     hotName: "HOT Wallet",
-    hotDesc: "MPC wallet via Telegram or the app. The key is split across several parties, so there is no secret password to lose.",
+    hotDesc: "Sign in through Telegram or the HOT app. Your key is split across several parties, so there is no secret phrase to lose.",
     hotBadge: "MPC · Telegram",
     hotTestnetNote: "HOT's testnet support is not official yet. For this demo, Meteor works best.",
     meteorName: "Meteor Wallet",
-    meteorDesc: "An easy web and extension wallet. Create an account in a minute; supports testnet.",
+    meteorDesc: "Works in the browser or as an extension. Create an account in a minute; supports testnet.",
     meteorBadge: "Easy · testnet",
-    fcNote: "One approval: Pratala may record verifications and claims without further approval windows (network-fee cap 0.25 NEAR). Payments and harvest registration still ask for your approval.",
+    fcNote: "Approve once and Pratala can record verifications and withdrawals without asking again (network fees capped at 0.25 NEAR). Payments and harvest registration still ask for your approval.",
     connecting: "Connecting…",
     loadingWallets: "Loading account providers…",
     failed: "Could not sign in with this account.",
@@ -116,7 +118,7 @@ export const en: Dictionary = {
     farmer: "Farmer",
     buyer: "Buyer",
     verifier: "Verifier",
-    supplier: "Farm shop",
+    supplier: "Farm-input supplier",
   },
   landing: {
     heroTitle: "Verified harvests, paid directly.",
@@ -124,11 +126,11 @@ export const en: Dictionary = {
       "Pratala connects farmers, cooperatives and buyers without middlemen. A harvest plan is checked in the field, approved by the co-op, then funded by a buyer. The contract holds the money until the harvest is weighed.",
     ctaBrowse: "Browse harvests",
     ctaRegister: "Register a harvest",
-    photoTitle: "Rice planting, Indonesia",
+    photoTitle: "Planting rice, Indonesia",
     photoCredit: "Photo: Redicul Pict on Unsplash",
     statsTitle: "Numbers straight from the contract",
     statsLead: "Read from the NEAR blockchain every time the page opens. A — means there is no data yet.",
-    statsNotDeployed: "The contract is not deployed on testnet yet — numbers appear once the first lot is recorded.",
+    statsNotDeployed: "Contracts not deployed on testnet yet — numbers appear once the first lot is recorded.",
     statsOffline: "The NEAR network is unreachable right now.",
     statTotal: "lots registered",
     statVerified: "lots verified",
@@ -145,7 +147,7 @@ export const en: Dictionary = {
     stage2Who: "Field agent",
     stage3Title: "The co-op reviews and approves",
     stage3Body: "Someone other than the field agent checks the evidence. Once approved, the farmer sets a price per kg.",
-    stage3Who: "Co-op · Gapoktan",
+    stage3Who: "Co-op · farmer group",
     stage4Title: "A buyer funds it up front",
     stage4Body: "The buyer pays in pUSDC. The money goes into the contract, not to a middleman, and the lot becomes the buyer's NFT.",
     stage4Who: "Buyer · investor",
@@ -178,7 +180,7 @@ export const en: Dictionary = {
   },
   footer: {
     colophon:
-      "Pratala · built for the NEAR Hackathon 2026 · contracts {lots} and {pusdc} on {network} · RPC {rpc} · set in Newsreader, IBM Plex Sans, IBM Plex Mono · paddy photo by Redicul Pict on Unsplash · MIT-licensed code.",
+      "Pratala · built for the NEAR Hackathon 2026 · contracts {lots} and {pusdc} on {network} · RPC {rpc} · set in Newsreader, IBM Plex Sans, IBM Plex Mono · rice-field photo by Redicul Pict on Unsplash · MIT-licensed code.",
     links: "Links",
     contracts: "Contracts",
   },
@@ -202,7 +204,7 @@ export const en: Dictionary = {
     emptyFiltered: "No lots match these filters.",
     clearFilters: "Clear filters",
     inputsEmptyTitle: "Nothing for sale yet",
-    inputsEmptyBody: "Farm shops can list seed, fertiliser and tools.",
+    inputsEmptyBody: "Farm-input suppliers can list seed, fertiliser and tools.",
     openSupplier: "Open a shop",
     buy: "Buy",
     stock: "{n} {unit} in stock",
@@ -374,7 +376,7 @@ export const en: Dictionary = {
     roleBuyerBody: "Fund harvests that have been verified.",
     roleVerifier: "I'm a verifier",
     roleVerifierBody: "Field agent, co-op or warehouse — by invitation.",
-    roleSupplier: "I'm a farm shop",
+    roleSupplier: "I'm a farm-input supplier",
     roleSupplierBody: "Sell seed, fertiliser and tools.",
     invite: "invite",
     verifierNoRole:
@@ -412,7 +414,7 @@ export const en: Dictionary = {
     step3: "Review & sign",
     plotLead: "Take 1–4 photos of the plot from where you stand. The location is read from the photo or your phone.",
     plotName: "Plot name",
-    plotNamePlaceholder: "North block paddy",
+    plotNamePlaceholder: "North rice field",
     crop: "Crop",
     variety: "Variety",
     varietyPlaceholder: "e.g. IR64, Ciherang",
@@ -518,7 +520,7 @@ export const en: Dictionary = {
     transferBlocked: "This lot can't be transferred right now.",
   },
   supplier: {
-    title: "Farm shop",
+    title: "Farm-input supplier",
     lead: "List your goods. Buyers pay straight to your account in pUSDC.",
     newListing: "New item",
     listingsTitle: "My items",
@@ -535,7 +537,7 @@ export const en: Dictionary = {
     fStock: "Stock",
     fRegion: "Region",
     saved: "Item saved",
-    needsBackend: "The farm shop uses Pratala services.",
+    needsBackend: "Selling farm inputs uses Pratala services.",
   },
   exports: {
     title: "Ledger",
@@ -556,14 +558,14 @@ export const en: Dictionary = {
   },
   admin: {
     title: "Admin",
-    lead: "Verifier roles, fee, treasury and contract pause. Every change asks for wallet approval.",
+    lead: "Verifier roles, fee, treasury and contract pause. Every change asks for approval in your account app.",
     notOwner: "This page is for the contract owner only.",
     rolesTitle: "Roles",
     add: "Add",
     remove: "Revoke",
     accountId: "Account",
     feeTitle: "Platform fee",
-    feeBps: "Fee (basis points, max 1000)",
+    feeBps: "Fee in basis points (max 1000)",
     feeNow: "Currently {pct}%",
     treasuryTitle: "Treasury",
     pauseTitle: "Contract pause",
@@ -591,8 +593,8 @@ export const en: Dictionary = {
     empty: "No activity yet.",
   },
   states: {
-    notDeployedTitle: "Contract not deployed yet",
-    notDeployedBody: "The Pratala contract ({contract}) doesn't exist on testnet yet. This page fills in automatically after deploy.",
+    notDeployedTitle: "Contracts not deployed yet",
+    notDeployedBody: "The Pratala contract ({contract}) isn't on testnet yet. This page fills in by itself once it is deployed.",
     chainDownTitle: "NEAR network unreachable",
     chainDownBody: "We can't read the blockchain right now. Check your connection and try again.",
     apiOffline: "Pratala services are offline — showing blockchain data only.",
@@ -608,10 +610,10 @@ export const en: Dictionary = {
     sending: "Recording on-chain…",
     silent: "Recording without an approval window…",
     done: "Recorded",
-    rejected: "Cancelled in the wallet. Nothing changed.",
+    rejected: "You cancelled the approval. Nothing changed.",
     failed: "Transaction failed: {reason}",
     failedGeneric: "Transaction failed. No funds moved.",
-    returned: "Transaction from the wallet received",
+    returned: "Approval received",
     registered: "Harvest registered",
     attested: "Verification recorded",
     listed: "Lot opened for funding",
@@ -627,4 +629,4 @@ export const en: Dictionary = {
     storage: "pUSDC account active",
     admin: "Contract settings updated",
   },
-};
+} as const;

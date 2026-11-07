@@ -112,7 +112,8 @@ export interface Profile {
   accountId?: string;
   displayName: string;
   region: string;
-  locale: "id" | "en";
+  /** UI language; the app sends "en". Older profiles may carry another value. */
+  locale?: string;
   phone?: string | null;
   intent: Intent;
 }

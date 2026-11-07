@@ -40,7 +40,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="id" className={`${display.variable} ${body.variable} ${mono.variable} antialiased`}>
+    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable} antialiased`}>
       <body className="flex min-h-dvh flex-col">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(siteJsonLd()) }} />
         <Providers>

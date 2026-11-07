@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: PageProps<"/lot/[id]">): Prom
   const { id } = await params;
   const lotId = decodeURIComponent(id);
   const lot = await getLotForSeo(lotId);
-  const t = serverT("id");
+  const t = serverT();
   if (!lot) {
     return createMetadata({ title: `Lot ${lotId}`, path: `/lot/${encodeURIComponent(lotId)}`, noIndex: true });
   }

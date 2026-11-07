@@ -39,7 +39,7 @@ export function AmountInput({
           id={id}
           inputMode="decimal"
           autoComplete="off"
-          placeholder="0,00"
+          placeholder="0.00"
           value={value}
           disabled={disabled}
           aria-invalid={error ? true : undefined}

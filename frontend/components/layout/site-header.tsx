@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 
 import { X } from "@phosphor-icons/react";
 
-import { LanguageToggle } from "@/components/layout/language-toggle";
 import { navFor } from "@/components/layout/nav-items";
 import type { NavItem } from "@/components/layout/nav-items";
 import { Wordmark } from "@/components/layout/wordmark";
@@ -123,7 +122,6 @@ export function SiteHeader() {
             </Suspense>
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            <LanguageToggle />
             <AccountMenu />
           </div>
         </div>

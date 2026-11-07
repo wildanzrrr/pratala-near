@@ -15,7 +15,7 @@ const C = { paper: "#f5f2ea", ink: "#17221b", green: "#1f5a37", lime: "#d7ef7f",
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const lot = await getLotForSeo(decodeURIComponent(id));
-  const t = serverT("id");
+  const t = serverT();
   const title = lot ? `${lot.crop}${lot.variety ? ` · ${lot.variety}` : ""}` : `Lot ${decodeURIComponent(id)}`;
   const facts = lot ? [formatKg(lot.projected_kg), formatMonth(lot.harvest_month), lot.region] : [];
   return new ImageResponse(
