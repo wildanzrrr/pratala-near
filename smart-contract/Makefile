@@ -7,8 +7,12 @@ CONTRACTS := pusdc harvest-lot
 # Release wasm for every contract -> target/near/<crate_name>/<crate_name>.wasm
 build: $(addprefix build-,$(CONTRACTS))
 
-build-%:
-	cd contracts/$* && cargo near build non-reproducible-wasm
+# Explicit rules: make skips pattern rules for .PHONY targets.
+build-pusdc:
+	cd contracts/pusdc && cargo near build non-reproducible-wasm
+
+build-harvest-lot:
+	cd contracts/harvest-lot && cargo near build non-reproducible-wasm
 
 # Unit + sandbox integration tests (integration tests build both wasm themselves).
 test:
