@@ -13,6 +13,8 @@ import { UsersModule } from './users/users.module.js';
 import { EvidenceModule } from './evidence/evidence.module.js';
 import { PlotsModule } from './plots/plots.module.js';
 import { AiModule } from './ai/ai.module.js';
+import { LotsModule } from './lots/lots.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { AiModule } from './ai/ai.module.js';
     EvidenceModule,
     PlotsModule,
     AiModule,
+    LotsModule,
+    NotificationsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
