@@ -215,3 +215,12 @@
     opacity: 1;
   }
 }
+
+/*
+ * NEAR Connect appends the wallet's modal (`.hot-connector-popup`) to <body>. While one of our
+ * Radix/vaul dialogs is open, <body> has `pointer-events: none`; re-enable it on the wallet modal
+ * so its buttons (e.g. "Meteor Web") stay clickable.
+ */
+.hot-connector-popup {
+  pointer-events: auto;
+}

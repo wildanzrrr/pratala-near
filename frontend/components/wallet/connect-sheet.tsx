@@ -54,14 +54,20 @@ export function ConnectSheet() {
   async function choose(walletId: string) {
     setError(null);
     setPending(walletId);
+    // NEAR Connect renders the wallet's own modal (e.g. Meteor Connect). Our sheet is a modal
+    // dialog that sets `pointer-events: none` on <body> and traps focus, which would make the
+    // wallet's buttons unclickable — so close it before handing off, and reopen only on failure.
+    setConnectSheetOpen(false);
     try {
       const accountId = await connect(walletId);
-      setConnectSheetOpen(false);
       toast.success(t("wallet.signedIn", { account: accountId }));
       if (accountId && !loadLocalProfile(accountId) && window.location.pathname === "/") router.push("/onboarding");
     } catch (e) {
       const err = classifyTxError(e);
-      if (!(err instanceof WalletRejectedError)) setError(err.message);
+      if (!(err instanceof WalletRejectedError)) {
+        setError(err.message);
+        setConnectSheetOpen(true);
+      }
     } finally {
       setPending(null);
     }

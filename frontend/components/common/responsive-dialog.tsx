@@ -49,12 +49,27 @@ export function ResponsiveDialog({
   );
 }
 
+/**
+ * NEAR Connect mounts the wallet's own modal (`.hot-connector-popup`) on <body>, outside our
+ * portal. A click or focus there must not count as "outside" — otherwise our dialog closes
+ * (or fights for focus) while the user is approving a transaction in the wallet.
+ */
+function keepOpenForWalletPopup(event: Event) {
+  const target = event.target;
+  if (target instanceof Element && target.closest(".hot-connector-popup")) event.preventDefault();
+}
+
 export function ResponsiveDialogContent({ children, className }: { children: ReactNode; className?: string }) {
   const desktop = use(DesktopContext);
   return desktop ? (
-    <DialogContent className={cn("max-h-[90dvh] overflow-y-auto sm:max-w-lg", className)}>{children}</DialogContent>
+    <DialogContent
+      className={cn("max-h-[90dvh] overflow-y-auto sm:max-w-lg", className)}
+      onInteractOutside={keepOpenForWalletPopup}
+    >
+      {children}
+    </DialogContent>
   ) : (
-    <DrawerContent className={cn("max-h-[92dvh]", className)}>
+    <DrawerContent className={cn("max-h-[92dvh]", className)} onInteractOutside={keepOpenForWalletPopup}>
       <div className="overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
     </DrawerContent>
   );
