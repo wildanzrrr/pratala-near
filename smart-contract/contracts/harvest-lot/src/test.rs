@@ -719,3 +719,15 @@ fn views_paginate_and_filter() {
     let cfg = t.c.get_config();
     assert_eq!((cfg.fee_bps, cfg.total_lots, cfg.paused), (200, 2, false));
 }
+
+#[test]
+fn registration_storage_cost_fits_in_0_1_near() {
+    let mut t = T::new(200);
+    let before = near_sdk::env::storage_usage();
+    t.register();
+    let used = near_sdk::env::storage_usage() - before;
+    let kept = near_sdk::env::storage_byte_cost()
+        .saturating_mul((used + lifecycle::LOT_STORAGE_RESERVE_BYTES) as u128);
+    println!("register_lot: {used} bytes measured, {kept} kept");
+    assert!(kept < NearToken::from_millinear(100));
+}
