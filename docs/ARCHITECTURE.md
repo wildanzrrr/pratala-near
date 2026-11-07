@@ -52,15 +52,15 @@ flowchart LR
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Registered: register_lot (farmer, 0.1 NEAR storage)<br/>NFT minted to farmer
+  [*] --> Registered: register_lot (farmer, 0.1 NEAR storage) · NFT minted to farmer
   Registered --> FieldVerified: attest_field (FieldAgent)
   FieldVerified --> CoopVerified: attest_coop (Coop, ≠ field signer)
   CoopVerified --> Listed: list_lot (farmer, price_per_kg)
   Listed --> CoopVerified: delist_lot (farmer)
   Listed --> Listed: update_price (farmer)
-  Listed --> Funded: pUSDC ft_transfer_call → ft_on_transfer<br/>NFT farmer → buyer
-  Funded --> Settled: weigh_in (Warehouse)<br/>claims computed
-  Funded --> Refunded: declare_failure (Coop or owner)<br/>claims.holder = escrow
+  Listed --> Funded: pUSDC ft_transfer_call → ft_on_transfer · NFT farmer → buyer
+  Funded --> Settled: weigh_in (Warehouse) · claims computed
+  Funded --> Refunded: declare_failure (Coop or owner) · claims.holder = escrow
   Registered --> Cancelled: cancel_lot
   FieldVerified --> Cancelled: cancel_lot
   CoopVerified --> Cancelled: cancel_lot
@@ -105,7 +105,7 @@ sequenceDiagram
   Note over L: check caller: farmer / current NFT owner / owner-or-treasury<br/>require !claim_lock and claim > 0
   L->>L: claim_lock = true, zero the claim
   L->>FT: ft_transfer(receiver=claimant, amount) · 1 yocto
-  FT-->>L: on_claim_resolved(lot_id, kind, amount) #[private]
+  FT-->>L: on_claim_resolved(lot_id, kind, amount) (private callback)
   alt transfer ok
     L->>L: escrow −= amount
   else transfer failed (e.g. receiver not registered on pUSDC)
@@ -121,7 +121,7 @@ sequenceDiagram
 | Actor | Can | Cannot | Enforced by |
 | --- | --- | --- | --- |
 | Contract owner (root) | add/remove roles, set fee (≤ 1,000 bps), treasury, pause; cancel pre-listing lots; declare crop failure; claim fee | move escrow to itself beyond the fee claim; change a lot's price, weight or holder | `harvest-lot` owner checks |
-| Field agent (`FieldAgent`) | attest a Registered lot (field visit, GPS hash, AI check hash) | attest twice in a row as co-op; settle; touch money | role allowlist |
+| Field agent (`FieldAgent`) | attest a Registered lot (field visit, GPS hash, AI check hash) | also sign the co-op review of the same lot; settle; touch money | role allowlist |
 | Co-op (`Coop`) | attest a FieldVerified lot (must differ from the field signer); declare failure on a Funded lot | weigh in; move funds | role allowlist + signer ≠ field signer |
 | Warehouse (`Warehouse`) | weigh in a Funded lot (actual kg, grade, ticket hash) → Settled | change the price or the fee | role allowlist |
 | Farmer | register, list, update price, delist, cancel own lots; claim payout | fund or settle own lot | `farmer_id == caller` |
