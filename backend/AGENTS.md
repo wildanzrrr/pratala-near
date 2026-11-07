@@ -1,6 +1,8 @@
 # Pratala API — agent rules
 
 > **MANDATORY.** Read the root [`AGENTS.md`](../AGENTS.md) and [`docs/INTERFACES.md`](../docs/INTERFACES.md) first. This folder ships installed agent skills in `.claude/skills/`, hash-pinned in `skills-lock.json`. Read and apply the matching `SKILL.md` before writing code in that domain. Do NOT skip. Do NOT improvise.
+>
+> **Status first:** read the root [`CHANGELOG.md`](../CHANGELOG.md) ("Current status" + open items) before starting, and add an `[Unreleased]` entry in the same commit as any behaviour, interface or deployment change (root `AGENTS.md` §7).
 
 ## Agent skills
 

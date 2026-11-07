@@ -1,6 +1,8 @@
 # Pratala web — agent rules
 
 > **MANDATORY.** Read the root [`AGENTS.md`](../AGENTS.md) and [`docs/INTERFACES.md`](../docs/INTERFACES.md) first. Every agent working in `frontend/` MUST follow these rules. No exceptions. A violated rule is a bug and a reviewer will flag it.
+>
+> **Status first:** read the root [`CHANGELOG.md`](../CHANGELOG.md) ("Current status" + open items) before starting, and add an `[Unreleased]` entry in the same commit as any behaviour, interface or deployment change (root `AGENTS.md` §7).
 
 ## 1. Skills — forced usage
 

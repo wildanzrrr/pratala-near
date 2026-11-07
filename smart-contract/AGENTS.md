@@ -1,6 +1,8 @@
 # Pratala Smart-Contract Conventions
 
 > **MANDATORY.** Every agent and contributor working in `smart-contract/` MUST follow these rules. They override the root `AGENTS.md` inside this folder. Read this file before changing code, dependencies, contract interfaces, tests, or contract documentation.
+>
+> **Status first:** read the root [`CHANGELOG.md`](../CHANGELOG.md) ("Current status" + open items) before starting, and add an `[Unreleased]` entry in the same commit as any behaviour, interface or deployment change (root `AGENTS.md` §7).
 
 ## 1. Installed Skills — Required Usage
 
