@@ -1,0 +1,13 @@
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Forwarded-Proto",
+          "value": "https"
+        }
+      ]
+    }
+  ]
+}
