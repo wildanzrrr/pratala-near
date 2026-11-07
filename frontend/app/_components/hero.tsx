@@ -5,8 +5,11 @@ import { ArrowRight, Plant } from "@phosphor-icons/react/dist/ssr";
 
 import { T } from "@/components/i18n/t";
 import { Button } from "@/components/ui/button";
+import { serverT } from "@/lib/i18n";
 
 import heroPhoto from "@/public/images/rice-field.jpg";
+
+const t = serverT();
 
 /** H2 · split diptych 7/5 — claim on the left, the field itself on the right. */
 export function Hero() {
@@ -38,7 +41,7 @@ export function Hero() {
         <div className="overflow-hidden rounded-md border border-border">
           <Image
             src={heroPhoto}
-            alt="Petani menanam padi di sawah tergenang di Indonesia"
+            alt={t("landing.photoAlt")}
             priority
             sizes="(min-width: 60rem) 30rem, 100vw"
             className="aspect-[4/3] h-auto w-full object-cover md:aspect-[4/5]"

@@ -22,7 +22,7 @@ import { shortAccount } from "@/lib/near/format";
 import { useSession } from "@/hooks/use-session";
 import { useT } from "@/providers/locale-provider";
 
-/** Signed out: one "Masuk" button. Signed in: account, signing mode, role links, sign out. */
+/** Signed out: one "Sign in" button. Signed in: account, signing mode, role links, sign out. */
 export function AccountMenu() {
   const t = useT();
   const session = useSession();

@@ -11,7 +11,7 @@ import type { TxResult } from "@/hooks/mutations/use-tx-mutation";
 
 /**
  * Plain-language status of one transaction, inline under the button that sent
- * it: waiting → recorded (Lihat bukti) / cancelled / failed. aria-live so
+ * it: waiting → recorded (View proof) / cancelled / failed. aria-live so
  * screen readers hear the outcome.
  */
 export function TxStatusLine({

@@ -49,7 +49,7 @@ export function PlotStep({ form, children }: { form: WizardForm; children: React
 }
 
 export function HarvestStep({ form }: { form: WizardForm }) {
-  const { t, dict } = useLocale();
+  const { t } = useLocale();
   const e = form.formState.errors;
   return (
     <FieldGroup>
@@ -68,7 +68,7 @@ export function HarvestStep({ form }: { form: WizardForm }) {
                   <SelectGroup>
                     {CROPS.map((c) => (
                       <SelectItem key={c} value={c}>
-                        {dict.wizard.crops[c]}
+                        {c}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -100,14 +100,14 @@ export function HarvestStep({ form }: { form: WizardForm }) {
 }
 
 export function ReviewStep({ values, photos }: { values: WizardInput; photos: EvidenceItem[] }) {
-  const { t, dict, locale } = useLocale();
+  const { t, locale } = useLocale();
   const ready = photos.filter((p) => p.sha256);
   const gps = ready.find((p) => p.gps)?.gps;
   const rows = [
     { k: t("wizard.plotName"), v: values.plotName },
     { k: t("wizard.region"), v: values.region },
     { k: t("wizard.areaM2"), v: formatArea(Number(values.areaM2), locale) },
-    { k: t("wizard.crop"), v: `${dict.wizard.crops[values.crop as keyof typeof dict.wizard.crops] ?? values.crop}${values.variety ? ` · ${values.variety}` : ""}` },
+    { k: t("wizard.crop"), v: `${values.crop}${values.variety ? ` · ${values.variety}` : ""}` },
     { k: t("wizard.projectedKg"), v: formatKg(Number(values.projectedKg), locale) },
     { k: t("wizard.harvestMonth"), v: formatMonth(values.harvestMonth, locale) },
     { k: t("evidence.gpsFromPhoto"), v: gps ? `${gps.lat.toFixed(5)}, ${gps.lng.toFixed(5)}` : "—" },

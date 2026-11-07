@@ -6,7 +6,7 @@ import { explorer } from "@/lib/explorer";
 import { cn } from "@/lib/utils";
 import { useT } from "@/providers/locale-provider";
 
-/** "Lihat bukti ↗" — the one link every transaction surface carries. */
+/** "View proof ↗" — the one link every transaction surface carries. */
 export function ProofLink({ hash, className, label }: { hash: string; className?: string; label?: string }) {
   const t = useT();
   return (

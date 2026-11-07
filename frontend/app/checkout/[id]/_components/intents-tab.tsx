@@ -29,7 +29,7 @@ const CHAIN_LABEL: Record<string, string> = {
 };
 
 /**
- * "Bayar dari chain lain": a real NEAR Intents 1Click quote (mainnet, dry:true)
+ * "Pay from another chain": a real NEAR Intents 1Click quote (mainnet, dry:true)
  * through the backend proxy. Honest banner: demo contracts are on testnet, so
  * no deposit address is created and nothing moves.
  */

@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-/** Tiny global store so any "Masuk" button can open the one connect sheet. */
+/** Tiny global store so any "Sign in" button can open the one connect sheet. */
 let open = false;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());

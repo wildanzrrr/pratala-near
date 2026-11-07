@@ -90,7 +90,7 @@ function WizardForm({ step, setStep, onDone }: { step: 1 | 2 | 3; setStep: (s: 1
       plotName: "",
       region: session.profile?.region ?? "",
       areaM2: "",
-      crop: "Padi",
+      crop: "Rice",
       variety: "",
       projectedKg: "",
       harvestMonth: currentMonth(),

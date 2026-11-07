@@ -41,7 +41,7 @@ function failureOf(outcome: unknown): string | null {
 /**
  * Shared lifecycle for every on-chain action:
  * sign (FC key locally when allowed, else wallet) → POST /api/tx (ignored on failure)
- * → invalidate exact keys → toast with a "Lihat bukti" explorer link.
+ * → invalidate exact keys → toast with a "View proof" explorer link.
  */
 export function useTxMutation<V = void, R = unknown>(config: TxMutationConfig<V, R>) {
   const { signedAccountId, signAndSendTransaction, hasFunctionCallKey } = useNear();

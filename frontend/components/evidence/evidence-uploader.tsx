@@ -37,7 +37,7 @@ const MAX_BYTES = 8 * 1024 * 1024;
  * Camera-first evidence capture. Opens the rear camera on phones
  * (capture="environment"), reads EXIF GPS, falls back to the phone's location,
  * computes the sha256 fingerprint locally, then uploads to the Pratala API —
- * if that fails the fingerprint still works on-chain ("Hanya di perangkat").
+ * if that fails the fingerprint still works on-chain ("Device only").
  */
 export function EvidenceUploader({
   items,

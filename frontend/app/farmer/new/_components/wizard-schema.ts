@@ -2,7 +2,8 @@ import { z } from "zod";
 
 import type { MessageKey } from "@/lib/i18n/types";
 
-export const CROPS = ["Padi", "Jagung", "Kopi Robusta", "Kopi Arabika", "Kedelai", "Cabai", "Bawang Merah", "Kakao"] as const;
+/** Crop names as recorded on-chain and shown to buyers (English). */
+export const CROPS = ["Rice", "Maize", "Robusta coffee", "Arabica coffee", "Soybean", "Chilli", "Shallot", "Cocoa"] as const;
 
 export function currentMonth(): string {
   const d = new Date();

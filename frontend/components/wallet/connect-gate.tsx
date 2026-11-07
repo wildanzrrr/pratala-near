@@ -11,7 +11,7 @@ import { useT } from "@/providers/locale-provider";
 
 import type { ReactNode } from "react";
 
-/** Renders children only for a signed-in account; otherwise one clear "Masuk" step. */
+/** Renders children only for a signed-in account; otherwise one clear "Sign in" step. */
 export function ConnectGate({ children }: { children: ReactNode }) {
   const { signedAccountId, loading } = useNear();
   const t = useT();
