@@ -32,7 +32,7 @@ mod views;
 mod test;
 
 pub use crate::errors::*;
-// pub use crate::escrow::compute_settlement;
+pub use crate::escrow::compute_settlement;
 use crate::storage::StorageKey;
 pub use crate::types::*;
 
