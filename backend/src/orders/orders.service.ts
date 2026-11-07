@@ -150,10 +150,7 @@ export class OrdersService {
       dedupeKey: `order-paid:${order.id}:${order.sellerId}`,
       accountId: order.sellerId,
       type: 'order_paid',
-      text: {
-        id: { title: 'Pesanan dibayar', body: `${order.qty} ${order.listing.unit} ${title} dibayar ${amount} pUSDC oleh ${order.buyerId}.` },
-        en: { title: 'Order paid', body: `${order.qty} ${order.listing.unit} ${title} paid ${amount} pUSDC by ${order.buyerId}.` },
-      },
+      text: { title: 'Order paid', body: `${order.qty} ${order.listing.unit} ${title} paid ${amount} pUSDC by ${order.buyerId}.` },
       data: { orderId: order.id, txHash },
     });
     return this.toView(paid);

@@ -125,7 +125,7 @@ describe('Pratala API (e2e)', () => {
 
     it('returns the session on /auth/me (roles degrade to [] without chain)', async () => {
       const res = await request(server).get('/api/auth/me').set('Cookie', cookie).expect(200);
-      expect(res.body).toMatchObject({ accountId: ACCOUNT, roles: [], profile: { accountId: ACCOUNT, locale: 'id' } });
+      expect(res.body).toMatchObject({ accountId: ACCOUNT, roles: [], profile: { accountId: ACCOUNT, locale: 'en' } });
       await request(server).get('/api/auth/me').expect(401);
     });
 

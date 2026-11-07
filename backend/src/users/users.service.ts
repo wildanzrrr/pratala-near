@@ -7,7 +7,7 @@ export interface Profile {
   accountId: string;
   displayName: string | null;
   region: string | null;
-  locale: 'id' | 'en';
+  locale: 'en';
   phone?: string | null;
   intent: 'farmer' | 'buyer' | 'verifier' | 'supplier' | null;
   createdAt: string;
@@ -19,7 +19,7 @@ export function toProfile(user: User, includePrivate: boolean): Profile {
     accountId: user.accountId,
     displayName: user.displayName,
     region: user.region,
-    locale: user.locale,
+    locale: 'en',
     ...(includePrivate ? { phone: user.phone } : {}),
     intent: user.intent,
     createdAt: user.createdAt.toISOString(),

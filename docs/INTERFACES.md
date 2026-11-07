@@ -127,7 +127,7 @@ Faucet UI = one transaction to pUSDC with two actions: `storage_deposit {}` (if 
 | `POST /auth/challenge` | `{ accountId }` | `{ nonce (base64, 32 bytes), message, recipient, expiresAt }` |
 | `POST /auth/verify` | `{ accountId, publicKey, signature (base64), nonce }` | `{ accountId }` + cookie |
 | `POST /auth/logout` · `GET /auth/me` | — | `{ accountId, roles: Role[], profile }` |
-| `GET/PUT /users/me` · `GET /users/:accountId` | `{ displayName, region, locale: "id"|"en", phone?, intent: "farmer"|"buyer"|"verifier"|"supplier" }` | profile |
+| `GET/PUT /users/me` · `GET /users/:accountId` | `{ displayName, region, locale?: "en", phone?, intent: "farmer"|"buyer"|"verifier"|"supplier" }` | profile |
 | `POST /plots` · `GET /plots/mine` · `GET /plots/:id` | `{ name, lat, lng, areaM2, region, evidenceIds[] }` | `{ id, ..., plotHash, gpsHash }` |
 | `POST /evidence` (multipart `file`, `kind`, `lotId?`, `plotId?`) | image ≤ 8 MB | `{ id, sha256, uri, mime, lat, lng, capturedAt, kind }` |
 | `GET /evidence/:sha256` | — | file stream |
@@ -169,6 +169,7 @@ CSV columns: `date_utc,lot_id,crop,type,from_account,to_account,amount_pusdc,sta
 - **Orders**: response adds `transfer: { receiverId: PUSDC_CONTRACT_ID, methodName: "ft_transfer", args: { receiver_id, amount, memo }, deposit: "1", gas }` (what the wallet signs) and `explorerUrl`. `POST /tx` with `context.orderId` also confirms the order and returns `order`.
 - **Listings**: `priceUsdc` is accepted as a decimal string/number and returned as a decimal string.
 - **Stats** adds `source: "chain" | "mirror"`.
-- `POST /auth/logout` returns `{ ok: true }`. `GET /notifications?unread=true` filters unread; items are `{ id, accountId, type, kind (= type), lotId, title, body, data, read, readAt, createdAt }` (copy in the recipient's profile locale).
+- `POST /auth/logout` returns `{ ok: true }`. `GET /notifications?unread=true` filters unread; items are `{ id, accountId, type, kind (= type), lotId, title, body, data, read, readAt, createdAt }` (English copy).
+- **Language**: the UI and all API copy (notifications, AI summaries, seed data) are English-only. `locale` is always `"en"`; `PUT /users/me` still accepts a legacy `"id"` and stores `"en"`.
 
 The frontend reads **chain state directly via RPC** and uses the API only for off-chain data (evidence, AI checks, history, payments, notifications, profiles). Every page must still render if the API is down.

@@ -133,10 +133,7 @@ export function paymentsFor(ev: ParsedEvent, ctx: ProjectionContext): PaymentWri
 }
 
 type Copy = NotifyInput['text'];
-const t = (idTitle: string, idBody: string, enTitle: string, enBody: string): Copy => ({
-  id: { title: idTitle, body: idBody },
-  en: { title: enTitle, body: enBody },
-});
+const t = (title: string, body: string): Copy => ({ title, body });
 
 export interface NotificationWrite {
   accountId: string;
@@ -161,43 +158,43 @@ export function notificationsFor(ev: ParsedEvent, ctx: ProjectionContext): Notif
 
   switch (ev.event) {
     case 'lot_registered':
-      to([farmer], t('Lot terdaftar', `${lot} (${crop}) sudah tercatat. Tunggu kunjungan petugas lapangan.`, 'Lot registered', `${lot} (${crop}) is on-chain. A field agent will visit next.`));
-      to(ctx.roles.FieldAgent, t('Lot baru perlu dicek', `${lot} (${crop}) menunggu kunjungan lapangan.`, 'New lot to verify', `${lot} (${crop}) is waiting for a field visit.`));
+      to([farmer], t('Lot registered', `${lot} (${crop}) is on-chain. A field agent will visit next.`));
+      to(ctx.roles.FieldAgent, t('New lot to verify', `${lot} (${crop}) is waiting for a field visit.`));
       break;
     case 'lot_attested': {
       const kind = txt(d.kind);
-      to([farmer], t('Verifikasi ditambahkan', `${lot}: ${kind} oleh ${txt(d.signer)}.`, 'Verification added', `${lot}: ${kind} by ${txt(d.signer)}.`));
+      to([farmer], t('Verification added', `${lot}: ${kind} by ${txt(d.signer)}.`));
       if (kind === 'FieldVisit') {
-        to(ctx.roles.Coop, t('Perlu tinjauan koperasi', `${lot} sudah dicek lapangan dan menunggu tinjauan koperasi.`, 'Co-op review needed', `${lot} passed the field visit and awaits co-op review.`));
+        to(ctx.roles.Coop, t('Co-op review needed', `${lot} passed the field visit and awaits co-op review.`));
       }
       break;
     }
     case 'lot_listed':
-      to([farmer], t('Lot tampil di pasar', `${lot} terbuka untuk pendanaan: ${amt(d.total)} pUSDC.`, 'Lot listed', `${lot} is open for funding: ${amt(d.total)} pUSDC.`));
+      to([farmer], t('Lot listed', `${lot} is open for funding: ${amt(d.total)} pUSDC.`));
       break;
     case 'lot_delisted':
     case 'lot_cancelled':
-      to([farmer], t('Status lot berubah', `${lot}: ${ev.event === 'lot_cancelled' ? 'dibatalkan' : 'ditarik dari pasar'}.`, 'Lot status changed', `${lot}: ${ev.event === 'lot_cancelled' ? 'cancelled' : 'delisted'}.`));
+      to([farmer], t('Lot status changed', `${lot}: ${ev.event === 'lot_cancelled' ? 'cancelled' : 'delisted'}.`));
       break;
     case 'lot_funded':
-      to([farmer], t('Lot didanai', `${lot} didanai ${amt(d.amount)} pUSDC. Dana aman di escrow sampai timbang di gudang.`, 'Lot funded', `${lot} was funded with ${amt(d.amount)} pUSDC, held in escrow until the warehouse weigh-in.`));
-      to([s(d.funder)], t('Pendanaan berhasil', `Anda mendanai ${lot}. NFT lot sekarang milik Anda.`, 'Funding confirmed', `You funded ${lot}. The lot NFT is now yours.`));
-      to(ctx.roles.Warehouse, t('Menunggu timbang', `${lot} (${crop}) sudah didanai dan menunggu timbang.`, 'Awaiting weigh-in', `${lot} (${crop}) is funded and awaits weigh-in.`));
+      to([farmer], t('Lot funded', `${lot} was funded with ${amt(d.amount)} pUSDC, held in escrow until the warehouse weigh-in.`));
+      to([s(d.funder)], t('Funding confirmed', `You funded ${lot}. The lot NFT is now yours.`));
+      to(ctx.roles.Warehouse, t('Awaiting weigh-in', `${lot} (${crop}) is funded and awaits weigh-in.`));
       break;
     case 'lot_settled':
-      to([farmer], t('Panen ditimbang', `${lot}: ${txt(d.actual_kg, '?')} kg. Anda bisa klaim ${amt(d.farmer_claim)} pUSDC.`, 'Harvest settled', `${lot}: ${txt(d.actual_kg, '?')} kg. You can claim ${amt(d.farmer_claim)} pUSDC.`));
+      to([farmer], t('Harvest settled', `${lot}: ${txt(d.actual_kg, '?')} kg. You can claim ${amt(d.farmer_claim)} pUSDC.`));
       if (isU128(d.holder_claim) && BigInt(d.holder_claim) > 0n) {
-        to([ctx.holder], t('Pengembalian tersedia', `${lot}: Anda bisa klaim ${amt(d.holder_claim)} pUSDC.`, 'Refund available', `${lot}: you can claim ${amt(d.holder_claim)} pUSDC.`));
+        to([ctx.holder], t('Refund available', `${lot}: you can claim ${amt(d.holder_claim)} pUSDC.`));
       }
       break;
     case 'lot_refunded':
-      to([ctx.holder], t('Dana dikembalikan', `${lot} gagal panen. Klaim ${amt(d.holder_claim)} pUSDC.`, 'Lot refunded', `${lot} was declared a crop failure. Claim ${amt(d.holder_claim)} pUSDC.`));
-      to([farmer], t('Gagal panen dicatat', `${lot} dinyatakan gagal panen.`, 'Crop failure recorded', `${lot} was declared a crop failure.`));
+      to([ctx.holder], t('Lot refunded', `${lot} was declared a crop failure. Claim ${amt(d.holder_claim)} pUSDC.`));
+      to([farmer], t('Crop failure recorded', `${lot} was declared a crop failure.`));
       break;
     case 'payout_claimed':
       to([s(d.to)], d.ok === true
-        ? t('Pembayaran diterima', `${amt(d.amount)} pUSDC dari ${lot} masuk ke akun Anda.`, 'Payment received', `${amt(d.amount)} pUSDC from ${lot} arrived in your account.`)
-        : t('Pembayaran gagal', `Transfer ${amt(d.amount)} pUSDC dari ${lot} gagal. Daftarkan akun di pUSDC lalu klaim lagi.`, 'Payment failed', `The ${amt(d.amount)} pUSDC transfer from ${lot} failed. Register with pUSDC and claim again.`));
+        ? t('Payment received', `${amt(d.amount)} pUSDC from ${lot} arrived in your account.`)
+        : t('Payment failed', `The ${amt(d.amount)} pUSDC transfer from ${lot} failed. Register with pUSDC and claim again.`));
       break;
     default:
       break;

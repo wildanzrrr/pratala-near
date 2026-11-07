@@ -7,8 +7,8 @@ export interface NotifyInput {
   accountId: string;
   type: string;
   lotId?: string | null;
-  /** Indonesian + English copy; the recipient's profile locale picks one. */
-  text: { id: { title: string; body: string }; en: { title: string; body: string } };
+  /** Inbox copy (English; the product UI is English-only). */
+  text: { title: string; body: string };
   data?: Record<string, unknown>;
 }
 
@@ -35,11 +35,7 @@ export class NotificationsService {
 
   /** Idempotent on dedupeKey (re-indexing a tx never duplicates inbox rows). */
   async notify(input: NotifyInput): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { accountId: input.accountId },
-      select: { locale: true },
-    });
-    const copy = user?.locale === 'en' ? input.text.en : input.text.id;
+    const copy = input.text;
     await this.prisma.notification.upsert({
       where: { dedupeKey: input.dedupeKey },
       create: {

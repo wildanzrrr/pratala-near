@@ -3,7 +3,11 @@ import { z } from 'zod';
 export const updateProfileSchema = z.object({
   displayName: z.string().trim().min(1).max(80),
   region: z.string().trim().min(1).max(120),
-  locale: z.enum(['id', 'en']),
+  /** The UI is English-only. `"id"` from older clients is accepted and stored as `"en"`. */
+  locale: z
+    .enum(['en', 'id'])
+    .optional()
+    .transform(() => 'en' as const),
   phone: z
     .string()
     .trim()

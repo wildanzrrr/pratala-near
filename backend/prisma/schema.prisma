@@ -13,8 +13,8 @@ datasource db {
   provider = "postgresql"
 }
 
+/// English-only UI; kept as a column so the profile shape stays stable.
 enum Locale {
-  id
   en
 }
 
@@ -72,7 +72,7 @@ model User {
   accountId     String         @id
   displayName   String?
   region        String?
-  locale        Locale         @default(id)
+  locale        Locale         @default(en)
   phone         String?
   intent        UserIntent?
   lastLoginAt   DateTime?
