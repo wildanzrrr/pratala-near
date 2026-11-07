@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
 import { EvidenceModule } from './evidence/evidence.module.js';
 import { PlotsModule } from './plots/plots.module.js';
+import { AiModule } from './ai/ai.module.js';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { PlotsModule } from './plots/plots.module.js';
     UsersModule,
     EvidenceModule,
     PlotsModule,
+    AiModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
