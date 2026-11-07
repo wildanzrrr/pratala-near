@@ -224,6 +224,7 @@ export interface InputListing {
   title: string;
   category: ListingCategory;
   description: string;
+  /** decimal pUSDC per unit, e.g. "12.50" (backend stores base units) */
   priceUsdc: string;
   unit: string;
   stock: number;
@@ -236,7 +237,10 @@ export type ListingInput = Omit<InputListing, "id" | "sellerId" | "createdAt">;
 export interface Order {
   id: string;
   memo: string;
+  /** decimal pUSDC, e.g. "12.50" */
   amount: string;
+  /** base units — what ft_transfer must carry */
+  amountBase?: string;
   sellerId: string;
   status: string;
   listingId?: string;

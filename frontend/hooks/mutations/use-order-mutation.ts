@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { explorer } from "@/lib/explorer";
 import { tx, txHashOf } from "@/lib/near/contracts";
+import { parseUsdc } from "@/lib/near/format";
 import { WalletRejectedError, classifyTxError } from "@/lib/near/errors";
 import { orderKeys } from "@/hooks/queries/use-orders";
 import { pusdcKeys } from "@/hooks/queries/use-pusdc-balance";
@@ -25,7 +26,9 @@ export function useOrderMutation() {
       toast.message(t("market.orderCreated"));
       let outcome: unknown;
       try {
-        outcome = await signAndSendTransaction(tx.ftTransfer(order.sellerId, order.amount, order.memo));
+        const amountBase = order.amountBase ?? parseUsdc(order.amount);
+        if (!amountBase) throw new Error("Invalid order amount");
+        outcome = await signAndSendTransaction(tx.ftTransfer(order.sellerId, amountBase, order.memo));
       } catch (error) {
         throw classifyTxError(error);
       }
