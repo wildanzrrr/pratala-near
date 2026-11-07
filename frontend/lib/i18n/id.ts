@@ -5,6 +5,9 @@
  */
 export const id = {
   common: {
+    required: "Wajib diisi.",
+    invalidPhone: "Hanya angka, spasi, + dan -.",
+    tooShort: "Isi minimal 2 huruf.",
     skip: "Lewati ke konten",
     brand: "pratala",
     demoRate: "kurs demo",

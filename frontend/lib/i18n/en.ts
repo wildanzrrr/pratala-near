@@ -3,6 +3,9 @@ import type { Dictionary } from "@/lib/i18n/types";
 /** English. Must match the shape of lib/i18n/id.ts (enforced by `Dictionary`). */
 export const en: Dictionary = {
   common: {
+    required: "Required.",
+    invalidPhone: "Digits, spaces, + and - only.",
+    tooShort: "Enter at least 2 characters.",
     skip: "Skip to content",
     brand: "pratala",
     demoRate: "demo rate",
