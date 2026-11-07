@@ -1,0 +1,308 @@
+// Pratala off-chain data. The chain (harvest-lot + pusdc contracts) is the
+// source of truth for lots and money; tables here are mirrors, evidence and
+// app state. Amounts are stored as U128 base-unit strings (pUSDC has 6 decimals).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Locale {
+  id
+  en
+}
+
+enum UserIntent {
+  farmer
+  buyer
+  verifier
+  supplier
+}
+
+enum EvidenceKind {
+  PLOT
+  FIELD_VISIT
+  COOP_REVIEW
+  WEIGH_IN
+  OTHER
+}
+
+enum AiVerdict {
+  pass
+  review
+  fail
+}
+
+enum PaymentType {
+  FUNDING
+  PAYOUT
+  REFUND
+  FEE
+  INPUT_PURCHASE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum ListingCategory {
+  SEED
+  FERTILIZER
+  SOIL
+  OTHER
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+model User {
+  accountId     String         @id
+  displayName   String?
+  region        String?
+  locale        Locale         @default(id)
+  phone         String?
+  intent        UserIntent?
+  lastLoginAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  plots         Plot[]
+  evidence      Evidence[]
+  listings      InputListing[]
+  orders        Order[]
+}
+
+model AuthChallenge {
+  id        String    @id @default(uuid())
+  accountId String
+  nonce     String    @unique // base64 of 32 random bytes
+  message   String
+  recipient String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([accountId])
+}
+
+model Plot {
+  id        String     @id @default(uuid())
+  ownerId   String
+  owner     User       @relation(fields: [ownerId], references: [accountId])
+  name      String
+  lat       Float
+  lng       Float
+  areaM2    Int
+  region    String
+  plotHash  String
+  gpsHash   String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  evidence  Evidence[]
+
+  @@index([ownerId])
+}
+
+model Evidence {
+  id         String       @id @default(uuid())
+  sha256     String
+  uploaderId String
+  uploader   User         @relation(fields: [uploaderId], references: [accountId])
+  kind       EvidenceKind
+  lotId      String?
+  plotId     String?
+  plot       Plot?        @relation(fields: [plotId], references: [id])
+  mime       String
+  sizeBytes  Int
+  storageKey String
+  lat        Float?
+  lng        Float?
+  capturedAt DateTime?
+  createdAt  DateTime     @default(now())
+  aiChecks   AiCheck[]
+
+  @@index([sha256])
+  @@index([lotId])
+  @@index([plotId])
+}
+
+model AiCheck {
+  id                 String       @id @default(uuid())
+  evidenceId         String
+  evidence           Evidence     @relation(fields: [evidenceId], references: [id])
+  kind               EvidenceKind
+  requestedBy        String
+  provider           String       @default("near-ai-cloud")
+  model              String
+  tier               String // "private-tee" | "anonymised" | "unknown"
+  chatId             String?
+  verdict            AiVerdict
+  confidence         Float
+  findings           Json
+  extracted          Json
+  summaryId          String
+  summaryEn          String
+  responseText       String // exact completion body bytes as received (utf-8)
+  responseJson       Json
+  responseHash       String // sha256 hex of responseText
+  requestHash        String?
+  signature          Json?
+  signatureAvailable Boolean      @default(false)
+  verifyUrl          String
+  createdAt          DateTime     @default(now())
+
+  @@index([evidenceId])
+}
+
+model Lot {
+  lotId        String   @id
+  farmerId     String
+  holder       String
+  crop         String
+  variety      String?
+  region       String
+  status       String
+  projectedKg  Int
+  harvestMonth String
+  plotHash     String
+  gpsHash      String
+  areaM2       Int?
+  pricePerKg   String
+  fundingTotal String
+  escrow       String
+  funder       String?
+  fundedAtMs   BigInt?
+  actualKg     Int?
+  grade        String?
+  settledAtMs  BigInt?
+  claims       Json
+  claimLock    Boolean  @default(false)
+  attestations Json
+  createdAtMs  BigInt
+  raw          Json
+  lastSyncedAt DateTime @default(now())
+
+  @@index([status])
+  @@index([farmerId])
+  @@index([holder])
+}
+
+model LotEvent {
+  id             String   @id @default(uuid())
+  lotId          String?
+  standard       String
+  version        String
+  event          String
+  index          Int // position of the data item inside the EVENT_JSON log
+  data           Json
+  txHash         String
+  receiptId      String
+  executorId     String
+  signerId       String
+  blockHash      String?
+  blockTimestamp DateTime
+  createdAt      DateTime @default(now())
+
+  @@unique([txHash, receiptId, event, index])
+  @@index([lotId])
+  @@index([event])
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  dedupeKey   String        @unique
+  lotId       String?
+  orderId     String?
+  type        PaymentType
+  fromAccount String
+  toAccount   String
+  amountBase  String // U128 pUSDC base units
+  status      PaymentStatus
+  txHash      String?
+  note        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([lotId])
+  @@index([fromAccount])
+  @@index([toAccount])
+}
+
+model InputListing {
+  id          String          @id @default(uuid())
+  sellerId    String
+  seller      User            @relation(fields: [sellerId], references: [accountId])
+  title       String
+  category    ListingCategory
+  description String
+  priceBase   String // pUSDC base units per unit
+  unit        String
+  stock       Int
+  region      String
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  orders      Order[]
+
+  @@index([category])
+  @@index([sellerId])
+}
+
+model Order {
+  id         String       @id @default(uuid())
+  listingId  String
+  listing    InputListing @relation(fields: [listingId], references: [id])
+  buyerId    String
+  buyer      User         @relation(fields: [buyerId], references: [accountId])
+  sellerId   String
+  qty        Int
+  amountBase String
+  memo       String       @unique
+  status     OrderStatus  @default(PENDING)
+  txHash     String?      @unique
+  paidAt     DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([buyerId])
+  @@index([sellerId])
+}
+
+model IntentsQuote {
+  id             String   @id @default(uuid())
+  dry            Boolean
+  originAsset    String
+  destination    String
+  amount         String
+  request        Json
+  response       Json
+  depositAddress String?
+  createdAt      DateTime @default(now())
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  dedupeKey String    @unique
+  accountId String
+  type      String
+  lotId     String?
+  title     String
+  body      String
+  data      Json
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([accountId, createdAt])
+}
