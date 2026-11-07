@@ -28,21 +28,21 @@ export function Stages() {
         {STAGES.map((stage, i) => (
           <li key={stage.n} className="relative grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 sm:grid-cols-[3.5rem_minmax(0,1fr)] sm:gap-x-6">
             <div className="flex flex-col items-center">
-              <span className="grid size-10 place-items-center rounded-sm border border-primary/40 bg-card font-mono text-sm text-primary sm:size-12">
+              <span className="grid size-10 place-items-center rounded-sm border border-primary/40 bg-card font-heading text-lg text-primary tnum sm:size-12">
                 {stage.n}
               </span>
               {i < STAGES.length - 1 ? <span aria-hidden className="w-px flex-1 bg-border" /> : null}
             </div>
             <div className="flex flex-col gap-2 pb-10 md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:gap-x-10 md:pb-14">
-              <div className="flex flex-col gap-1.5">
-                <p className="text-sm text-muted-foreground">
-                  <T k={stage.who} />
-                </p>
+              <div className="flex flex-col gap-1.5 pt-1.5 sm:pt-2.5">
                 <h3 className="text-xl sm:text-2xl">
                   <T k={stage.title} />
                 </h3>
+                <p className="text-sm text-muted-foreground">
+                  <T k={stage.who} />
+                </p>
               </div>
-              <div className="flex flex-col items-start gap-3 md:pt-6">
+              <div className="flex flex-col items-start gap-3 md:pt-2.5">
                 <p className="text-ink-2">
                   <T k={stage.body} />
                 </p>
