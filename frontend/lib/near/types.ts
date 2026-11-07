@@ -142,7 +142,7 @@ export interface Plot {
   gpsHash: string;
 }
 
-export type EvidenceKind = "PLOT" | "FIELD_VISIT" | "COOP_REVIEW" | "WEIGH_IN" | "CROP_FAILURE";
+export type EvidenceKind = "PLOT" | "FIELD_VISIT" | "COOP_REVIEW" | "WEIGH_IN" | "OTHER";
 
 export interface Evidence {
   id: string;
