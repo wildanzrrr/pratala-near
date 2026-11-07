@@ -124,7 +124,7 @@ faucet_create() { # faucet_create <role> <account-id>
   [[ "$st" == "missing" ]] || die "could not query $id (network error)"
   info "creating $role → $id via faucet"
   near_run "accounts.$role" account create-account sponsor-by-faucet-service "$id" \
-    autogenerate-new-keypair "save-to-$NEAR_KEYCHAIN" network-config "$NEAR_NETWORK" create
+    autogenerate-new-keypair --signature-scheme ed25519 "save-to-$NEAR_KEYCHAIN" network-config "$NEAR_NETWORK" create
   wait_exists "$id" || die "$id was not visible on-chain after creation"
   state_set_str ".accounts.\"$role\"" "$id"
   ok "$role $id created  $(explorer_account "$id")"
@@ -176,7 +176,7 @@ sub_create() { # sub_create <role> <id> <NEAR>
   [[ "$st" == "missing" ]] || die "could not query $id (network error)"
   info "creating $id with ${amount} NEAR from $ROOT"
   near_run "accounts.$role" account create-account fund-myself "$id" "$amount NEAR" \
-    autogenerate-new-keypair "save-to-$NEAR_KEYCHAIN" sign-as "$ROOT" \
+    autogenerate-new-keypair --signature-scheme ed25519 "save-to-$NEAR_KEYCHAIN" sign-as "$ROOT" \
     network-config "$NEAR_NETWORK" "sign-with-$NEAR_KEYCHAIN" send
   wait_exists "$id" || die "$id was not visible on-chain after creation"
   state_set_str ".accounts.\"$role\"" "$id"

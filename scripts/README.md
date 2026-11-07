@@ -60,8 +60,8 @@ near-cli-rs 0.31.x (`near`), cargo-near 0.23.0, Rust 1.95.0 with `wasm32-unknown
 
 ```sh
 near account view-account-summary <id> network-config testnet now
-near account create-account sponsor-by-faucet-service <id> autogenerate-new-keypair save-to-keychain network-config testnet create
-near account create-account fund-myself <sub.id> '<n> NEAR' autogenerate-new-keypair save-to-keychain sign-as <root> network-config testnet sign-with-keychain send
+near account create-account sponsor-by-faucet-service <id> autogenerate-new-keypair --signature-scheme ed25519 save-to-keychain network-config testnet create
+near account create-account fund-myself <sub.id> '<n> NEAR' autogenerate-new-keypair --signature-scheme ed25519 save-to-keychain sign-as <root> network-config testnet sign-with-keychain send
 near tokens <from> send-near <to> '<n> NEAR' network-config testnet sign-with-keychain send
 near contract deploy <id> use-file <wasm> with-init-call new json-args '<json>' prepaid-gas '100 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-keychain send
 near contract deploy <id> use-file <wasm> without-init-call network-config testnet sign-with-keychain send
