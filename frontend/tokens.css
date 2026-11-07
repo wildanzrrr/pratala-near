@@ -1,0 +1,102 @@
+/* Hallmark · genre: editorial · macrostructure: Narrative Workflow · H2 hero knobs: ratio=7/5, right=photo, divider=hairline
+ * theme: custom (tuned) · vibe: "cooperative ledger, paddy green, warm paper"
+ * paper: oklch(96.2% 0.011 95) · accent: oklch(91% 0.14 119) lime highlighter · brand: oklch(42% 0.085 154) paddy green
+ * display: Newsreader (roman only) · body: IBM Plex Sans · outlier: IBM Plex Mono (ledger figures, ids)
+ * axes: light / roman-serif / chromatic-green ~154 · nav: N12 banner + bar · footer: Ft4 dense colophon
+ * enrichment: real photograph (Redicul Pict, Unsplash) · studied: no · context: user-provided
+ * anchored on the pratala-web3 prototype palette (paper #f3f1e9 · ink #1c2820 · green #315d40 · lime #d8ef81 · rust #b96747)
+ * pre-emit critique: P5 H4 E4 S5 R5 V4 · contrast: body ≥ 5.2:1, focus 4.96:1, inputs ≥ 3:1
+ *
+ * Locked system. Every colour / font in the app references a --pt-* token (directly or via the
+ * shadcn semantic vars in app/globals.css). Add a token here before using a new value.
+ */
+:root {
+  /* ── colour · paper & ink ──────────────────────────────── */
+  --pt-paper:        oklch(96.2% 0.011 95);   /* page — warm ledger paper */
+  --pt-paper-2:      oklch(98.6% 0.006 95);   /* raised surface: cards, sheets */
+  --pt-paper-3:      oklch(92.4% 0.016 92);   /* sunken surface: wells, table heads (sand) */
+  --pt-ink:          oklch(24% 0.022 155);    /* primary text — green-black */
+  --pt-ink-2:        oklch(36% 0.02 155);     /* secondary text */
+  --pt-muted:        oklch(48% 0.018 152);    /* captions, helper text (5.8:1 on paper) */
+  --pt-rule:         oklch(86% 0.014 120);    /* hairlines, dividers */
+  --pt-rule-soft:    oklch(91% 0.012 110);    /* row separators */
+  --pt-rule-strong:  oklch(64% 0.016 140);    /* input boundaries (≥ 3:1) */
+
+  /* ── colour · brand & accent ───────────────────────────── */
+  --pt-green:        oklch(42% 0.085 154);    /* brand: primary actions, links, wordmark */
+  --pt-green-hover:  oklch(37% 0.08 155);
+  --pt-green-deep:   oklch(29% 0.045 160);    /* dark band (footer, banner) */
+  --pt-green-soft:   oklch(93% 0.03 140);     /* verified / success wash */
+  --pt-lime:         oklch(91% 0.14 119);     /* accent highlighter — ≤ 3 % of a view */
+  --pt-lime-ink:     oklch(30% 0.07 130);     /* text on lime */
+  --pt-on-dark:      oklch(95% 0.012 110);    /* text on green-deep */
+  --pt-muted-on-dark: oklch(78% 0.02 140);
+
+  /* ── colour · status (paired with an icon, never colour alone) ── */
+  --pt-rust:         oklch(52% 0.12 42);      /* attention: refunds, under-delivery */
+  --pt-rust-soft:    oklch(93% 0.03 55);
+  --pt-amber-soft:   oklch(93% 0.05 85);      /* pending / waiting */
+  --pt-amber-ink:    oklch(40% 0.08 70);
+  --pt-danger:       oklch(50% 0.16 28);      /* errors, destructive */
+  --pt-danger-soft:  oklch(94% 0.03 28);
+  --pt-focus:        oklch(50% 0.15 150);     /* :focus-visible ring, instant */
+
+  /* ── type ──────────────────────────────────────────────── */
+  --pt-font-display: var(--font-newsreader, "Newsreader"), ui-serif, Georgia, serif;
+  --pt-font-body:    var(--font-plex-sans, "IBM Plex Sans"), ui-sans-serif, system-ui, sans-serif;
+  --pt-font-mono:    var(--font-plex-mono, "IBM Plex Mono"), ui-monospace, monospace;
+
+  /* major third (1.25) on a 16 px base */
+  --pt-text-xs:   0.8rem;
+  --pt-text-sm:   0.9rem;
+  --pt-text-base: 1rem;
+  --pt-text-md:   1.25rem;
+  --pt-text-lg:   1.5625rem;
+  --pt-text-xl:   1.9531rem;
+  --pt-text-2xl:  2.4414rem;
+  --pt-text-h2:      clamp(1.75rem, 2vw + 1rem, 2.6rem);
+  --pt-text-display: clamp(2.4rem, 4.2vw + 1rem, 4.4rem);
+  --pt-leading-display: 1.04;
+  --pt-leading-body: 1.6;
+  --pt-measure: 62ch;
+
+  /* ── space (4-pt) ──────────────────────────────────────── */
+  --pt-space-3xs: 0.125rem;
+  --pt-space-2xs: 0.25rem;
+  --pt-space-xs:  0.5rem;
+  --pt-space-sm:  0.75rem;
+  --pt-space-md:  1rem;
+  --pt-space-lg:  1.5rem;
+  --pt-space-xl:  2.5rem;
+  --pt-space-2xl: 4rem;
+  --pt-space-3xl: 6rem;
+  --pt-space-4xl: 9rem;
+
+  /* ── motion ────────────────────────────────────────────── */
+  --pt-ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --pt-ease-in:     cubic-bezier(0.7, 0, 0.84, 0);
+  --pt-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --pt-dur-micro: 120ms;
+  --pt-dur-short: 220ms;
+  --pt-dur-long:  420ms;
+
+  /* ── shape · depth · layout · z ────────────────────────── */
+  --pt-radius:      0.375rem;                 /* ledger corners: small, not pill */
+  --pt-shadow-whisper: 0 1px 2px oklch(24% 0.022 155 / 0.06);
+  --pt-page-max: 72rem;
+  --pt-gutter: clamp(1rem, 4vw, 2.5rem);      /* 16 px side gutter on phones */
+  --pt-banner-h: 2.25rem;
+  --pt-bar-h: 3.75rem;
+  --pt-bottom-bar-h: 4rem;
+  --pt-z-base: 1;
+  --pt-z-raised: 10;
+  --pt-z-sticky: 200;
+  --pt-z-toast: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --pt-dur-short: 120ms;
+    --pt-dur-long: 150ms;
+  }
+}
