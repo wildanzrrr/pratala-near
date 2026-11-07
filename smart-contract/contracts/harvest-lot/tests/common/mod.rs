@@ -9,8 +9,10 @@
 use std::sync::{Arc, LazyLock};
 
 use cargo_near_build::BuildOpts;
+use near_api::types::Action;
+use near_api::types::transaction::actions::FunctionCallAction;
 use near_api::types::transaction::result::ExecutionFinalResult;
-use near_api::{AccountId, Contract, NearGas, NearToken, NetworkConfig, Signer};
+use near_api::{AccountId, Contract, NearGas, NearToken, NetworkConfig, Signer, Transaction};
 use near_sandbox::Sandbox;
 use near_sdk::serde::de::DeserializeOwned;
 use near_sdk::serde_json::{Value, json};
@@ -191,6 +193,31 @@ impl World {
         result
             .into_full()
             .ok_or_else(|| anyhow::anyhow!("{method} still pending"))
+    }
+
+    /// One transaction, several function-call actions to `contract`. All actions run in the
+    /// same receipt, so a later action observes state written by an earlier one, and a panic
+    /// in any action reverts all of them.
+    pub async fn batch(
+        &self,
+        caller: &AccountId,
+        contract: &AccountId,
+        calls: Vec<(&str, Value, NearToken)>,
+    ) -> anyhow::Result<ExecutionFinalResult> {
+        let mut tx = Transaction::construct(caller.clone(), contract.clone());
+        for (method, args, deposit) in calls {
+            tx = tx.add_action(Action::FunctionCall(Box::new(FunctionCallAction {
+                method_name: method.into(),
+                args: near_sdk::serde_json::to_vec(&args)?,
+                gas: NearGas::from_tgas(100),
+                deposit,
+            })));
+        }
+        tx.with_signer(self.signer.clone())
+            .send_to(&self.net)
+            .await?
+            .into_full()
+            .ok_or_else(|| anyhow::anyhow!("batch still pending"))
     }
 
     /// Zero-deposit call that must succeed.
