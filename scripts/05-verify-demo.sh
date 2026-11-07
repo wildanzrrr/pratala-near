@@ -121,14 +121,14 @@ else
        | select(.kind == $k and .amount == $a and .to == $t and .ok == true)] | length > 0' >/dev/null <<<"$resp"
   }
   check_payout() { # check_payout <label> <tx-key> <signer> <kind> <amount> <to> <fallback-balance-account>
-    local rc=0 bal
+    local rc=0 bal want="$5"
     payout_event "$2" "$3" "$4" "$5" "$6" || rc=$?
     case $rc in
       0) pass "$1: payout_claimed {kind:$4, amount:$5, to:$6, ok:true}  $(explorer_tx "$(state_get ".txs.\"$2\"")")" ;;
       1) fail "$1: tx $(state_get ".txs.\"$2\"") has no matching payout_claimed event" ;;
       *) bal="$(near_view "$PUSDC" ft_balance_of "$(jq -cn --arg a "$7" '{account_id:$a}')" | jq -r . || echo 0)"
-         if [[ "$bal" =~ ^[0-9]+$ ]] && (( bal >= $5 )); then
-           warn "$1: claim tx not retrievable from RPC; fallback balance check $7 holds $(fmt_pusdc "$bal") ≥ $(fmt_pusdc "$5")"
+         if [[ "$bal" =~ ^[0-9]+$ ]] && (( bal >= want )); then
+           warn "$1: claim tx not retrievable from RPC; fallback balance check $7 holds $(fmt_pusdc "$bal") ≥ $(fmt_pusdc "$want")"
          else
            fail "$1: claim tx not retrievable and $7 holds only $(fmt_pusdc "${bal:-0}") pUSDC"
          fi ;;

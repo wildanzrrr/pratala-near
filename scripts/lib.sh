@@ -181,6 +181,7 @@ near_view_json() {
 #   With tx-key, records the hash at .txs."<tx-key>" in deploy/testnet.json.
 LAST_TX_HASH=""
 LAST_CALL_OUT=""
+export LAST_TX_HASH LAST_CALL_OUT   # read by the calling scripts
 near_call() {
   local signer="$1" contract="$2" method="$3" args="$4" gas="$5" deposit="$6" key="${7:-}"
   local base rc=0
@@ -233,7 +234,7 @@ near_run() {
 
 extract_tx_hash() {
   # near-cli-rs prints "Transaction ID: <base58>" after a successful send.
-  cat "$@" 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' \
+  sed 's/\x1b\[[0-9;]*m//g' "$@" 2>/dev/null \
     | grep -Eo 'Transaction ID: [1-9A-HJ-NP-Za-km-z]{43,44}' | tail -n 1 | awk '{print $3}' || true
 }
 
