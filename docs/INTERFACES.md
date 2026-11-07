@@ -49,6 +49,7 @@ interface LotView {
   status: Status; attestations: Attestation[];
   escrow: string; funder: string | null; funded_at_ms: number | null;
   actual_kg: number | null; grade: string | null; settled_at_ms: number | null;
+  fee_bps: number;                  // fee rate frozen at funding (0 before funding)
   claims: Claims; claim_lock: boolean; created_at_ms: number;
   holder: string;                   // current NFT owner
   funding_total: string;            // projected_kg * price_per_kg
@@ -64,7 +65,7 @@ interface Stats { total_lots: number; verified_lots: number; funded_lots: number
 | `new` | `owner_id, usdc_contract, treasury, fee_bps` | init | — | — |
 | `add_role` / `remove_role` | `role, account_id` | owner | 0 / 30 Tgas | — |
 | `set_fee_bps` (≤ 1000) / `set_treasury` / `set_paused` | `fee_bps` / `account_id` / `paused` | owner | 0 | — |
-| `register_lot` | `crop, variety?, region, projected_kg, harvest_month, plot_hash, gps_hash, area_m2?, media_uri?` | anyone → becomes farmer | **0.1 NEAR** (excess refunded) / 50 Tgas | → Registered, NFT minted to caller; returns `lot_id` |
+| `register_lot` | `crop, variety?, region, projected_kg, harvest_month, plot_hash, gps_hash, area_m2?, media_uri?, reference?` | anyone → becomes farmer | **0.1 NEAR** (charges storage + 4,000-byte reserve ≈ 0.05 NEAR, excess refunded) / 50 Tgas | → Registered, NFT minted to caller; returns `lot_id` |
 | `attest_field` | `lot_id, evidence_hash, evidence_uri?, gps_hash, ai_check_hash?, note?` | FieldAgent | **0** (contract pays storage) / 30 Tgas | Registered → FieldVerified |
 | `attest_coop` | `lot_id, evidence_hash, evidence_uri?, note?` | Coop, ≠ field signer | 0 / 30 Tgas | FieldVerified → CoopVerified |
 | `list_lot` / `update_price` | `lot_id, price_per_kg` | farmer | 0 | CoopVerified → Listed / Listed |
@@ -72,8 +73,8 @@ interface Stats { total_lots: number; verified_lots: number; funded_lots: number
 | `cancel_lot` | `lot_id` | farmer or owner | 0 | Registered/FieldVerified/CoopVerified → Cancelled |
 | `weigh_in` | `lot_id, actual_kg, grade, evidence_hash, evidence_uri?, ai_check_hash?` | Warehouse | 0 / 30 Tgas | Funded → Settled |
 | `declare_failure` | `lot_id, reason, evidence_hash` | Coop or owner | 0 | Funded → Refunded |
-| `claim_payout` / `claim_refund` / `claim_fee` | `lot_id` | farmer / **current NFT holder** / owner or treasury | **0** / 60 Tgas | pays out its claim via pUSDC `ft_transfer` |
-| `nft_transfer` (NEP-171) | `receiver_id, token_id, approval_id?, memo?` | holder | **1 yocto** | blocked while `claim_lock` or Cancelled |
+| `claim_payout` / `claim_refund` / `claim_fee` | `lot_id` | farmer / **current NFT holder** / owner or treasury | **0** / 60 Tgas (min 40) | pays out its claim via pUSDC `ft_transfer`; returns `true` if paid, `false` if the transfer failed (claim restored) |
+| `nft_transfer` / `nft_transfer_call` (NEP-171) | `receiver_id, token_id, approval_id?, memo?` (+ `msg`) | holder or approved account | **1 yocto** | allowed only when status is Funded / Settled / Refunded and `claim_lock` is false (before funding the NFT stays with the farmer) |
 
 Function-call-key friendly (no deposit): `attest_field, attest_coop, weigh_in, declare_failure, list_lot, update_price, delist_lot, cancel_lot, claim_payout, claim_refund, claim_fee`.
 
@@ -88,9 +89,11 @@ Amount ≥ `funding_total` required; excess is refunded; invalid msg/state ⇒ f
 
 **Settlement math** (weigh-in): `delivered = min(actual_kg, projected_kg)`, `gross = delivered × price_per_kg`, `fee = gross × fee_bps / 10000`, `claims.farmer = gross − fee`, `claims.treasury = fee`, `claims.holder = escrow − gross`. Reference numbers: 1,000 kg × 0.45 pUSDC = 450 escrow; 900 kg at 200 bps → farmer 396.90, treasury 8.10, holder 45.00.
 
+`fee_bps` is frozen per lot at funding. `set_paused(true)` blocks `register_lot`, attestations, `list_lot`/`update_price`, funding and `weigh_in`; claims, `delist_lot`, `cancel_lot`, `declare_failure` and NFT transfers stay open. `update_price` re-emits `lot_listed`. Stats: `verified_lots` = lots that reached CoopVerified, `funded_lots` = successful fundings, `settled_lots` = weigh-ins, `settled_volume` = Σ gross (delivered × price) at weigh-in, `farmer_paid` = Σ successful farmer claims.
+
 ### View methods
 
-`get_lot(lot_id) → LotView | null` · `get_lots(from_index?: number, limit?: number) → LotView[]` · `get_lots_by_status(status, from_index?, limit?)` · `get_lots_by_farmer(account_id)` · `get_lots_for_holder(account_id)` · `get_attestations(lot_id)` · `get_claims(lot_id) → Claims` · `quote_funding(lot_id) → string` · `get_roles(account_id) → Role[]` · `list_role(role) → string[]` · `get_config() → Config` · `get_stats() → Stats` · NEP-171/177/181: `nft_token`, `nft_tokens`, `nft_tokens_for_owner`, `nft_supply_for_owner`, `nft_metadata`.
+`get_lot(lot_id) → LotView | null` · `get_lots(from_index?: number, limit?: number) → LotView[]` · `get_lots_by_status(status, from_index?, limit?)` · `get_lots_by_farmer(account_id)` · `get_lots_for_holder(account_id)` · `get_attestations(lot_id)` · `get_claims(lot_id) → Claims` · `quote_funding(lot_id) → string` · `get_roles(account_id) → Role[]` · `list_role(role) → string[]` · `get_config() → Config` · `get_stats() → Stats` · NEP-171/177/181: `nft_token`, `nft_tokens`, `nft_tokens_for_owner`, `nft_supply_for_owner`, `nft_metadata`. List views return at most 100 items (default 50 for `get_lots*`).
 
 ### Events (NEP-297, `EVENT_JSON:` log prefix)
 
