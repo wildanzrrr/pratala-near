@@ -42,7 +42,7 @@ function makeService(apiKey: string | undefined) {
   const config = { get: (k: string) => env[k] } as unknown as AppConfig;
   const evidenceRow = {
     id: '11111111-1111-4111-8111-111111111111',
-    uploaderId: 'tani.testnet',
+    uploaderId: 'farmer.testnet',
     lotId: null,
     mime: 'image/jpeg',
     lat: -6.91475,
@@ -76,7 +76,7 @@ describe('AiService (NEAR AI Cloud, openai SDK mocked)', () => {
   it('returns 503 ai_unavailable when NEAR_AI_API_KEY is empty', async () => {
     const { service } = makeService(undefined);
     const err = await service
-      .check({ evidenceId: '11111111-1111-4111-8111-111111111111', kind: 'PLOT' }, 'tani.testnet')
+      .check({ evidenceId: '11111111-1111-4111-8111-111111111111', kind: 'PLOT' }, 'farmer.testnet')
       .catch((e: unknown) => e);
     expect(err).toBeInstanceOf(HttpException);
     expect((err as HttpException).getStatus()).toBe(503);
@@ -105,7 +105,7 @@ describe('AiService (NEAR AI Cloud, openai SDK mocked)', () => {
     const { service, create } = makeService('test-key');
     const view = await service.check(
       { evidenceId: '11111111-1111-4111-8111-111111111111', kind: 'FIELD_VISIT', expectedCrop: 'rice' },
-      'tani.testnet',
+      'farmer.testnet',
     );
 
     const [body, opts] = createMock.mock.calls[0] as [Record<string, any>, Record<string, any>];
@@ -156,7 +156,7 @@ describe('AiService (NEAR AI Cloud, openai SDK mocked)', () => {
     const { service } = makeService('test-key');
     const view = await service.check(
       { evidenceId: '11111111-1111-4111-8111-111111111111', kind: 'WEIGH_IN' },
-      'tani.testnet',
+      'farmer.testnet',
     );
     expect(view.model).toBe('z-ai/glm-5.3-flash');
     expect(view.verdict).toBe('review');

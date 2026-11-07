@@ -29,7 +29,7 @@ describe('toCsv', () => {
       crop: 'Rice',
       type: 'PAYOUT',
       from_account: 'lots.pratala.testnet',
-      to_account: 'tani.pratala.testnet',
+      to_account: 'farmer.pratala.testnet',
       amount_pusdc: '396.90',
       status: 'PAID',
       tx_hash: '4mVZ2hQk8hGvN3xEq9pW7cT1sYb6aR5dK2jL8nM3pQ7u',
@@ -54,7 +54,7 @@ describe('toCsv', () => {
 
   it('formats a row and quotes fields containing commas or quotes', () => {
     expect(csv.split('\r\n')[1]).toBe(
-      '2026-11-12 08:30:00,lot-1,Rice,PAYOUT,lots.pratala.testnet,tani.pratala.testnet,396.90,PAID,' +
+      '2026-11-12 08:30:00,lot-1,Rice,PAYOUT,lots.pratala.testnet,farmer.pratala.testnet,396.90,PAID,' +
         '4mVZ2hQk8hGvN3xEq9pW7cT1sYb6aR5dK2jL8nM3pQ7u,https://testnet.nearblocks.io/txns/4mVZ2hQk8hGvN3xEq9pW7cT1sYb6aR5dK2jL8nM3pQ7u,' +
         '"Weigh-in 900 kg grade A, ""premium"""',
     );

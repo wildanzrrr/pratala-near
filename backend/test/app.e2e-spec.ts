@@ -164,9 +164,9 @@ describe('Pratala API (e2e)', () => {
       const res = await request(server)
         .put('/api/users/me')
         .set('Cookie', cookie)
-        .send({ displayName: 'Pak Tani', region: 'Jawa Barat', locale: 'en', intent: 'farmer' })
+        .send({ displayName: 'Farmer Budi', region: 'West Java', locale: 'en', intent: 'farmer' })
         .expect(200);
-      expect(res.body).toMatchObject({ displayName: 'Pak Tani', locale: 'en', intent: 'farmer' });
+      expect(res.body).toMatchObject({ displayName: 'Farmer Budi', locale: 'en', intent: 'farmer' });
       const pub = await request(server).get(`/api/users/${ACCOUNT}`).expect(200);
       expect(pub.body.phone).toBeUndefined();
     });
@@ -192,7 +192,7 @@ describe('Pratala API (e2e)', () => {
       const plot = await request(server)
         .post('/api/plots')
         .set('Cookie', cookie)
-        .send({ name: 'Sawah utara', lat: -6.914751, lng: 107.609812, areaM2: 1200, region: 'Jawa Barat', evidenceIds: [up.body.id] })
+        .send({ name: 'North paddy', lat: -6.914751, lng: 107.609812, areaM2: 1200, region: 'West Java', evidenceIds: [up.body.id] })
         .expect(201);
       expect(plot.body.plotHash).toMatch(/^[a-f0-9]{64}$/);
       expect(plot.body.gpsHash).toMatch(/^[a-f0-9]{64}$/);

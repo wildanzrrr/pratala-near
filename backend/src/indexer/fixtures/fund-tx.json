@@ -48,7 +48,7 @@
       "block_hash": "BlkC3333333333333333333333333333333333333333",
       "outcome": {
         "logs": [
-          "EVENT_JSON:{\"standard\":\"nep171\",\"version\":\"1.2.0\",\"event\":\"nft_transfer\",\"data\":[{\"old_owner_id\":\"tani.pratala.testnet\",\"new_owner_id\":\"buyer.pratala.testnet\",\"token_ids\":[\"lot-1\"]}]}",
+          "EVENT_JSON:{\"standard\":\"nep171\",\"version\":\"1.2.0\",\"event\":\"nft_transfer\",\"data\":[{\"old_owner_id\":\"farmer.pratala.testnet\",\"new_owner_id\":\"buyer.pratala.testnet\",\"token_ids\":[\"lot-1\"]}]}",
           "EVENT_JSON:{\"standard\":\"pratala\",\"version\":\"1.0.0\",\"event\":\"lot_funded\",\"data\":[{\"lot_id\":\"lot-1\",\"funder\":\"buyer.pratala.testnet\",\"amount\":\"450000000\",\"refund\":\"10000000\"}]}"
         ],
         "receipt_ids": ["RcptResolve3333333333333333333333333333333"],

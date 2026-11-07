@@ -4,12 +4,12 @@ import { canonicalPlotJson, coord5, gpsHash, plotHash } from './plot-hash.js';
 
 const A = 'a'.repeat(64);
 const B = 'b'.repeat(64);
-const base = { farmer: 'tani.pratala.testnet', lat: -6.914751, lng: 107.609812, areaM2: 1200, evidenceSha256: [B, A] };
+const base = { farmer: 'farmer.pratala.testnet', lat: -6.914751, lng: 107.609812, areaM2: 1200, evidenceSha256: [B, A] };
 
 describe('plotHash / gpsHash', () => {
   it('builds canonical JSON with sorted keys, 5-dp coordinates and sorted evidence', () => {
     expect(canonicalPlotJson(base)).toBe(
-      `{"areaM2":1200,"evidence":["${A}","${B}"],"farmer":"tani.pratala.testnet","lat":"-6.91475","lng":"107.60981"}`,
+      `{"areaM2":1200,"evidence":["${A}","${B}"],"farmer":"farmer.pratala.testnet","lat":"-6.91475","lng":"107.60981"}`,
     );
   });
 

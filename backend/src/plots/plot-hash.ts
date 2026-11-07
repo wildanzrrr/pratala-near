@@ -27,7 +27,7 @@ export interface PlotHashInput {
 /**
  * Canonical JSON (keys sorted, coordinates as 5-dp strings, evidence digests
  * lower-cased + sorted + de-duplicated, no whitespace), e.g.
- * {"areaM2":1200,"evidence":["ab…"],"farmer":"tani.testnet","lat":"-6.91475","lng":"107.60981"}
+ * {"areaM2":1200,"evidence":["ab…"],"farmer":"farmer.testnet","lat":"-6.91475","lng":"107.60981"}
  */
 export function canonicalPlotJson(input: PlotHashInput): string {
   const evidence = [...new Set(input.evidenceSha256.map((s) => s.toLowerCase()))].sort();

@@ -19,11 +19,11 @@ const opts = {
 const ctx: ProjectionContext = {
   txHash: 'TX',
   lotsContract: 'lots.pratala.testnet',
-  farmerId: 'tani.pratala.testnet',
+  farmerId: 'farmer.pratala.testnet',
   holder: 'buyer.pratala.testnet',
   crop: 'Rice',
   treasury: 'pratala.testnet',
-  roles: { FieldAgent: ['agent.pratala.testnet'], Coop: ['coop.pratala.testnet'], Warehouse: ['gudang.pratala.testnet'] },
+  roles: { FieldAgent: ['agent.pratala.testnet'], Coop: ['coop.pratala.testnet'], Warehouse: ['warehouse.pratala.testnet'] },
 };
 
 describe('parseEventLog', () => {
@@ -79,7 +79,7 @@ describe('parseTxEvents (funding tx via pUSDC ft_transfer_call)', () => {
       }),
     ]);
     const inbox = events.flatMap((e) => notificationsFor(e, ctx)).map((n) => n.accountId);
-    expect(inbox).toEqual(['tani.pratala.testnet', 'buyer.pratala.testnet', 'gudang.pratala.testnet']);
+    expect(inbox).toEqual(['farmer.pratala.testnet', 'buyer.pratala.testnet', 'warehouse.pratala.testnet']);
   });
 });
 
@@ -94,7 +94,7 @@ describe('parseTxEvents (weigh-in settlement)', () => {
     const settled = events.find((e) => e.event === 'lot_settled')!;
     const rows = paymentsFor(settled, ctx).map((p) => [p.type, p.toAccount, p.amountBase, p.status]);
     expect(rows).toEqual([
-      ['PAYOUT', 'tani.pratala.testnet', '396900000', 'PENDING'],
+      ['PAYOUT', 'farmer.pratala.testnet', '396900000', 'PENDING'],
       ['FEE', 'pratala.testnet', '8100000', 'PENDING'],
       ['REFUND', 'buyer.pratala.testnet', '45000000', 'PENDING'],
     ]);
