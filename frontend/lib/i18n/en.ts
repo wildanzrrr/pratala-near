@@ -595,6 +595,7 @@ export const en: Dictionary = {
     home: "Go home",
   },
   tx: {
+    claimRestored: "Payout held back: the receiving account is not active for pUSDC. The claim was restored; try again after activating.",
     pending: "Waiting for approval…",
     sending: "Recording on-chain…",
     silent: "Recording without an approval window…",

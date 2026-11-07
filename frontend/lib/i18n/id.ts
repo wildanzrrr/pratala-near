@@ -597,6 +597,7 @@ export const id = {
     home: "Ke beranda",
   },
   tx: {
+    claimRestored: "Pembayaran tertunda: akun penerima belum aktif untuk pUSDC. Klaim dipulihkan, coba lagi setelah aktivasi.",
     pending: "Menunggu persetujuan…",
     sending: "Mencatat ke blockchain…",
     silent: "Mencatat tanpa jendela persetujuan…",
