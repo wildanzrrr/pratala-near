@@ -1,0 +1,61 @@
+# Pratala local stack: Postgres 16 + API. Frontend runs separately (pnpm -C frontend dev).
+#   cp backend/.env.example backend/.env
+#   docker compose up -d --build
+#   curl -s localhost:4100/api/health
+# Optional object storage: docker compose --profile minio up -d (then STORAGE_DRIVER=s3).
+
+name: pratala
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pratala
+      POSTGRES_PASSWORD: pratala
+      POSTGRES_DB: pratala
+    ports:
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pratala -d pratala']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    env_file:
+      - path: backend/.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://pratala:pratala@postgres:5432/pratala
+      PORT: '4100'
+      UPLOAD_DIR: /app/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '4100:4100'
+    volumes:
+      - uploads:/app/data/uploads
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    profiles: ['minio']
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: pratala
+      MINIO_ROOT_PASSWORD: pratala-minio
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - miniodata:/data
+
+volumes:
+  pgdata:
+  uploads:
+  miniodata:
