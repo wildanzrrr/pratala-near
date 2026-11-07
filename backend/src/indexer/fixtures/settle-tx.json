@@ -1,0 +1,62 @@
+{
+  "final_execution_status": "FINAL",
+  "status": { "SuccessValue": "" },
+  "transaction": {
+    "hash": "4mVZ2hQk8hGvN3xEq9pW7cT1sYb6aR5dK2jL8nM3pQ7u",
+    "signer_id": "gudang.pratala.testnet",
+    "receiver_id": "lots.pratala.testnet",
+    "nonce": 190000000000044,
+    "public_key": "ed25519:8hJk1VwVJzT1Mf2C3j3a1o9k4j5y7Z2gL1Uq6s8W3dVt",
+    "signature": "ed25519:2Lm5zQk9v8T7uR6sQ5pP4oN3mL2kJ1iH9gF8eD7cB6aZ",
+    "priority_fee": 0,
+    "actions": [
+      {
+        "FunctionCall": {
+          "method_name": "weigh_in",
+          "args": "eyJsb3RfaWQiOiJsb3QtMSIsImFjdHVhbF9rZyI6OTAwLCJncmFkZSI6IkEiLCJldmlkZW5jZV9oYXNoIjoiYWJjIn0=",
+          "gas": 30000000000000,
+          "deposit": "0"
+        }
+      }
+    ]
+  },
+  "transaction_outcome": {
+    "id": "4mVZ2hQk8hGvN3xEq9pW7cT1sYb6aR5dK2jL8nM3pQ7u",
+    "block_hash": "BlkE5555555555555555555555555555555555555555",
+    "outcome": {
+      "logs": [],
+      "receipt_ids": ["RcptWeigh5555555555555555555555555555555555"],
+      "executor_id": "gudang.pratala.testnet",
+      "status": { "SuccessReceiptId": "RcptWeigh5555555555555555555555555555555555" }
+    }
+  },
+  "receipts_outcome": [
+    {
+      "id": "RcptWeigh5555555555555555555555555555555555",
+      "block_hash": "BlkF6666666666666666666666666666666666666666",
+      "outcome": {
+        "logs": [
+          "Weigh-in recorded for lot-1",
+          "EVENT_JSON:{\"standard\":\"pratala\",\"version\":\"1.0.0\",\"event\":\"lot_attested\",\"data\":[{\"lot_id\":\"lot-1\",\"kind\":\"WarehouseWeighIn\",\"signer\":\"gudang.pratala.testnet\",\"evidence_hash\":\"9f2c3a0d7e5b4c1a8f6e2d3c4b5a69788776655443322110ffeeddccbbaa9988\",\"ai_check_hash\":null}]}",
+          "EVENT_JSON:{\"standard\":\"pratala\",\"version\":\"1.0.0\",\"event\":\"lot_settled\",\"data\":[{\"lot_id\":\"lot-1\",\"actual_kg\":900,\"grade\":\"A\",\"farmer_claim\":\"396900000\",\"holder_claim\":\"45000000\",\"fee\":\"8100000\"}]}",
+          "EVENT_JSON:not json at all"
+        ],
+        "receipt_ids": [],
+        "executor_id": "lots.pratala.testnet",
+        "status": { "SuccessValue": "" }
+      }
+    },
+    {
+      "id": "RcptFailed777777777777777777777777777777777",
+      "block_hash": "BlkF6666666666666666666666666666666666666666",
+      "outcome": {
+        "logs": [
+          "EVENT_JSON:{\"standard\":\"pratala\",\"version\":\"1.0.0\",\"event\":\"lot_cancelled\",\"data\":[{\"lot_id\":\"lot-1\"}]}"
+        ],
+        "receipt_ids": [],
+        "executor_id": "lots.pratala.testnet",
+        "status": { "Failure": { "ActionError": { "index": 0, "kind": { "FunctionCallError": { "ExecutionError": "Smart contract panicked" } } } } }
+      }
+    }
+  ]
+}

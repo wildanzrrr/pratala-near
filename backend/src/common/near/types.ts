@@ -51,6 +51,8 @@ export interface LotView {
   actual_kg: number | null;
   grade: string | null;
   settled_at_ms: number | null;
+  /** Fee rate frozen at funding (0 before funding). */
+  fee_bps: number;
   claims: Claims;
   claim_lock: boolean;
   created_at_ms: number;

@@ -232,10 +232,13 @@ model Payment {
   status      PaymentStatus
   txHash      String?
   note        String?
+  // Block time of the event that last changed the status (CSV date_utc).
+  occurredAt  DateTime      @default(now())
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   @@index([lotId])
+  @@index([occurredAt])
   @@index([fromAccount])
   @@index([toAccount])
 }

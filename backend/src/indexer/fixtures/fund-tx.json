@@ -1,0 +1,84 @@
+{
+  "final_execution_status": "FINAL",
+  "status": { "SuccessValue": "IjQ1MDAwMDAwMCI=" },
+  "transaction": {
+    "hash": "9Xq3bKk1u7mZb3r6cJ5mJZb7Vb1qUo3kP4Ytq2gq8v6W",
+    "signer_id": "buyer.pratala.testnet",
+    "receiver_id": "pusdc.pratala.testnet",
+    "nonce": 190000000000012,
+    "public_key": "ed25519:6E8sCci9badyRkXb3JoRpBj5p8C6Tw41ELDZoiihKEtp",
+    "signature": "ed25519:3yWzmTFT8V7nZcVfCwvJ2jjRZb8m8Wq5Y4ZzBz1Jm1h8",
+    "priority_fee": 0,
+    "actions": [
+      {
+        "FunctionCall": {
+          "method_name": "ft_transfer_call",
+          "args": "eyJyZWNlaXZlcl9pZCI6ImxvdHMucHJhdGFsYS50ZXN0bmV0IiwiYW1vdW50IjoiNDUwMDAwMDAwIiwibXNnIjoie1wiYWN0aW9uXCI6XCJmdW5kXCIsXCJsb3RfaWRcIjpcImxvdC0xXCJ9In0=",
+          "gas": 100000000000000,
+          "deposit": "1"
+        }
+      }
+    ]
+  },
+  "transaction_outcome": {
+    "id": "9Xq3bKk1u7mZb3r6cJ5mJZb7Vb1qUo3kP4Ytq2gq8v6W",
+    "block_hash": "BlkA1111111111111111111111111111111111111111",
+    "outcome": {
+      "logs": [],
+      "receipt_ids": ["RcptPusdc1111111111111111111111111111111111"],
+      "executor_id": "buyer.pratala.testnet",
+      "status": { "SuccessReceiptId": "RcptPusdc1111111111111111111111111111111111" }
+    }
+  },
+  "receipts_outcome": [
+    {
+      "id": "RcptPusdc1111111111111111111111111111111111",
+      "block_hash": "BlkB2222222222222222222222222222222222222222",
+      "outcome": {
+        "logs": [
+          "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"buyer.pratala.testnet\",\"new_owner_id\":\"lots.pratala.testnet\",\"amount\":\"460000000\"}]}"
+        ],
+        "receipt_ids": ["RcptLots22222222222222222222222222222222222"],
+        "executor_id": "pusdc.pratala.testnet",
+        "status": { "SuccessReceiptId": "RcptLots22222222222222222222222222222222222" }
+      }
+    },
+    {
+      "id": "RcptLots22222222222222222222222222222222222",
+      "block_hash": "BlkC3333333333333333333333333333333333333333",
+      "outcome": {
+        "logs": [
+          "EVENT_JSON:{\"standard\":\"nep171\",\"version\":\"1.2.0\",\"event\":\"nft_transfer\",\"data\":[{\"old_owner_id\":\"tani.pratala.testnet\",\"new_owner_id\":\"buyer.pratala.testnet\",\"token_ids\":[\"lot-1\"]}]}",
+          "EVENT_JSON:{\"standard\":\"pratala\",\"version\":\"1.0.0\",\"event\":\"lot_funded\",\"data\":[{\"lot_id\":\"lot-1\",\"funder\":\"buyer.pratala.testnet\",\"amount\":\"450000000\",\"refund\":\"10000000\"}]}"
+        ],
+        "receipt_ids": ["RcptResolve3333333333333333333333333333333"],
+        "executor_id": "lots.pratala.testnet",
+        "status": { "SuccessValue": "IjEwMDAwMDAwIg==" }
+      }
+    },
+    {
+      "id": "RcptResolve3333333333333333333333333333333",
+      "block_hash": "BlkD4444444444444444444444444444444444444444",
+      "outcome": {
+        "logs": [
+          "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_transfer\",\"data\":[{\"old_owner_id\":\"lots.pratala.testnet\",\"new_owner_id\":\"buyer.pratala.testnet\",\"amount\":\"10000000\",\"memo\":\"refund\"}]}"
+        ],
+        "receipt_ids": [],
+        "executor_id": "pusdc.pratala.testnet",
+        "status": { "SuccessValue": "IjQ1MDAwMDAwMCI=" }
+      }
+    },
+    {
+      "id": "RcptSpoof44444444444444444444444444444444444",
+      "block_hash": "BlkD4444444444444444444444444444444444444444",
+      "outcome": {
+        "logs": [
+          "EVENT_JSON:{\"standard\":\"pratala\",\"version\":\"1.0.0\",\"event\":\"payout_claimed\",\"data\":[{\"lot_id\":\"lot-1\",\"kind\":\"Farmer\",\"to\":\"attacker.testnet\",\"amount\":\"999000000\",\"ok\":true}]}"
+        ],
+        "receipt_ids": [],
+        "executor_id": "attacker.testnet",
+        "status": { "SuccessValue": "" }
+      }
+    }
+  ]
+}
