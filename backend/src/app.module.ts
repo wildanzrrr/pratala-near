@@ -10,6 +10,8 @@ import { PrismaModule } from './prisma/prisma.module.js';
 import { HealthModule } from './health/health.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
+import { EvidenceModule } from './evidence/evidence.module.js';
+import { PlotsModule } from './plots/plots.module.js';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { UsersModule } from './users/users.module.js';
     HealthModule,
     AuthModule,
     UsersModule,
+    EvidenceModule,
+    PlotsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
