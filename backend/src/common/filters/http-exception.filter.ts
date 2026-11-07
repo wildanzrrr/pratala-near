@@ -36,7 +36,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
               : exception.message;
         const out: Record<string, unknown> = { ...b, statusCode: status, error };
         delete out.custom;
-        if (Array.isArray(message)) out.issues = message;
+        if (Array.isArray(message)) {
+          out.issues = message;
+          delete out.message;
+        }
         if (out.message === error) delete out.message;
         res.status(status).json(out);
         return;
