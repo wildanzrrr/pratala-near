@@ -19,7 +19,7 @@ Scripts 02, 03 and 04 ask `Proceed? [y/N]` before they send anything. Set `YES=1
 - pUSDC `storage_deposit` for all six actors, root and the lots contract. `buyer1` takes 1,000 pUSDC from the faucet.
 - **lot-1** goes through the whole lifecycle: rice IR64, Karawang, 1,000 kg, harvest two months ahead. Steps: field visit, co-op review, listed at 0.45 pUSDC/kg, `buyer1` funds 450 pUSDC with `ft_transfer_call`, weigh-in at 900 kg grade A. Payouts: farmer claims 396.90, treasury claims 8.10. Then `buyer1` transfers the NFT to `investor2`, who claims the 45.00 refund.
 - **lot-2** is left at Listed: rice Ciherang, Subang, 800 kg, 360 pUSDC. A judge with faucet pUSDC can fund it.
-- **lot-3** is left at FieldVerified: corn Bisi 18, Lampung Selatan, 1,500 kg. The co-op attests it live in the demo.
+- **lot-3** is left at FieldVerified: corn Bisi 18, South Lampung, 1,500 kg. The co-op attests it live in the demo.
 - Evidence and plot hashes are `sha256("pratala-demo/<lot-key>/<fixture>")`, so they are the same on every run.
 
 Each step reads chain state first, so re-running 02, 03 or 04 picks up where the last run stopped. After every transaction the script re-reads the lot and stops if the expected status did not appear. This matters because a failed `ft_on_transfer` or payout still lands as a successful transaction with a refund.

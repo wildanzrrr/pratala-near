@@ -153,7 +153,7 @@ attest_coop() {
   local key="$1" id="$2"
   (( $(status_rank "$(lot_field "$id" .status)") >= 3 )) && { ok "$id co-op review already attested"; return 0; }
   near_call "$COOP" "$LOTS" attest_coop "$(jq -cn --arg l "$id" --arg e "$(fixture_hash "$key/coop-review")" \
-    '{lot_id:$l, evidence_hash:$e, evidence_uri:null, note:"Gapoktan review: field record consistent with member register"}')" \
+    '{lot_id:$l, evidence_hash:$e, evidence_uri:null, note:"Co-op (farmer group) review: field record consistent with member register"}')" \
     '30 Tgas' '0 NEAR' "seed.$key.attest_coop"
   expect_status "$id" CoopVerified
 }
@@ -168,7 +168,7 @@ list_lot() { # list_lot <key> <lot> <price_per_kg>
 
 # ------------------------------------------------------------------- lot-1 ---
 step "4/5 lot-1 full lifecycle"
-L1="$(register_lot lot1 rice IR64 "Karawang, Jawa Barat" 1000 2500)"
+L1="$(register_lot lot1 rice IR64 "Karawang, West Java" 1000 2500)"
 attest_field lot1 "$L1"
 attest_coop lot1 "$L1"
 list_lot lot1 "$L1" 450000
@@ -228,13 +228,13 @@ state_set_str '.lots.lot1.target' Settled
 
 # --------------------------------------------------------------- lot-2, -3 ---
 step "5/5 lot-2 (Listed) and lot-3 (FieldVerified)"
-L2="$(register_lot lot2 rice Ciherang "Subang, Jawa Barat" 800 2000)"
+L2="$(register_lot lot2 rice Ciherang "Subang, West Java" 800 2000)"
 attest_field lot2 "$L2"
 attest_coop lot2 "$L2"
 list_lot lot2 "$L2" 450000
 state_set_str '.lots.lot2.target' Listed
 
-L3="$(register_lot lot3 corn "Bisi 18" "Lampung Selatan, Lampung" 1500 3000)"
+L3="$(register_lot lot3 corn "Bisi 18" "South Lampung, Lampung" 1500 3000)"
 attest_field lot3 "$L3"
 state_set_str '.lots.lot3.target' FieldVerified
 

@@ -35,7 +35,7 @@
     }
   },
   "lots": {
-    "lot1": { "lot_id": "lot-1", "target": "Settled", "crop": "rice", "variety": "IR64", "region": "Karawang, Jawa Barat", "projected_kg": 1000, "price_per_kg": "450000" },
+    "lot1": { "lot_id": "lot-1", "target": "Settled", "crop": "rice", "variety": "IR64", "region": "Karawang, West Java", "projected_kg": 1000, "price_per_kg": "450000" },
     "lot2": { "lot_id": "lot-2", "target": "Listed" },
     "lot3": { "lot_id": "lot-3", "target": "FieldVerified" }
   },
