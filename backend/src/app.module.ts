@@ -15,6 +15,9 @@ import { PlotsModule } from './plots/plots.module.js';
 import { AiModule } from './ai/ai.module.js';
 import { LotsModule } from './lots/lots.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { IndexerModule } from './indexer/indexer.module.js';
+import { ListingsModule } from './listings/listings.module.js';
+import { OrdersModule } from './orders/orders.module.js';
 
 @Module({
   imports: [
@@ -39,6 +42,9 @@ import { NotificationsModule } from './notifications/notifications.module.js';
     AiModule,
     LotsModule,
     NotificationsModule,
+    IndexerModule,
+    ListingsModule,
+    OrdersModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
