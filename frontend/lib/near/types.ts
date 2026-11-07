@@ -168,8 +168,8 @@ export interface AiCheck {
   confidence: number;
   findings: string[];
   extracted: { crop?: string; stage?: string; kg?: number; grade?: string };
-  summaryId: string;
-  summaryEn: string;
+  /** English summary of the verdict (the only summary the API returns). */
+  summaryEn?: string | null;
   responseHash: string;
   signatureAvailable: boolean;
   verifyUrl: string;

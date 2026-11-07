@@ -29,7 +29,7 @@ export function AiCheckBadge({ check }: { check: AiCheck }) {
         </Badge>
         <span className="tnum text-xs text-muted-foreground">{t("ai.confidence", { n: Math.round(check.confidence * (check.confidence <= 1 ? 100 : 1)) })}</span>
       </div>
-      {check.summaryId || check.summaryEn ? <p className="text-ink-2">{check.summaryId || check.summaryEn}</p> : null}
+      {check.summaryEn ? <p className="text-ink-2">{check.summaryEn}</p> : null}
       {check.findings.length ? (
         <ul className="flex list-disc flex-col gap-0.5 pl-5 text-xs text-muted-foreground">
           {check.findings.slice(0, 4).map((f) => (
