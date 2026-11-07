@@ -6,7 +6,7 @@
 
 **Deadline:** public repo + X demo post + submission by **2026-11-14 23:59 UTC** (today 2026-11-07 → 7 days). Judging Nov 16–18: Claude Code + Codex screen reproducibility first, then human judges.
 
-**Product (owner's brief):** Indonesian agriculture marketplace linking farmers, seed/fertilizer suppliers and buyers/investors without middlemen (tengkulak). On-chain core: a *harvest projection* (e.g. 1,000 kg rice, month M) is a token; an investor pre-funds it into escrow; a 3-layer verification (field agent → cooperative/Gapoktan → warehouse weigh-in) is the oracle; weigh-in settles escrow to the farmer and refunds under-delivery to the token holder. Web3 must stay invisible to farmers.
+**Product (owner's brief):** Indonesian agriculture marketplace linking farmers, seed/fertilizer suppliers and buyers/investors without middlemen (the local harvest traders who set the price). On-chain core: a *harvest projection* (e.g. 1,000 kg rice, month M) is a token; an investor pre-funds it into escrow; a 3-layer verification (field agent → cooperative / farmer group → warehouse weigh-in) is the oracle; weigh-in settles escrow to the farmer and refunds under-delivery to the token holder. Web3 must stay invisible to farmers.
 
 **Prototype to port (~800 LOC):** `server.mjs` 1Click proxy (tokens/quote/deposit-submit/status, BigInt `decimalToBaseUnits`), landing copy, 3-step verification concept, green/lime/paper palette. No contracts, wallet, or DB exist.
 
@@ -46,22 +46,22 @@ Per-folder `AGENTS.md` (+ `CLAUDE.md` = `@AGENTS.md`), `.agents/skills/` pinned 
 ### Personas & roles (on-chain allowlists + off-chain profile)
 | Role | Who | Wallet path | Key jobs |
 |---|---|---|---|
-| **Farmer** (Petani) | smallholder, low digital literacy, phone-first | HOT Wallet (Telegram mini-app, MPC) or Meteor; FC-key so no popups | register plot, create harvest projection, follow status, receive payout |
-| **Field agent** (Penyuluh) | trained extension worker, visits plots | same; FC-key for `attest_field` | task queue, geotagged photo, AI pre-check, one-tap attest |
-| **Cooperative** (Gapoktan) | community org, trusted reviewer | wallet (multi-user later) | review queue, approve/reject, declare crop failure |
-| **Warehouse** (Gudang) | collection point with scale | wallet; FC-key for `weigh_in` | weigh-in form w/ ticket photo → AI OCR prefill → settle |
+| **Farmer** | smallholder, low digital literacy, phone-first | HOT Wallet (Telegram mini-app, MPC) or Meteor; FC-key so no popups | register plot, create harvest projection, follow status, receive payout |
+| **Field agent** | trained agricultural extension worker, visits plots | same; FC-key for `attest_field` | task queue, geotagged photo, AI pre-check, one-tap attest |
+| **Cooperative / farmer group** | community org, trusted reviewer | wallet (multi-user later) | review queue, approve/reject, declare crop failure |
+| **Warehouse** | collection point with scale | wallet; FC-key for `weigh_in` | weigh-in form w/ ticket photo → AI OCR prefill → settle |
 | **Buyer / Investor** | offtaker, supplier, retail investor; crypto-capable | any NEAR Connect wallet; pays pUSDC or cross-chain | discover lots, trust panel, fund, portfolio, claim refunds, CSV, transfer NFT |
-| **Supplier** (Toko Tani) | seed/fertilizer seller | wallet | list inputs, receive pUSDC, orders |
+| **Farm-input supplier** | seed/fertilizer seller | wallet | list inputs, receive pUSDC, orders |
 | **Admin** (Pratala) | platform operator | owner key | roles, fee, treasury, pause, region stats |
 
 ### Core journeys (what the demo video shows, in order)
-1. **Onboard**: Connect (HOT/Meteor/…) → first-time role picker ("Saya petani / Saya pembeli / Saya verifikator (invite)") → profile (name, region, language id/en) → optional "Sign in to Pratala" (NEP-413) for off-chain features → FC-key sign-in for verifier roles (no further popups).
-2. **Farmer registers a plot & projection** (`/farmer/new`, 3 steps, Bahasa-first): plot photos + GPS (EXIF/geolocation) → crop/variety/area/projected kg/harvest month (AI yield sanity hint) → review → sign `register_lot` (1 tx). Sees "Menunggu kunjungan penyuluh".
+1. **Onboard**: Connect (HOT/Meteor/…) → first-time role picker ("I'm a farmer / I'm a buyer / I'm a verifier (invite)") → profile (name, region) → optional "Sign in to Pratala" (NEP-413) for off-chain features → FC-key sign-in for verifier roles (no further popups).
+2. **Farmer registers a plot & projection** (`/farmer/new`, 3 steps, plain language): plot photos + GPS (EXIF/geolocation) → crop/variety/area/projected kg/harvest month (AI yield sanity hint) → review → sign `register_lot` (1 tx). Sees "Waiting for a field agent visit".
 3. **Field agent verifies** (`/verify`, mobile queue): open task → camera → photo gets AI check ("rice paddy ✓, GPS within 150 m of plot ✓, stage: vegetative") → note → attest (FC-key, silent). Lot → FieldVerified; farmer gets inbox notification.
 4. **Co-op reviews** (`/verify` with coop role): compares agent evidence + AI check → approve → CoopVerified. Farmer sets price → **Listed**, gets a shareable **pay link** `/lot/lot-7`.
 5. **Buyer funds** (`/lot/[id]` → `/checkout/[id]`): trust panel (3-layer verification, AI check badge, farmer track record), funding math, pay with pUSDC (`ft_transfer_call`) **or** see a live cross-chain quote (NEAR Intents, mainnet dry). NFT moves to buyer; escrow shown as "Held in contract", receipt page `/receipt/[tx]`.
 6. **Warehouse weigh-in**: photo of scale ticket → AI OCR prefills kg/grade → settlement preview (farmer 396.90 / platform 8.10 / buyer refund 45.00) → `weigh_in`. Lot **Settled**.
-7. **Money out**: farmer `/farmer` "Tarik 396.90 pUSDC" (claim_payout); buyer `/portfolio` "Claim refund 45.00"; `/exports` CSV for the bookkeeper; every row links to testnet explorer.
+7. **Money out**: farmer `/farmer` "Withdraw 396.90 pUSDC" (claim_payout); buyer `/portfolio` "Claim refund 45.00"; `/exports` CSV for the bookkeeper; every row links to testnet explorer.
 8. **NFT does something**: buyer transfers the lot NFT to another account → new holder sees the claimable refund, old holder cannot (`/lot/[id]` history shows ownership + money timeline).
 
 ### Screen map (Next.js routes)
@@ -72,7 +72,7 @@ Per-folder `AGENTS.md` (+ `CLAUDE.md` = `@AGENTS.md`), `.agents/skills/` pinned 
 | `/lot/[id]` | Public lot page = pay link: header, status stepper, **Trust panel** (attestations w/ evidence thumbnails + hashes, AI check badge → NEAR AI verify link, farmer history), Funding panel, Money timeline, NFT ownership history, share button |
 | `/checkout/[id]` | Tab A pUSDC (live testnet); Tab B "Pay from any chain" (1Click dry quote, honest banner); success → `/receipt/[txHash]` |
 | `/receipt/[txHash]` | Printable receipt: parties, amount, status, explorer link, QR |
-| `/onboarding` | Role picker + profile + language |
+| `/onboarding` | Role picker + profile |
 | `/farmer` | Dashboard: plots, lots (status cards), claimable payout CTA, inbox |
 | `/farmer/new` | 3-step wizard |
 | `/verify` | Role-adaptive queue (agent / coop / warehouse) — mobile-first, camera-first |
@@ -84,7 +84,7 @@ Per-folder `AGENTS.md` (+ `CLAUDE.md` = `@AGENTS.md`), `.agents/skills/` pinned 
 | `/activity` | Public event feed (indexer) — transparency |
 
 ### UX principles (enforced by `impeccable` + Hallmark)
-Bahasa Indonesia default with EN toggle (simple dictionary, `next-intl` not needed); no crypto words on farmer screens ("Dompet" never mentioned — "Akun"), amounts shown as "pUSDC ≈ Rp" with a fixed demo rate labelled; every tx shows a plain status line + "Lihat bukti" (explorer); FC-key so verifiers never see popups after sign-in; optimistic UI + undo where safe; mobile 320–414 px verified; 8 interactive states per control.
+English-only UI in plain, short sentences (one dictionary, no language toggle, `next-intl` not needed); no crypto words on farmer screens ("wallet" never mentioned — "account"), amounts shown as "pUSDC ≈ Rp" with a fixed demo rate labelled; every tx shows a plain status line + "View proof" (explorer); FC-key so verifiers never see popups after sign-in; optimistic UI + undo where safe; mobile 320–414 px verified; 8 interactive states per control.
 
 ---
 
@@ -162,12 +162,12 @@ Unit (`VMContextBuilder`): settlement math, state machine, roles, msg parsing, `
 
 ---
 
-## 4. NEAR AI integration ("Pemeriksaan AI" — AI evidence check)
+## 4. NEAR AI integration (AI evidence check)
 Backend `ai` module using `openai` SDK with `baseURL: https://cloud-api.near.ai/v1`, model `Qwen/Qwen3-VL-30B-A3B-Instruct` (default, cheap, vision; fallback `z-ai/glm-5.3-flash`). **Verify at implementation** which vision models are Confidential-TEE tier (`/v1/model/list` metadata or cloud.near.ai models page); prefer a TEE-tier model so the farmer's plot photos never leave a TEE — that is the `privacy` track hook.
-1. `POST /ai/check` `{evidenceId, lotId, kind}` → sends image + structured prompt: crop match (expected crop), scene plausibility (field/paddy/warehouse scale), visible growth stage, GPS plausibility vs plot (text), for `WEIGH_IN`: OCR `{kg, grade}` from the ticket; returns JSON `{verdict: pass|review|fail, confidence, findings[], extracted{kg?,grade?}, summary_id, summary_en}`.
+1. `POST /ai/check` `{evidenceId, lotId, kind}` → sends image + structured prompt: crop match (expected crop), scene plausibility (field/paddy/warehouse scale), visible growth stage, GPS plausibility vs plot (text), for `WEIGH_IN`: OCR `{kg, grade}` from the ticket; returns JSON `{verdict: pass|review|fail, confidence, findings[], extracted{kg?,grade?}, summary_en}`.
 2. Store `AiCheck{evidenceId, model, chatId, responseJson, signature (from GET /v1/signature/{chat_id}), responseHash}`; `ai_check_hash = sha256(responseJson)` goes on-chain in the attestation.
 3. UI: "AI check: pass · Qwen3-VL on NEAR AI Cloud (TEE) · Verify ↗" badge linking to `https://cloud.near.ai/verify` with chat id; `docs/AI-VERIFICATION.md` explains it is advisory, humans attest.
-4. Stretch: "Asisten Pratala" chat (Bahasa) explaining a lot's status/payouts (text model), yield sanity hint on the wizard.
+4. Stretch: "Pratala Assistant" chat explaining a lot's status/payouts (text model), yield sanity hint on the wizard.
 Env: `NEAR_AI_API_KEY`, `NEAR_AI_BASE_URL`, `NEAR_AI_VISION_MODEL`. If key missing → UI shows "AI check unavailable" and flow continues (never blocks).
 
 ---
@@ -214,13 +214,13 @@ Env: `NEXT_PUBLIC_NEAR_NETWORK, NEXT_PUBLIC_RPC_URL, NEXT_PUBLIC_LOTS_CONTRACT_I
 - **Pushes:** push after each tagged milestone and at the end of each day at minimum (confirm the remote with the user once; after that pushing is routine).
 
 ## 9. Seven-day build order
-**Must (M):** contracts on testnet + sandbox tests; onboarding + farmer wizard + verify queue + lot page + checkout (pUSDC) + portfolio claims + faucet + exports CSV; Hallmark landing; README/LICENSE/disclosure; video; X post; submission. **Should (S):** backend auth/evidence/indexer/notifications hosted; AI evidence check with signature badge; Intents dry-quote tab; supplier listings + checkout; receipts; CI. **Stretch (X):** map view, Asisten chat, HOT Kit Google login, secondary-market UI, MinIO, expiry refunds.
+**Must (M):** contracts on testnet + sandbox tests; onboarding + farmer wizard + verify queue + lot page + checkout (pUSDC) + portfolio claims + faucet + exports CSV; Hallmark landing; README/LICENSE/disclosure; video; X post; submission. **Should (S):** backend auth/evidence/indexer/notifications hosted; AI evidence check with signature badge; Intents dry-quote tab; supplier listings + checkout; receipts; CI. **Stretch (X):** map view, Assistant chat, HOT Kit Google login, secondary-market UI, MinIO, expiry refunds.
 
 - **Day 1 Sat Nov 8 (M):** toolchain (`rustup target add wasm32-unknown-unknown`; cargo-near & near-cli-rs installers; fallback `cargo binstall`); `git init`, root files, AGENTS.md files, LICENSE, workspace; **install all skills** (§8); `pusdc` from near-examples/FT + faucet, `cargo near build non-reproducible-wasm`; `harvest-lot` skeleton; create `pratala.testnet` + sub-accounts (ask user before any deploy per bunkr rule); deploy+init pusdc.
 - **Day 2 Sun Nov 9 (M):** lifecycle/escrow/events/guards + unit tests; deploy v0; CLI walkthrough.
 - **Day 3 Mon Nov 10 (M/S):** integration tests 1–8; scripts 02–05 (seed full lifecycle, write `deploy/testnet.json`). Backend scaffold, Prisma, compose, health, auth (NEP-413) e2e, evidence, ai module skeleton.
 - **Day 4 Tue Nov 11 (M):** frontend seed + providers + FC-key plugin; **Hallmark run** (tokens, landing); `lib/near/contracts.ts`; onboarding, `/farmer(+new)`, `/verify`, `/lot/[id]`, `/faucet`, `/checkout` tab A, `/portfolio`. Walk the lifecycle with 5 testnet wallets (HOT + Meteor + MyNearWallet).
-- **Day 5 Wed Nov 12 (M/S):** indexer, payments + CSV, notifications, lots mirror, intents port, listings/orders; frontend `/exports`, `/admin`, `/receipt`, `/activity`, AI check wiring + badge, checkout tab B, i18n pass; deploy Vercel + API (Railway/Render); clean-clone compose check.
+- **Day 5 Wed Nov 12 (M/S):** indexer, payments + CSV, notifications, lots mirror, intents port, listings/orders; frontend `/exports`, `/admin`, `/receipt`, `/activity`, AI check wiring + badge, checkout tab B, plain-English copy pass; deploy Vercel + API (Railway/Render); clean-clone compose check.
 - **Day 6 Thu Nov 13 (M):** README + docs/*; `impeccable` audit pass on all screens (mobile widths); run README on clean clone + `claude -p "follow README"`; CI green; record 3-min demo; tag `v0.1.0`.
 - **Day 7 Fri Nov 14 (M):** re-run `05-verify-demo.sh`, final README (ids, tx links), X post (@NEARProtocol #NEARHackathon + video), submit by **18:00 UTC** after user confirms payload. Afternoon S/X only.
 
@@ -234,7 +234,7 @@ Env: `NEXT_PUBLIC_NEAR_NETWORK, NEXT_PUBLIC_RPC_URL, NEXT_PUBLIC_LOTS_CONTRACT_I
 ## 11. Risks & mitigations
 | Risk | Mitigation |
 |---|---|
-| Scope grew (AI, i18n, more screens) in 7 days | Strict M/S/X cut; AI check is S with graceful "unavailable" fallback; Day 7 buffer |
+| Scope grew (AI, more screens) in 7 days | Strict M/S/X cut; AI check is S with graceful "unavailable" fallback; Day 7 buffer |
 | cargo-near / near-cli-rs install on arm64 | `cargo binstall cargo-near near-cli-rs`; Day 1 first thing |
 | FC keys cannot attach deposit → payable verifier methods fail | Verifier methods non-payable; owner pre-funds contract storage; cap attestations |
 | HOT Wallet testnet support / `signMessage` support varies | Test HOT + Meteor + MyNearWallet on Day 4; chain features never need NEP-413 login |
