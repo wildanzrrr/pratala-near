@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { ArrowRight, Info, ShieldCheck, Warning } from "@phosphor-icons/react";
 import { toast } from "sonner";
@@ -41,7 +41,6 @@ export function ConnectSheet() {
   const open = useConnectSheetOpen();
   const t = useT();
   const router = useRouter();
-  const pathname = usePathname();
   const { connect, wallets, walletsReady } = useNear();
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +58,7 @@ export function ConnectSheet() {
       const accountId = await connect(walletId);
       setConnectSheetOpen(false);
       toast.success(t("wallet.signedIn", { account: accountId }));
-      if (accountId && !loadLocalProfile(accountId) && pathname === "/") router.push("/onboarding");
+      if (accountId && !loadLocalProfile(accountId) && window.location.pathname === "/") router.push("/onboarding");
     } catch (e) {
       const err = classifyTxError(e);
       if (!(err instanceof WalletRejectedError)) setError(err.message);

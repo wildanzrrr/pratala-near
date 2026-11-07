@@ -211,6 +211,7 @@ export const en: Dictionary = {
     categories: { SEED: "Seed", FERTILIZER: "Fertiliser", SOIL: "Soil amendment", OTHER: "Other" },
   },
   lot: {
+    priceInvalid: "Write a price like 0.45 (at most 6 decimals).",
     projected: "Expected harvest",
     harvest: "Harvest month",
     area: "Plot area",

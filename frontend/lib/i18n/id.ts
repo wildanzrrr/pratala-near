@@ -213,6 +213,7 @@ export const id = {
     categories: { SEED: "Benih", FERTILIZER: "Pupuk", SOIL: "Pembenah tanah", OTHER: "Lainnya" },
   },
   lot: {
+    priceInvalid: "Tulis harga seperti 0,45 (maksimal 6 angka di belakang koma).",
     projected: "Perkiraan panen",
     harvest: "Bulan panen",
     area: "Luas lahan",

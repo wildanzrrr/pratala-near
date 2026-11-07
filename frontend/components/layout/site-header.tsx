@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { Suspense, useEffect, useState, useSyncExternalStore } from "react";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,6 +9,7 @@ import { X } from "@phosphor-icons/react";
 
 import { LanguageToggle } from "@/components/layout/language-toggle";
 import { navFor } from "@/components/layout/nav-items";
+import type { NavItem } from "@/components/layout/nav-items";
 import { Wordmark } from "@/components/layout/wordmark";
 import { AccountMenu } from "@/components/wallet/account-menu";
 import { cn } from "@/lib/utils";
@@ -38,7 +39,6 @@ export function isActive(pathname: string, href: string) {
  */
 export function SiteHeader() {
   const t = useT();
-  const pathname = usePathname();
   const session = useSession();
   const [compact, setCompact] = useState(false);
   const dismissed = useSyncExternalStore(
@@ -118,22 +118,9 @@ export function SiteHeader() {
         <div className="page-max page-x flex h-(--pt-bar-h) items-center gap-4">
           <Wordmark />
           <nav aria-label={t("nav.primary")} className="ml-4 hidden flex-1 items-center gap-1 md:flex">
-            {items.map((item) => {
-              const active = isActive(pathname, item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "relative rounded-sm px-3 py-2 text-sm whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground",
-                    active && "text-foreground after:absolute after:inset-x-3 after:-bottom-[0.6rem] after:h-0.5 after:bg-primary",
-                  )}
-                >
-                  {t(item.label)}
-                </Link>
-              );
-            })}
+            <Suspense fallback={<NavLinks items={items} pathname="" />}>
+              <ActiveNavLinks items={items} />
+            </Suspense>
           </nav>
           <div className="ml-auto flex items-center gap-2">
             <LanguageToggle />
@@ -142,5 +129,34 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
+  );
+}
+
+function ActiveNavLinks({ items }: { items: NavItem[] }) {
+  const pathname = usePathname();
+  return <NavLinks items={items} pathname={pathname} />;
+}
+
+function NavLinks({ items, pathname }: { items: NavItem[]; pathname: string }) {
+  const t = useT();
+  return (
+    <>
+      {items.map((item) => {
+        const active = isActive(pathname, item.href);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "relative rounded-sm px-3 py-2 text-sm whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground",
+              active && "text-foreground after:absolute after:inset-x-3 after:-bottom-[0.6rem] after:h-0.5 after:bg-primary",
+            )}
+          >
+            {t(item.label)}
+          </Link>
+        );
+      })}
+    </>
   );
 }
