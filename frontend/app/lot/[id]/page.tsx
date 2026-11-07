@@ -4,7 +4,7 @@ import { LotDetail } from "@/app/lot/[id]/_components/lot-detail";
 import { LotDetailSkeleton } from "@/app/lot/[id]/_components/lot-detail-skeleton";
 import { env } from "@/lib/env";
 import { serverT } from "@/lib/i18n";
-import { formatKg, formatUsdc, usdcToDecimal } from "@/lib/near/format";
+import { formatKg, formatMonth, formatUsdc, usdcToDecimal } from "@/lib/near/format";
 import { getLotForSeo } from "@/lib/server/lots";
 import { createMetadata, jsonLdScript, site } from "@/lib/seo";
 
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps<"/lot/[id]">): Prom
   const price = lot.price_per_kg !== "0" ? ` Total ${formatUsdc(lot.funding_total)} pUSDC.` : "";
   return createMetadata({
     title,
-    description: `${lot.lot_id} · ${t(`status.${lot.status}`)} · ${lot.attestations.length} bukti verifikasi.${price} Lihat bukti dan danai panen ini di Pratala.`,
+    description: `${lot.lot_id} · ${t(`status.${lot.status}`)} · ${lot.attestations.length} verification records.${price} View the proof and fund this harvest on Pratala.`,
     path: `/lot/${encodeURIComponent(lot.lot_id)}`,
     image: { url: `/lot/${encodeURIComponent(lot.lot_id)}/opengraph-image`, width: 1200, height: 630, alt: title },
     keywords: [lot.crop, lot.region],
@@ -38,7 +38,7 @@ async function LotJsonLd({ params }: { params: PageProps<"/lot/[id]">["params"] 
     "@context": "https://schema.org",
     "@type": "Product",
     name: `${lot.crop}${lot.variety ? ` ${lot.variety}` : ""} — ${lot.lot_id}`,
-    description: `Proyeksi panen ${formatKg(lot.projected_kg)} dari ${lot.region}, bulan panen ${lot.harvest_month}. Diverifikasi ${lot.attestations.length} lapis.`,
+    description: `Projected harvest of ${formatKg(lot.projected_kg)} from ${lot.region}, harvest month ${formatMonth(lot.harvest_month)}. Verified in ${lot.attestations.length} layers.`,
     sku: lot.lot_id,
     category: "Agricultural harvest lot",
     url,

@@ -2,8 +2,8 @@ import { MarketView } from "@/app/market/_components/market-view";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata({
-  title: "Pasar panen",
-  description: "Lot panen yang sudah diverifikasi penyuluh dan koperasi, siap didanai dengan pUSDC di NEAR, serta kebutuhan tani dari toko lokal.",
+  title: "Harvest market",
+  description: "Harvest lots verified by field agents and cooperatives, ready to fund with pUSDC on NEAR, plus farm inputs from local suppliers.",
   path: "/market",
 });
 

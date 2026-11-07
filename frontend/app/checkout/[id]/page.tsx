@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: PageProps<"/checkout/[id]">): Promise<Metadata> {
   const { id } = await params;
-  return createMetadata({ title: `Danai ${decodeURIComponent(id)}`, path: `/checkout/${id}`, noIndex: true });
+  return createMetadata({ title: `Fund ${decodeURIComponent(id)}`, path: `/checkout/${id}`, noIndex: true });
 }
 
 async function CheckoutFromParams({ params }: { params: PageProps<"/checkout/[id]">["params"] }) {

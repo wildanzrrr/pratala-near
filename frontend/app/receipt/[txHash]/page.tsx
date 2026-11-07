@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: PageProps<"/receipt/[txHash]">): Promise<Metadata> {
   const { txHash } = await params;
-  return createMetadata({ title: `Tanda terima ${txHash.slice(0, 8)}…`, path: `/receipt/${txHash}`, noIndex: true });
+  return createMetadata({ title: `Receipt ${txHash.slice(0, 8)}…`, path: `/receipt/${txHash}`, noIndex: true });
 }
 
 async function ReceiptFromRequest({ params, searchParams }: PageProps<"/receipt/[txHash]">) {

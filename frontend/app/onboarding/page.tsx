@@ -2,8 +2,8 @@ import { OnboardingView } from "@/app/onboarding/_components/onboarding-view";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata({
-  title: "Mulai",
-  description: "Masuk dengan HOT Wallet atau Meteor, pilih peran Anda — petani, pembeli, verifikator, atau toko tani — dan lengkapi profil.",
+  title: "Get started",
+  description: "Sign in with HOT Wallet or Meteor, pick your role — farmer, buyer, verifier or farm-input supplier — and complete your profile.",
   path: "/onboarding",
   noIndex: true,
 });

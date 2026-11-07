@@ -6,7 +6,7 @@ import type { Metadata } from "next";
  * One source of truth for site-wide defaults (`site`) and one factory
  * (`createMetadata`) every route reuses (mirrors bunkr/lp/lib/seo.ts).
  *
- *   export const metadata = createMetadata({ title: "Pasar", path: "/market" })
+ *   export const metadata = createMetadata({ title: "Market", path: "/market" })
  *
  * Client pages can't export metadata — give the segment a layout.tsx and
  * call the factory there.
@@ -14,21 +14,20 @@ import type { Metadata } from "next";
 export const site = {
   name: "Pratala",
   url: env.siteUrl,
-  defaultTitle: "Pratala — Panen terverifikasi, dibayar langsung",
+  defaultTitle: "Pratala — Verified harvests, paid directly",
   description:
-    "Pratala menghubungkan petani, koperasi, dan pembeli tanpa tengkulak. Proyeksi panen yang diverifikasi tiga lapis menjadi NFT di NEAR yang menahan dana pUSDC sampai panen ditimbang.",
+    "Pratala connects Indonesian farmers, cooperatives and buyers without middlemen. A harvest projection verified in three layers becomes a NEAR NFT that holds pUSDC in escrow until the harvest is weighed.",
   ogImage: {
     url: "/images/rice-field.jpg",
     width: 2100,
     height: 1182,
-    alt: "Petani menanam padi di sawah tergenang di Indonesia (foto: Redicul Pict, Unsplash)",
+    alt: "Farmers planting rice in a flooded field in Indonesia (photo: Redicul Pict, Unsplash)",
   },
   keywords: [
     "Pratala",
-    "pembiayaan panen",
     "harvest financing",
-    "petani Indonesia",
-    "koperasi",
+    "Indonesian farmers",
+    "agricultural cooperative",
     "NEAR Protocol",
     "NFT",
     "escrow stablecoin",
