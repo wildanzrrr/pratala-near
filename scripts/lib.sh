@@ -160,6 +160,12 @@ near_view() {
     json-args "$args" network-config "$NEAR_NETWORK" now 2>"$LOG_DIR/last-view.err"
 }
 
+# last_view_error → the most specific line of the last near_view failure (e.g. "account … does not exist").
+last_view_error() {
+  sed 's/\x1b\[[0-9;]*m//g' "$LOG_DIR/last-view.err" 2>/dev/null \
+    | grep -E '^[[:space:]]*[0-9]+: ' | tail -n 1 | sed -E 's/^[[:space:]]*[0-9]+: //' || true
+}
+
 # near_view_json: like near_view but prints nothing and returns 1 if the call fails
 # or returns null (e.g. get_lot for an unknown id).
 near_view_json() {
@@ -262,7 +268,7 @@ near_balance() {
   local a
   a="$(view_account "$1")"
   [[ -n "$a" ]] || { echo 0; return 0; }
-  jq -r '(.amount | tonumber) / 1e24' <<<"$a"
+  jq -r '(.amount | tonumber) / 1e24' <<<"$a" | awk '{printf "%.4f", $1}'
 }
 
 # Free NEAR above storage staking (1 byte = 1e19 yocto), as decimal NEAR.
@@ -270,7 +276,7 @@ near_free_balance() {
   local a
   a="$(view_account "$1")"
   [[ -n "$a" ]] || { echo 0; return 0; }
-  jq -r '((.amount | tonumber) - (.storage_usage * 1e19)) / 1e24' <<<"$a"
+  jq -r '((.amount | tonumber) - (.storage_usage * 1e19)) / 1e24' <<<"$a" | awk '{printf "%.4f", $1}'
 }
 
 has_code() {
