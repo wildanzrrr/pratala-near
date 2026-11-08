@@ -7,6 +7,10 @@
 neardev/
 .near-credentials/
 
+# local config/secret keys (config/README.txt stays tracked)
+config/*
+!config/README.txt
+
 # node
 node_modules/
 .pnpm-store/
