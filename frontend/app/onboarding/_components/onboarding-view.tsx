@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ArrowRight, Check, Info, SealCheck, ShieldCheck } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, Check, Info, SealCheck } from "@phosphor-icons/react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -67,10 +67,21 @@ export function OnboardingView() {
 
   async function finish(values: ProfileForm) {
     if (!session.accountId || !intent) return;
+    // Complete registration also signs in to the backend (NEP-413) when possible;
+    // sign-in is optional, so a rejected prompt still saves the profile locally.
+    let signedInToApi = session.signedInToApi;
+    if (!signedInToApi && !health.isError && session.supportsSignMessage) {
+      try {
+        await signIn.mutateAsync();
+        signedInToApi = true;
+      } catch {
+        // The mutation already toasts the error; finish registration regardless.
+      }
+    }
     const result = await saveProfile.mutateAsync({
       accountId: session.accountId,
       profile: { displayName: values.displayName, region: values.region, phone: values.phone || null, locale, intent },
-      signedInToApi: session.signedInToApi,
+      signedInToApi,
     });
     toast.success(result.remote ? t("onboarding.savedRemote") : t("onboarding.savedLocal"));
     router.push(homeFor(intent, session.roles));
@@ -147,35 +158,17 @@ export function OnboardingView() {
               </Field>
             </FieldGroup>
 
-            {!health.isError ? (
-              <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-4">
-                <p className="flex items-center gap-2 font-medium">
-                  <ShieldCheck aria-hidden className="size-4 text-primary" />
-                  {t("wallet.signInBackend")}
-                </p>
-                <p className="text-sm text-muted-foreground">{t("wallet.signInBackendLead")}</p>
-                {session.signedInToApi ? (
-                  <p className="flex items-center gap-1.5 text-sm text-primary">
-                    <Check aria-hidden weight="bold" className="size-4" />
-                    {t("wallet.backendSignedIn")}
-                  </p>
-                ) : (
-                  <Button type="button" variant="outline" className="w-fit" disabled={signIn.isPending || !session.supportsSignMessage} onClick={() => signIn.mutate()}>
-                    {signIn.isPending ? <Spinner data-icon="inline-start" /> : <ShieldCheck data-icon="inline-start" />}
-                    {signIn.isPending ? t("wallet.signingIn") : t("wallet.signInBackend")}
-                  </Button>
-                )}
-                {!session.supportsSignMessage ? <p className="text-xs text-muted-foreground">{t("wallet.noSignMessage")}</p> : null}
-              </div>
+            {!health.isError && !session.signedInToApi && session.supportsSignMessage ? (
+              <p className="text-xs text-muted-foreground">{t("onboarding.completeHint")}</p>
             ) : null}
 
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="ghost" size="lg" onClick={() => setStep(1)}>
+              <Button type="button" variant="ghost" size="lg" disabled={signIn.isPending || saveProfile.isPending} onClick={() => setStep(1)}>
                 <ArrowLeft data-icon="inline-start" />
                 {t("common.back")}
               </Button>
-              <Button type="submit" size="lg" disabled={saveProfile.isPending}>
-                {saveProfile.isPending ? <Spinner data-icon="inline-start" /> : <Check data-icon="inline-start" />}
+              <Button type="submit" size="lg" disabled={signIn.isPending || saveProfile.isPending}>
+                {signIn.isPending || saveProfile.isPending ? <Spinner data-icon="inline-start" /> : <Check data-icon="inline-start" />}
                 {t("onboarding.finish")}
               </Button>
             </div>
