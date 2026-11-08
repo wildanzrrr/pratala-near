@@ -180,10 +180,7 @@ export const en = {
     note3: "Paying from another chain via NEAR Intents shows a real price estimate (mainnet) without moving funds.",
   },
   footer: {
-    colophon:
-      "Pratala · built for the NEAR Hackathon 2026 · contracts {lots} and {pusdc} on {network} · RPC {rpc} · set in Newsreader, IBM Plex Sans, IBM Plex Mono · rice-field photo by Redicul Pict on Unsplash · MIT-licensed code.",
-    links: "Links",
-    contracts: "Contracts",
+    colophon: "Pratala · built for the NEAR Hackathon 2026",
   },
   market: {
     title: "Harvest market",
