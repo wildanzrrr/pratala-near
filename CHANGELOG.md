@@ -33,6 +33,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 ## [Unreleased]
 
 ### Fixed
+- GCS boot check writes and deletes a probe object instead of reading bucket metadata — `roles/storage.objectAdmin` keys lack `storage.buckets.get` and the old check would have crashed boot with the least-privilege key.
 - Wallet modal ("Meteor Web" button) was unclickable: our connect sheet stayed open as a modal behind NEAR Connect's popup. The sheet now closes before handing off; all dialogs keep `.hot-connector-popup` clickable and don't treat it as an outside click (`290cce3`).
 - `scripts/02-create-accounts.sh` aborted on near-cli-rs 0.31's new key-scheme prompt; now passes `--signature-scheme ed25519` (`6dd4bae`).
 

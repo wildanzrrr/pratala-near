@@ -21,9 +21,15 @@ export class GcsStorageProvider implements StorageProvider {
     this.storage = new Storage(opts.keyFile ? { keyFilename: opts.keyFile } : undefined);
   }
 
-  /** Resolves once the bucket is reachable with the configured credentials. */
+  /**
+   * Resolves once the bucket accepts object writes with the configured
+   * credentials. Storage Object Admin has no storage.buckets.get, so this
+   * probes with a throwaway object instead of reading bucket metadata.
+   */
   async assertReady(): Promise<void> {
-    await this.storage.bucket(this.bucketName).getMetadata();
+    const probe = this.storage.bucket(this.bucketName).file(`evidence/.boot-check-${Date.now()}`);
+    await probe.save('ok', { resumable: false });
+    await probe.delete({ ignoreNotFound: true });
   }
 
   async put(key: string, data: Buffer, mime: string): Promise<void> {
