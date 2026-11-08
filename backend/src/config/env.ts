@@ -1,10 +1,20 @@
 import { randomBytes } from 'node:crypto';
+import { isAbsolute, resolve } from 'node:path';
 import { z } from 'zod';
 
 const optionalString = z
   .string()
   .optional()
   .transform((v) => (v && v.trim() ? v.trim() : undefined));
+
+/**
+ * A file path that stays relative to the backend/ folder regardless of the
+ * process working directory or build layout: this file sits two levels below
+ * backend/ both in src/ and in the compiled dist/ tree.
+ */
+const backendRelativeFile = optionalString.transform((v) =>
+  v && !isAbsolute(v) ? resolve(import.meta.dirname, '../..', v) : v,
+);
 
 export const envSchema = z.object({
   NODE_ENV: z
@@ -34,7 +44,7 @@ export const envSchema = z.object({
   PUBLIC_API_URL: z.url().default('http://localhost:4100'),
   // Evidence storage: Google Cloud Storage only — required, no local fallback.
   GCS_BUCKET: z.string().min(1, 'GCS_BUCKET is required (evidence have no local fallback)'),
-  GCS_KEY_FILE: optionalString,
+  GCS_KEY_FILE: backendRelativeFile,
   NEAR_INTENTS_BASE_URL: z.url().default('https://1click.chaindefuser.com/v0'),
   NEAR_INTENTS_API_KEY: optionalString,
   NEAR_AI_API_KEY: optionalString,
