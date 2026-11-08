@@ -29,7 +29,7 @@ export function FailureTask({ lot, onDone }: { lot: LotView; onDone: () => void 
   const declare = useDeclareFailureMutation(onDone);
 
   async function submit() {
-    const ready = photos.filter((p) => p.sha256);
+    const ready = photos.filter((p) => p.status === "ready");
     const evidenceHash = ready.length
       ? (await evidenceDigest(ready)).evidenceHash
       : await sha256Hex(JSON.stringify({ lot: lot.lot_id, reason: reason.trim(), by: session.accountId }));

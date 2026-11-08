@@ -430,7 +430,7 @@ export const en = {
     doneBody: "Waiting for a field visit. You'll hear about it in your inbox.",
     viewLot: "View lot",
     another: "Register another",
-    hashesLocal: "Pratala services are unreachable — plot fingerprints are computed on this device.",
+    plotFailed: "Couldn't save the plot. Check your connection and try again.",
   },
   evidence: {
     take: "Take photo",
@@ -440,7 +440,7 @@ export const en = {
     reading: "Reading photo…",
     uploading: "Uploading…",
     uploaded: "Saved",
-    localOnly: "Device only",
+    signInToUpload: "Sign in to Pratala services to attach photos.",
     gpsFromPhoto: "Location from photo",
     gpsFromDevice: "Location from phone",
     gpsMissing: "Photo has no location",
@@ -450,7 +450,7 @@ export const en = {
     hash: "Photo fingerprint",
     tooBig: "The photo is over 8 MB. Pick a smaller one.",
     notImage: "This file is not a photo.",
-    uploadFailed: "The photo didn't upload. Its fingerprint is still computed on the device.",
+    uploadFailed: "The photo didn't upload — remove it and try again.",
   },
   verify: {
     title: "Verify",

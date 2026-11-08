@@ -35,7 +35,7 @@ export function CoopTask({ lot, onDone }: { lot: LotView; onDone: () => void }) 
   const sameSigner = field?.signer === session.accountId;
 
   async function submit() {
-    const ready = photos.filter((p) => p.sha256);
+    const ready = photos.filter((p) => p.status === "ready");
     const d = ready.length ? await evidenceDigest(ready) : null;
     const evidenceHash =
       d?.evidenceHash ??

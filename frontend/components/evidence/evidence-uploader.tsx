@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-import { Camera, CheckCircle, CloudSlash, MapPin, Plus, Trash, WarningCircle } from "@phosphor-icons/react";
+import { Camera, CheckCircle, MapPin, Plus, Trash, WarningCircle } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -27,7 +27,7 @@ export interface EvidenceItem {
   sha256: string | null;
   gps: GeoPoint | null;
   evidence: Evidence | null;
-  status: "reading" | "uploading" | "ready" | "local" | "error";
+  status: "reading" | "uploading" | "ready" | "error";
   error?: string;
 }
 
@@ -36,8 +36,9 @@ const MAX_BYTES = 8 * 1024 * 1024;
 /**
  * Camera-first evidence capture. Opens the rear camera on phones
  * (capture="environment"), reads EXIF GPS, falls back to the phone's location,
- * computes the sha256 fingerprint locally, then uploads to the Pratala API —
- * if that fails the fingerprint still works on-chain ("Device only").
+ * computes the sha256 fingerprint locally, then uploads to the Pratala API
+ * (Google Cloud Storage). Upload is required: a photo that is not uploaded
+ * is an error and cannot be used as evidence.
  */
 export function EvidenceUploader({
   items,
@@ -85,8 +86,11 @@ export function EvidenceUploader({
         .then((g) => (g && Number.isFinite(g.latitude) ? ({ lat: g.latitude, lng: g.longitude, source: "photo" } as GeoPoint) : null))
         .catch(() => null),
     ]);
-    patch(localId, { sha256, gps, status: canUpload ? "uploading" : "local" });
-    if (!canUpload) return;
+    if (!canUpload) {
+      patch(localId, { sha256, gps, status: "error", error: t("evidence.signInToUpload") });
+      return;
+    }
+    patch(localId, { sha256, gps, status: "uploading" });
     try {
       const evidence = await api.uploadEvidence(file, kind, { lotId });
       patch(localId, {
@@ -96,7 +100,7 @@ export function EvidenceUploader({
         status: "ready",
       });
     } catch {
-      patch(localId, { status: "local", error: t("evidence.uploadFailed") });
+      patch(localId, { status: "error", error: t("evidence.uploadFailed") });
     }
   }
 
@@ -220,7 +224,6 @@ function ItemStatus({ item }: { item: EvidenceItem }) {
     reading: { icon: <Spinner />, text: t("evidence.reading"), cls: "text-muted-foreground" },
     uploading: { icon: <Spinner />, text: t("evidence.uploading"), cls: "text-muted-foreground" },
     ready: { icon: <CheckCircle aria-hidden weight="fill" className="size-3.5 text-primary" />, text: t("evidence.uploaded"), cls: "text-foreground" },
-    local: { icon: <CloudSlash aria-hidden className="size-3.5" />, text: t("evidence.localOnly"), cls: "text-muted-foreground" },
     error: { icon: <WarningCircle aria-hidden className="size-3.5" />, text: item.error ?? "", cls: "text-destructive" },
   }[item.status];
   return (

@@ -5,10 +5,10 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ArrowRight, CheckCircle, Info, Signature } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, CheckCircle, Signature } from "@phosphor-icons/react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { ApiOfflineBanner } from "@/components/common/api-offline-banner";
@@ -19,7 +19,6 @@ import { ConnectGate } from "@/components/wallet/connect-gate";
 import { HarvestStep, PlotStep, ReviewStep } from "@/app/farmer/new/_components/wizard-steps";
 import { STEP_FIELDS, currentMonth, wizardSchema } from "@/app/farmer/new/_components/wizard-schema";
 import { api } from "@/lib/api";
-import { sha256Hex } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useApiHealth } from "@/hooks/queries/use-api-health";
 import { useRegisterLotMutation } from "@/hooks/mutations/use-register-lot-mutation";
@@ -81,7 +80,6 @@ function WizardForm({ step, setStep, onDone }: { step: 1 | 2 | 3; setStep: (s: 1
   const [photos, setPhotos] = useState<EvidenceItem[]>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
-  const [usedLocalHashes, setUsedLocalHashes] = useState(false);
   const register = useRegisterLotMutation((lotId) => onDone(lotId));
 
   const form = useForm<WizardInput, unknown, WizardValues>({
@@ -100,7 +98,7 @@ function WizardForm({ step, setStep, onDone }: { step: 1 | 2 | 3; setStep: (s: 1
 
   async function next() {
     if (step === 1) {
-      const ready = photos.filter((p) => p.sha256);
+      const ready = photos.filter((p) => p.status === "ready");
       if (!ready.length) return setPhotoError(t("wizard.needPhoto"));
       if (!ready.some((p) => p.gps)) return setPhotoError(t("wizard.needGps"));
       setPhotoError(null);
@@ -113,30 +111,27 @@ function WizardForm({ step, setStep, onDone }: { step: 1 | 2 | 3; setStep: (s: 1
   async function submit(values: WizardValues) {
     setPreparing(true);
     try {
-      const ready = photos.filter((p) => p.sha256);
+      const ready = photos.filter((p) => p.status === "ready");
       const digest = await evidenceDigest(ready);
-      let plotHash: string | null = null;
-      let gpsHash = digest.gpsHash;
-      const evidenceIds = ready.map((p) => p.evidence?.id).filter((id): id is string => Boolean(id));
-      if (canUpload && digest.gps) {
-        try {
-          const plot = await api.createPlot({
-            name: values.plotName,
-            lat: digest.gps.lat,
-            lng: digest.gps.lng,
-            areaM2: values.areaM2,
-            region: values.region,
-            evidenceIds,
-          });
-          plotHash = plot.plotHash;
-          gpsHash = plot.gpsHash;
-        } catch {
-          /* fall through to local hashes */
-        }
+      if (!ready.length || !digest.gps) {
+        toast.error(t("wizard.needPhoto"));
+        return;
       }
-      if (!plotHash) {
-        setUsedLocalHashes(true);
-        plotHash = await sha256Hex(JSON.stringify({ name: values.plotName, areaM2: values.areaM2, region: values.region, photos: ready.map((p) => p.sha256) }));
+      // Evidence upload and the plot record are required — no local-hash fallback.
+      const evidenceIds = ready.map((p) => p.evidence?.id).filter((id): id is string => Boolean(id));
+      let plot: Awaited<ReturnType<typeof api.createPlot>>;
+      try {
+        plot = await api.createPlot({
+          name: values.plotName,
+          lat: digest.gps.lat,
+          lng: digest.gps.lng,
+          areaM2: values.areaM2,
+          region: values.region,
+          evidenceIds,
+        });
+      } catch {
+        toast.error(t("wizard.plotFailed"));
+        return;
       }
       register.mutate({
         crop: values.crop,
@@ -144,8 +139,8 @@ function WizardForm({ step, setStep, onDone }: { step: 1 | 2 | 3; setStep: (s: 1
         region: values.region,
         projected_kg: values.projectedKg,
         harvest_month: values.harvestMonth,
-        plot_hash: plotHash,
-        gps_hash: gpsHash ?? plotHash,
+        plot_hash: plot.plotHash,
+        gps_hash: digest.gpsHash ?? plot.plotHash,
         area_m2: values.areaM2,
         media_uri: digest.evidenceUri,
       });
@@ -169,13 +164,6 @@ function WizardForm({ step, setStep, onDone }: { step: 1 | 2 | 3; setStep: (s: 1
       ) : (
         <ReviewStep values={form.getValues()} photos={photos} />
       )}
-
-      {step === 3 && (usedLocalHashes || !canUpload) ? (
-        <Alert>
-          <Info />
-          <AlertDescription>{t("wizard.hashesLocal")}</AlertDescription>
-        </Alert>
-      ) : null}
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-2">

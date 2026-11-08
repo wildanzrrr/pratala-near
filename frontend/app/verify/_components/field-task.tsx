@@ -30,7 +30,7 @@ export function FieldTask({ lot, onDone }: { lot: LotView; onDone: () => void })
   const [error, setError] = useState<string | null>(null);
   const ai = useAutoAiCheck(photos, "FIELD_VISIT", lot.crop);
   const attest = useAttestFieldMutation(onDone);
-  const ready = photos.filter((p) => p.sha256);
+  const ready = photos.filter((p) => p.status === "ready");
 
   async function submit() {
     if (!ready.length) return setError(t("verify.needEvidence"));

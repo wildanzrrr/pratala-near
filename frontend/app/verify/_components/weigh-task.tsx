@@ -52,7 +52,7 @@ export function WeighTask({ lot, onDone }: { lot: LotView; onDone: () => void })
   const split = valid
     ? settlementPreview({ actualKg, projectedKg: lot.projected_kg, pricePerKg: lot.price_per_kg, escrow: lot.escrow, feeBps })
     : null;
-  const ready = photos.filter((p) => p.sha256);
+  const ready = photos.filter((p) => p.status === "ready");
 
   async function submit() {
     if (!valid || !gradeValue || !ready.length) return;
