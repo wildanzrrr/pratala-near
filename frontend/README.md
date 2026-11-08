@@ -44,7 +44,7 @@ pnpm build       # production build — all 18 routes
 | `NEXT_PUBLIC_API_URL` | `http://localhost:4100/api` | Backend |
 | `NEXT_PUBLIC_EXPLORER_BASE` | `https://testnet.nearblocks.io` | "View proof" links |
 | `NEXT_PUBLIC_AUTH_RECIPIENT` | `lots.pratala.testnet` | NEP-413 recipient (informational; the backend issues it) |
-| `NEXT_PUBLIC_DEMO_IDR_RATE` | `16000` | "≈ Rp" conversion, always labelled *demo rate* |
+| `NEXT_PUBLIC_DEMO_IDR_RATE` | `18000` | "≈ Rp" conversion, always labelled *demo rate* |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | Canonical URLs, sitemap, OG |
 | `NEXT_PUBLIC_DEMO_FIXTURES` | `0` | `1` = sample lots from `lib/fixtures.ts` |
 

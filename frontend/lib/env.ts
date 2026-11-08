@@ -29,7 +29,7 @@ const raw = {
   apiUrl: (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4100/api").replace(/\/$/, ""),
   explorerBase: (process.env.NEXT_PUBLIC_EXPLORER_BASE ?? "https://testnet.nearblocks.io").replace(/\/$/, ""),
   authRecipient: process.env.NEXT_PUBLIC_AUTH_RECIPIENT ?? "lots.pratala.testnet",
-  demoIdrRate: process.env.NEXT_PUBLIC_DEMO_IDR_RATE ?? "16000",
+  demoIdrRate: process.env.NEXT_PUBLIC_DEMO_IDR_RATE ?? "18000",
   siteUrl: (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, ""),
   demoFixtures: process.env.NEXT_PUBLIC_DEMO_FIXTURES === "1",
 };
@@ -50,7 +50,7 @@ export const env: PublicEnv = parsed.success
       apiUrl: "http://localhost:4100/api",
       explorerBase: "https://testnet.nearblocks.io",
       authRecipient: "lots.pratala.testnet",
-      demoIdrRate: 16000,
+      demoIdrRate: 18000,
       siteUrl: "http://localhost:3000",
       demoFixtures: raw.demoFixtures,
     };

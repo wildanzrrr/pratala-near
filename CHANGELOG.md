@@ -37,6 +37,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 - `scripts/02-create-accounts.sh` aborted on near-cli-rs 0.31's new key-scheme prompt; now passes `--signature-scheme ed25519` (`6dd4bae`).
 
 ### Changed
+- Demo USDC→IDR conversion rate raised from 16,000 to 18,000 (frontend env default, `.env.example`, README table) — user decision to match the current rate.
 - **English-only project** (`b9c6726`…`87eff17`): Bahasa dictionary and language toggle removed from the frontend; notifications, seed listings, AI summary (`summaryEn` only), profile locale (`en` only, migrations `20261107162300_locale_en_only`, `20261107162400_ai_check_drop_summary_id`), docs, scripts seed data and contract test fixtures translated.
 - `docs/INTERFACES.md` §5.1 extended by the backend (AiCheck fields, error envelope, decimal amounts, payment `occurredAt`, order transfer hint) and §3 by the contracts (NFT transfer only after funding, `reference` on `register_lot`, per-lot `fee_bps`, claims return `bool`, ≥ 40 Tgas).
 
