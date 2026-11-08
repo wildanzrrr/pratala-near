@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { Readable } from 'node:stream';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { KeyPair, KeyPairSigner } from 'near-api-js';
@@ -8,6 +9,24 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { AppModule } from '../src/app.module.js';
 import { configureApp } from '../src/app.setup.js';
 import { NearRpcService } from '../src/common/near/rpc.service.js';
+import {
+  STORAGE_PROVIDER,
+  type StorageProvider,
+} from '../src/evidence/storage/storage.provider.js';
+
+/** In-memory evidence store: e2e never touches Google Cloud Storage. */
+const memoryBlobs = new Map<string, { data: Buffer; mime: string }>();
+const fakeStorage: StorageProvider = {
+  driver: 'gcs',
+  async put(key, data, mime) {
+    memoryBlobs.set(key, { data, mime });
+  },
+  async get(key) {
+    const blob = memoryBlobs.get(key);
+    if (!blob) return null;
+    return { stream: Readable.from(blob.data), size: blob.data.length };
+  },
+};
 
 /**
  * NEAR RPC fake: no network. `viewAccessKey` reports FullAccess for the
@@ -73,6 +92,8 @@ describe('Pratala API (e2e)', () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(NearRpcService)
       .useValue(fakeRpc)
+      .overrideProvider(STORAGE_PROVIDER)
+      .useValue(fakeStorage)
       .compile();
     app = moduleRef.createNestApplication();
     configureApp(app);

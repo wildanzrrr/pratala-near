@@ -9,7 +9,7 @@ export interface StoredObject {
 
 /** Content-addressed blob store for evidence files. Keys are `<sha256>`. */
 export interface StorageProvider {
-  readonly driver: 'local' | 's3';
+  readonly driver: 'gcs';
   put(key: string, data: Buffer, mime: string): Promise<void>;
   get(key: string): Promise<StoredObject | null>;
 }

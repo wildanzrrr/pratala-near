@@ -1,10 +1,10 @@
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { defineConfig } from 'vitest/config';
 
 // E2E runs against the real Postgres from the root docker-compose.yml
-// (`docker compose up -d postgres && pnpm db:deploy`). NEAR RPC is replaced by
-// an in-memory fake inside the tests; 1Click and NEAR AI are never called.
+// (`docker compose up -d postgres && pnpm db:deploy`). NEAR RPC and the
+// evidence storage provider are replaced by in-memory fakes inside the
+// tests; 1Click and NEAR AI are never called. GCS_BUCKET only satisfies
+// the required env validation — no GCS request is made.
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
@@ -23,8 +23,7 @@ export default defineConfig({
       INDEXER_POLL_MS: '0',
       NEAR_AI_API_KEY: '',
       NEAR_INTENTS_BASE_URL: 'http://127.0.0.1:9/v0',
-      UPLOAD_DIR: join(tmpdir(), 'pratala-e2e-uploads'),
-      STORAGE_DRIVER: 'local',
+      GCS_BUCKET: 'pratala-e2e-fake-bucket',
       PUBLIC_API_URL: 'http://localhost:4100',
     },
   },

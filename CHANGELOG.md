@@ -37,6 +37,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 - `scripts/02-create-accounts.sh` aborted on near-cli-rs 0.31's new key-scheme prompt; now passes `--signature-scheme ed25519` (`6dd4bae`).
 
 ### Changed
+- **Evidence storage is Google Cloud Storage only** (backend): `@aws-sdk/client-s3` and the local-disk store were removed. `GCS_BUCKET` is required env (boot fails without it or when the bucket is unreachable); `GCS_KEY_FILE` optionally points at a service-account JSON, otherwise Application Default Credentials. Evidence is still served through `GET /api/evidence/:sha256` (private bucket, no public URLs). E2E tests use an in-memory storage fake; docker-compose dropped the MinIO profile and uploads volume.
 - Onboarding "Finish" is now a single "Complete registration" button that also signs the NEP-413 backend login when needed and supported; the separate "Sign in to Pratala services" card was removed. A rejected or failed signature still completes registration (profile saved locally).
 - Demo USDC→IDR conversion rate raised from 16,000 to 18,000 (frontend env default, `.env.example`, README table) — user decision to match the current rate. (`6570dfd`)
 - Site footer reduced to a single line, "Pratala · built for the NEAR Hackathon 2026"; footer nav links and the contracts/RPC/fonts/photo-credit colophon were removed.

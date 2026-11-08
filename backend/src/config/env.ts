@@ -6,11 +6,6 @@ const optionalString = z
   .optional()
   .transform((v) => (v && v.trim() ? v.trim() : undefined));
 
-const bool = z
-  .enum(['true', 'false', '1', '0', ''])
-  .optional()
-  .transform((v) => v === 'true' || v === '1');
-
 export const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
@@ -37,14 +32,9 @@ export const envSchema = z.object({
   EXPLORER_BASE: z.url().default('https://testnet.nearblocks.io'),
   FRONTEND_ORIGIN: z.string().default('http://localhost:3000'),
   PUBLIC_API_URL: z.url().default('http://localhost:4100'),
-  UPLOAD_DIR: z.string().default('./data/uploads'),
-  STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
-  S3_ENDPOINT: optionalString,
-  S3_REGION: z.string().default('us-east-1'),
-  S3_BUCKET: optionalString,
-  S3_ACCESS_KEY_ID: optionalString,
-  S3_SECRET_ACCESS_KEY: optionalString,
-  S3_FORCE_PATH_STYLE: bool,
+  // Evidence storage: Google Cloud Storage only — required, no local fallback.
+  GCS_BUCKET: z.string().min(1, 'GCS_BUCKET is required (evidence have no local fallback)'),
+  GCS_KEY_FILE: optionalString,
   NEAR_INTENTS_BASE_URL: z.url().default('https://1click.chaindefuser.com/v0'),
   NEAR_INTENTS_API_KEY: optionalString,
   NEAR_AI_API_KEY: optionalString,

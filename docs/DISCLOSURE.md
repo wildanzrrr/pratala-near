@@ -95,6 +95,7 @@ Most of the code and docs were written by AI coding agents, with the human owner
 | `openai` | 7.53.0 | OpenAI-compatible client for NEAR AI Cloud |
 | `exifr` | 7.1.3 | photo EXIF GPS/time |
 | `multer` | ^2.5.0 | multipart uploads |
+| `@google-cloud/storage` | 8.4.0 | evidence photo storage (GCS, required) |
 | `helmet` | 8.3.0 | security headers |
 | `cookie-parser` | 1.4.7 | session cookie |
 | `zod` | 4.6.7 | validation |
@@ -134,6 +135,7 @@ Most of the code and docs were written by AI coding agents, with the human owner
 | testnet.nearblocks.io | testnet | explorer links |
 | NEAR AI Cloud (`cloud-api.near.ai/v1`) | — | advisory AI evidence check, signed responses |
 | NEAR Intents 1Click (`1click.chaindefuser.com/v0`) | **mainnet**, `dry: true` quotes only | cross-chain checkout preview |
+| Google Cloud Storage (`storage.googleapis.com`) | — | evidence photo storage (required, no local fallback) |
 
 ## 7. Agent skills used during development
 

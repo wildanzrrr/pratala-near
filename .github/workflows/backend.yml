@@ -55,7 +55,8 @@ jobs:
       PUSDC_CONTRACT_ID: pusdc.pratala.testnet
       EXPLORER_BASE: https://testnet.nearblocks.io
       FRONTEND_ORIGIN: http://localhost:3000
-      UPLOAD_DIR: ./data/uploads
+      # Placeholder: unit tests never touch GCS; the bucket name only satisfies required env validation.
+      GCS_BUCKET: ci-placeholder-bucket
     steps:
       - uses: actions/checkout@v4
 

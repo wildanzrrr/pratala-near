@@ -65,7 +65,7 @@ All variables are listed with comments in [`.env.example`](.env.example) and val
 | `EXPLORER_BASE` | `https://testnet.nearblocks.io` | Explorer links (`/txns/<hash>`) |
 | `FRONTEND_ORIGIN` | `http://localhost:3000` | CORS origin(s), comma-separated, credentials on |
 | `PUBLIC_API_URL` | `http://localhost:4100` | Base for evidence URIs; `https://` makes the cookie `Secure` |
-| `STORAGE_DRIVER`, `UPLOAD_DIR`, `S3_*` | `local`, `./data/uploads` | Evidence store (local disk or S3/MinIO) |
+| `GCS_BUCKET`, `GCS_KEY_FILE` | — | **Required.** Google Cloud Storage bucket for evidence photos (no local fallback); `GCS_KEY_FILE` is an optional service-account JSON path, otherwise Application Default Credentials |
 | `NEAR_INTENTS_API_KEY`, `NEAR_INTENTS_BASE_URL` | empty, 1Click v0 | Intents proxy |
 | `NEAR_AI_API_KEY`, `NEAR_AI_BASE_URL`, `NEAR_AI_VISION_MODEL`, `NEAR_AI_FALLBACK_MODEL` | empty, `https://cloud-api.near.ai/v1`, `Qwen/Qwen3-VL-30B-A3B-Instruct`, `z-ai/glm-5.3-flash` | AI evidence check |
 | `INDEXER_POLL_MS` | `30000` | Reconcile `get_lots` into the mirror (0 = off) |
