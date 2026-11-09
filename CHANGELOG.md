@@ -4,7 +4,7 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+7 (developer machine). Hackathon deadline: **2026-11-14 23:59 UTC** (aim to submit by 18:00 UTC).
 
-## Current status — 2026-11-09 19:50
+## Current status — 2026-11-09 21:52
 
 | Area | State | Verified by |
 | --- | --- | --- |
@@ -14,7 +14,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 | Backend (`backend/`) | NestJS 12 + Prisma 7.10.1 + Postgres 16; all modules from `docs/INTERFACES.md` §5 | `pnpm test` 35/35, `pnpm test:e2e` 20/20, `docker compose up` healthy |
 | Frontend (`frontend/`) | Next.js 16.4, 18 routes, English-only UI, Hallmark custom theme, **email SSO via NEAR Auth (live-verified end-to-end on testnet: chosen-name accounts + mandatory onboarding)**, NEAR Connect + function-call keys | `pnpm lint && pnpm typecheck && pnpm build` pass; all routes 200; signup → named sponsored account → gate → onboarding verified in-browser |
 | NEAR AI evidence check | Wired to NEAR AI Cloud, `Qwen/Qwen3-VL-30B-A3B-Instruct` (private TEE tier); blocked on the account's spending limit (`no_limit_configured`) | key accepted; direct API probe 2026-11-09 returns `no_limit_configured` for every completion |
-| NEAR Intents | 1Click proxy, mainnet `dry: true` quotes; partner key configured locally | `GET /v0/tokens` 200 with key |
+| NEAR Intents | 1Click proxy, mainnet `dry: true` quotes; partner key configured locally; quote path live-verified (mainnet recipient required — testnet accounts are rejected with a clear message) | `GET /v0/tokens` 200 with key; live dry quote 360 → 359.96 USDC (Base → NEAR) |
 | Scripts / CI | `scripts/00–05`, four GitHub workflows | `bash -n`; CI not yet run (no remote) |
 | Git | `main`, one commit per unit of work, tag `v0.1.0-contracts` | — |
 
@@ -35,6 +35,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 ## [Unreleased]
 
 ### Fixed
+- **Intents checkout tab no longer fails with a bare "Internal server error"**: 1Click runs on mainnet only and answers testnet recipients — every account in this demo — with a generic 400 of exactly that text, which the API passed through verbatim, so the "Other chains" estimate could never complete. `POST /intents/quote` now rejects `*.testnet`/`*.betanet` recipients up front with an actionable message, and rewraps 1Click's generic rejection bodies into a hint that carries the provider `correlationId`. The checkout tab gains an explicit "Recipient on NEAR (mainnet)" field, prefilled with the signed-in account and flagged inline when it is a testnet id, so the dry estimate completes for any mainnet name (INTERFACES §5.1 documents the rule). Live-verified: 360 USDC (Base) → 359.96 USDC on NEAR.
 - **iPhone HEIC photos no longer upload as HEIC**: the evidence uploader now detects HEIC by magic bytes, converts it to JPEG in the browser (`heic2any`, loaded only when needed) and re-embeds the photo's GPS + capture-time EXIF into the JPEG (`piexifjs`) before hashing and uploading. Before, Chrome/Firefox showed a blank preview (only Safari decodes HEIC) and the stored evidence + AI check received HEIC bytes. Conversion failure is a hard error on the photo, never a silent HEIC upload. Verified in-browser: HEIC in → JPEG stored (`image/jpeg`, hash matches the UI fingerprint), preview decodes.
 - 5xx API responses no longer swallow the server's message: `ApiUnavailableError` keeps the body's `message` (e.g. the NEAR AI upstream error), and the verify AiPanel shows it after "AI check unavailable" instead of hiding the cause.
 - E2E env no longer inherits the developer's `backend/.env` (Vitest loads it): the sponsor wallet vars are pinned empty so the 503 `sponsor_unconfigured` paths test for real.

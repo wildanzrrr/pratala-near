@@ -5,6 +5,8 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { decimalToBaseUnits, validAddress, validateQuoteBody } from './intents.util.js';
 
 const TOKEN_CACHE_MS = 60_000;
+/** Accounts on NEAR test networks cannot receive a mainnet 1Click swap. */
+const TESTNET_ACCOUNT = /(?:^|\.)(?:testnet|betanet)$/i;
 
 export interface IntentsToken {
   assetId: string;
@@ -88,6 +90,14 @@ export class IntentsService {
     if ('error' in validated) throw new BadRequestException(validated.error);
     const body = validated.body;
 
+    // 1Click is mainnet-only: a testnet recipient makes it answer a bare
+    // "Internal server error" 400. Fail fast with something actionable.
+    if (TESTNET_ACCOUNT.test(body.recipient)) {
+      throw new BadRequestException(
+        `1Click runs on NEAR mainnet only — "${body.recipient}" is a testnet account. Enter a mainnet NEAR recipient (for example name.near).`,
+      );
+    }
+
     const tokens = await this.tokens();
     const origin = tokens.find((token) => token.assetId === body.originAsset);
     const destination = tokens.find((token) => token.assetId === body.destinationAsset);
@@ -124,7 +134,15 @@ export class IntentsService {
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      const message = typeof data?.message === 'string' ? data.message : 'Quote request was rejected by NEAR Intents';
+      // 1Click answers some rejections (unknown recipient, bad route) with a
+      // bare "Internal server error" body. Keep its correlation ref but say
+      // what to check instead of passing that noise through.
+      const providerMessage = typeof data?.message === 'string' ? data.message : '';
+      const ref = typeof data?.correlationId === 'string' ? ` (ref ${data.correlationId})` : '';
+      const message =
+        providerMessage && providerMessage !== 'Internal server error'
+          ? providerMessage
+          : `NEAR Intents rejected the quote${ref}: check that the recipient is a mainnet NEAR account and the refund address is valid on the origin chain.`;
       throw upstreamError(response.status >= 500 ? 502 : 400, message, response.status);
     }
 

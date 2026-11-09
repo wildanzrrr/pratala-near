@@ -6,13 +6,12 @@ import { ArrowsLeftRight, Info } from "@phosphor-icons/react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { ApiOfflineBanner } from "@/components/common/api-offline-banner";
-import { env } from "@/lib/env";
 import { isApiUnavailable } from "@/lib/api";
 import { usdcToDecimal } from "@/lib/near/format";
 import { useIntentsQuote } from "@/hooks/queries/use-intents-quote";
@@ -28,6 +27,9 @@ const CHAIN_LABEL: Record<string, string> = {
   stellar: "Stellar", xrp: "XRP Ledger", doge: "Dogecoin", zec: "Zcash", ltc: "Litecoin", gnosis: "Gnosis",
 };
 
+/** Mirror of the backend rule: 1Click swaps only on mainnet, so testnet accounts cannot receive. */
+const TESTNET_ACCOUNT = /(?:^|\.)(?:testnet|betanet)$/i;
+
 /**
  * "Pay from another chain": a real NEAR Intents 1Click quote (mainnet, dry:true)
  * through the backend proxy. Honest banner: demo contracts are on testnet, so
@@ -40,6 +42,10 @@ export function IntentsTab({ lot }: { lot: LotView }) {
   const [chain, setChain] = useState("base");
   const [assetId, setAssetId] = useState("");
   const [amount, setAmount] = useState(usdcToDecimal(lot.funding_total));
+  // Prefilled with the signed-in account (a testnet id) so the mainnet-only
+  // constraint is visible immediately; the buyer swaps in any mainnet name.
+  const [recipientText, setRecipientText] = useState<string | null>(null);
+  const recipient = recipientText ?? signedAccountId ?? "";
   const [refundTo, setRefundTo] = useState("");
   const [request, setRequest] = useState<IntentsQuoteRequest | null>(null);
   const quote = useIntentsQuote(request);
@@ -55,7 +61,10 @@ export function IntentsTab({ lot }: { lot: LotView }) {
   const destination = useMemo(() => (tokens.data ?? []).find((tk) => tk.blockchain === "near" && tk.symbol === "USDC"), [tokens.data]);
   const origin = chainTokens.find((tk) => tk.assetId === assetId) ?? chainTokens.find((tk) => tk.symbol === "USDC") ?? chainTokens[0];
 
-  const ready = Boolean(origin && destination && Number(amount.replace(",", ".")) > 0 && refundTo.trim().length >= 8);
+  const recipientOk = recipient.trim().length >= 2 && !TESTNET_ACCOUNT.test(recipient.trim());
+  const ready = Boolean(
+    origin && destination && Number(amount.replace(",", ".")) > 0 && refundTo.trim().length >= 8 && recipientOk,
+  );
   const q = quote.data?.quote?.quote;
 
   return (
@@ -86,7 +95,7 @@ export function IntentsTab({ lot }: { lot: LotView }) {
               originAsset: origin.assetId,
               destinationAsset: destination.assetId,
               amount: amount.replace(",", "."),
-              recipient: signedAccountId || env.lotsContractId,
+              recipient: recipient.trim(),
               refundTo: refundTo.trim(),
               slippageTolerance: 100,
               dry: true,
@@ -137,6 +146,24 @@ export function IntentsTab({ lot }: { lot: LotView }) {
             <Field>
               <FieldLabel htmlFor="intents-amount">{t("checkout.amount")}</FieldLabel>
               <Input id="intents-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} className="tnum font-mono" />
+            </Field>
+            <Field data-invalid={!recipientOk && recipient.trim() !== "" ? true : undefined}>
+              <FieldLabel htmlFor="intents-recipient">{t("checkout.recipient")}</FieldLabel>
+              <Input
+                id="intents-recipient"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={recipient}
+                onChange={(e) => setRecipientText(e.target.value)}
+                placeholder="name.near"
+                className="font-mono"
+                aria-invalid={!recipientOk && recipient.trim() !== "" ? true : undefined}
+              />
+              {!recipientOk && recipient.trim() !== "" ? (
+                <FieldError>{t("checkout.recipientTestnet")}</FieldError>
+              ) : (
+                <FieldDescription>{t("checkout.recipientHint")}</FieldDescription>
+              )}
             </Field>
             <Field>
               <FieldLabel htmlFor="intents-refund">{t("checkout.refundTo")}</FieldLabel>

@@ -299,6 +299,15 @@ describe('Pratala API (e2e)', () => {
       const res = await request(server).post('/api/intents/quote').send(body).expect(400);
       expect(res.body.error).toBe(error);
     });
+
+    it('400 with a mainnet hint for a testnet recipient (1Click is mainnet-only)', async () => {
+      const res = await request(server)
+        .post('/api/intents/quote')
+        .send({ ...ok, recipient: 'buyer.sponsor.pratala.testnet' })
+        .expect(400);
+      expect(res.body.error).toContain('1Click runs on NEAR mainnet only');
+      expect(res.body.error).toContain('buyer.sponsor.pratala.testnet');
+    });
   });
 
   describe('chain-backed endpoints degrade without a contract', () => {
