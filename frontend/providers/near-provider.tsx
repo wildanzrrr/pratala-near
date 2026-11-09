@@ -1,25 +1,45 @@
 "use client";
 
 /**
- * NEAR wallet provider.
+ * NEAR wallet provider — two sign-in paths behind one surface.
  *
- * One NearConnector (@hot-labs/near-connect 0.12) per app load, with the
- * function-call-key-plugin 2.2 registered for the lots contract: at sign-in the
- * wallet adds a limited key for FC_METHODS (0.25 NEAR allowance), after which
- * zero-deposit calls to those methods sign locally — no popup. Everything else
- * falls through to the wallet.
+ * Wallet path: one NearConnector (@hot-labs/near-connect 0.12) per app load,
+ * with the function-call-key-plugin 2.2 registered for the lots contract: at
+ * sign-in the wallet adds a limited key for FC_METHODS (0.25 NEAR allowance),
+ * after which zero-deposit calls to those methods sign locally — no popup.
  *
- * The context mirrors near-connect-hooks' `useNearWallet` surface
- * (signedAccountId, loading, signIn/connect, signOut, signAndSendTransaction(s),
- * signMessage) so the near-dapp skill's patterns apply, and adds `wallets` for
- * our own connect sheet.
+ * SSO path (email/Google via NEAR Auth, docs/WALLETS.md §1): login creates no
+ * key material locally — the Auth0 identity owns an MPC key on
+ * v1.signer-prod.testnet. Fresh accounts are created and gas-seeded by the
+ * backend sponsor; deposit transactions pop the Auth0 confirm window once
+ * (MPC-signed via the fast-auth contract), everything FC-eligible signs
+ * locally once the quick-signing key is added. The context mirrors
+ * near-connect-hooks' `useNearWallet` surface so the near-dapp skill's
+ * patterns apply, and adds `wallets` for our own connect sheet.
  */
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useRouter } from "next/navigation";
 import { NearConnector } from "@hot-labs/near-connect";
 import { createAccessKeyPlugin } from "function-call-key-plugin";
 
 import { env } from "@/lib/env";
+import {
+  beginSsoLogin,
+  completeSsoLogin,
+  ssoHandleRedirect,
+  ssoAccountIdFor,
+  ssoDerivedPublicKey,
+  ssoIsLoggedIn,
+  ssoLogout,
+} from "@/lib/fastauth/client";
+import {
+  clearSsoFcKey,
+  ensureSsoFcKey,
+  loadSsoFcKeyPair,
+  signSsoSilent,
+  signSsoTransaction,
+} from "@/lib/fastauth/signer";
 import { FC_KEY_ALLOWANCE, FC_METHODS } from "@/lib/near/contracts";
 
 import type { NearWalletBase, SignedMessage, WalletManifest } from "@hot-labs/near-connect";
@@ -36,10 +56,14 @@ export interface WalletOption {
   signMessage: boolean;
 }
 
+export type AuthKind = "wallet" | "sso";
+
 export interface NearContextValue {
   network: "testnet" | "mainnet";
   /** "" while signed out — same contract as near-connect-hooks */
   signedAccountId: string;
+  /** which sign-in path is active: an external wallet or the email SSO account */
+  authKind: AuthKind | null;
   walletId: string | null;
   loading: boolean;
   wallets: WalletOption[];
@@ -47,6 +71,8 @@ export interface NearContextValue {
   /** true when a local function-call key for the lots contract exists */
   hasFunctionCallKey: boolean;
   connect: (walletId?: string) => Promise<string>;
+  /** Email/Google SSO — creates + funds the account on first use. */
+  connectEmail: () => Promise<void>;
   signOut: () => Promise<void>;
   signAndSendTransaction: (tx: TxRequest) => Promise<unknown>;
   signAndSendTransactions: (txs: TxRequest[]) => Promise<unknown[]>;
@@ -57,6 +83,9 @@ export interface NearContextValue {
 const NearContext = createContext<NearContextValue | null>(null);
 
 const fcStorageKey = (accountId: string) => `access_key::plugin::${env.network}::${accountId}`;
+const authKindStorageKey = `pratala:authkind:${env.network}`;
+/** Set before the login redirect when the user has no profile yet (→ /onboarding after). */
+const onboardingFlagKey = "pratala:sso:new-user";
 
 function readFcKey(accountId: string): boolean {
   if (!accountId || typeof localStorage === "undefined") return false;
@@ -78,7 +107,14 @@ function toOption(manifest: WalletManifest, network: "testnet" | "mainnet"): Wal
   };
 }
 
+/** SSO session state: the account id plus the MPC key that owns it. */
+interface SsoSession {
+  accountId: string;
+  mpcPublicKey: string;
+}
+
 export function NearProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const connectorRef = useRef<NearConnector | null>(null);
   const readyRef = useRef<Promise<void> | null>(null);
   const [wallet, setWallet] = useState<NearWalletBase | null>(null);
@@ -87,6 +123,8 @@ export function NearProvider({ children }: { children: ReactNode }) {
   const [wallets, setWallets] = useState<WalletOption[]>([]);
   const [walletsReady, setWalletsReady] = useState(false);
   const [fcVersion, setFcVersion] = useState(0);
+  const [sso, setSso] = useState<SsoSession | null>(null);
+  const [ssoOnboardingRoute, setSsoOnboardingRoute] = useState(false);
 
   useEffect(() => {
     const providers = { [env.network]: [env.rpcUrl] };
@@ -102,6 +140,7 @@ export function NearProvider({ children }: { children: ReactNode }) {
     const refreshWallets = () => setWallets(connector.wallets.map((w) => toOption(w.manifest, env.network)));
 
     const onSignIn = async (payload: { wallet: NearWalletBase; accounts: { accountId: string }[] }) => {
+      setSso(null);
       setWallet(payload.wallet);
       setSignedAccountId(payload.accounts[0]?.accountId ?? "");
       setFcVersion((v) => v + 1);
@@ -116,6 +155,47 @@ export function NearProvider({ children }: { children: ReactNode }) {
     connector.on("wallet:signOut", onSignOut);
     connector.on("selector:walletsChanged", refreshWallets);
 
+    /**
+     * SSO session restore, also the landing path of the redirect login: when
+     * the browser returns from the login window with ?code&state, the SDK's
+     * isLoggedIn() consumes them and completeSsoLogin() finishes the flow
+     * (create + gas-seed the account on first use, set the backend session —
+     * idempotent on later loads). Returns true when signed in.
+     */
+    const restoreSso = async (lastKindKnown: boolean, cancelledRef: boolean, walletConnected: boolean): Promise<boolean> => {
+      const returningFromLogin = typeof location !== "undefined" && /[?&]code=/.test(location.search);
+      // Also self-heal a half-finished first login: when no wallet is
+      // connected, an existing Auth0 session is worth restoring even without
+      // the flag or a fresh code.
+      if (walletConnected && !lastKindKnown && !returningFromLogin) return false;
+      try {
+        if (returningFromLogin) await ssoHandleRedirect();
+        if (!(await ssoIsLoggedIn())) return false;
+        const mpcPublicKey = await ssoDerivedPublicKey();
+        const accountId = await ssoAccountIdFor(mpcPublicKey);
+        if (cancelledRef) return true;
+        setSso({ accountId, mpcPublicKey });
+        setSignedAccountId(accountId);
+        if (returningFromLogin || !lastKindKnown) {
+          // Finish (or re-confirm) account creation, funding and the backend
+          // session; clean the OAuth query params off the URL.
+          void completeSsoLogin()
+            .then(() => {
+              if (returningFromLogin) history.replaceState(null, "", location.pathname);
+              const flag = localStorage.getItem(onboardingFlagKey);
+              if (flag) {
+                localStorage.removeItem(onboardingFlagKey);
+                setSsoOnboardingRoute(true);
+              }
+            })
+            .catch((error: unknown) => console.warn("[pratala] sso completion failed", error));
+        }
+        return true;
+      } catch {
+        return false; // Auth0 session expired — stay signed out.
+      }
+    };
+
     let cancelled = false;
     readyRef.current = (async () => {
       await connector.use(plugin);
@@ -124,12 +204,23 @@ export function NearProvider({ children }: { children: ReactNode }) {
       setWalletsReady(true);
       const connected = await connector.getConnectedWallet().catch(() => null);
       if (cancelled) return;
-      if (connected) {
+      // Restore whichever path was used last: an external wallet, or the
+      // email SSO session (Auth0 silent refresh, no popup).
+      const lastKind = (() => {
+        try {
+          return localStorage.getItem(authKindStorageKey) as AuthKind | null;
+        } catch {
+          return null;
+        }
+      })();
+      if (connected && lastKind !== "sso") {
         setWallet(connected.wallet);
         setSignedAccountId(connected.accounts[0]?.accountId ?? "");
+      } else if (await restoreSso(lastKind === "sso", cancelled, Boolean(connected))) {
+        // restoreSso set the state itself.
       }
     })()
-      .catch((error) => console.warn("[pratala] wallet init failed", error))
+      .catch((error: unknown) => console.warn("[pratala] wallet init failed", error))
       .finally(() => !cancelled && setLoading(false));
 
     return () => {
@@ -147,19 +238,53 @@ export function NearProvider({ children }: { children: ReactNode }) {
     const connected = await connector.connect(walletId ? { walletId } : {});
     const accounts = await connected.getAccounts();
     const accountId = accounts[0]?.accountId ?? "";
+    setSso(null);
     setWallet(connected);
     setSignedAccountId(accountId);
     setFcVersion((v) => v + 1);
+    try {
+      localStorage.setItem(authKindStorageKey, "wallet");
+    } catch {
+      // private mode
+    }
     return accountId;
   }, []);
 
+  /**
+   * Email SSO entry point: redirects the page to the login window (no popups
+   * to block). /auth/callback finishes the flow — creating and gas-seeding
+   * the account through the backend sponsor on first use — and the provider
+   * restores the session on the next load.
+   */
+  const connectEmail = useCallback(async () => {
+    try {
+      // Remember brand-new users so the login return routes to onboarding.
+      if (!signedAccountId) localStorage.setItem(onboardingFlagKey, "1");
+    } catch {
+      // private mode — the flag is best-effort routing only
+    }
+    await beginSsoLogin();
+  }, [signedAccountId]);
+
   const signOut = useCallback(async () => {
+    if (sso) {
+      clearSsoFcKey(sso.accountId);
+      await ssoLogout();
+      setSso(null);
+      setSignedAccountId("");
+      try {
+        localStorage.removeItem(authKindStorageKey);
+      } catch {
+        // private mode
+      }
+      return;
+    }
     const connector = connectorRef.current;
     if (!connector) return;
     await connector.disconnect(wallet ?? undefined).catch(() => undefined);
     setWallet(null);
     setSignedAccountId("");
-  }, [wallet]);
+  }, [sso, wallet]);
 
   const activeWallet = useCallback(async () => {
     const connector = connectorRef.current;
@@ -170,66 +295,100 @@ export function NearProvider({ children }: { children: ReactNode }) {
 
   const signAndSendTransaction = useCallback(
     async (tx: TxRequest) => {
+      if (sso) {
+        if (tx.silent && !loadSsoFcKeyPair(sso.accountId)) {
+          // First silent-eligible action on this device: add the quick-signing
+          // key through one MPC confirmation, inside the user's click.
+          try {
+            await ensureSsoFcKey(sso.accountId, sso.mpcPublicKey);
+            setFcVersion((v) => v + 1);
+          } catch {
+            // popup blocked or declined — fall through to the MPC path
+          }
+        }
+        if (tx.silent && loadSsoFcKeyPair(sso.accountId)) {
+          return signSsoSilent(sso.accountId, tx);
+        }
+        return signSsoTransaction(sso.accountId, sso.mpcPublicKey, tx);
+      }
       const w = await activeWallet();
       return w.signAndSendTransaction({ receiverId: tx.receiverId, actions: tx.actions, signerId: signedAccountId || undefined });
     },
-    [activeWallet, signedAccountId],
+    [activeWallet, signedAccountId, sso],
   );
 
   const signAndSendTransactions = useCallback(
     async (txs: TxRequest[]) => {
+      if (sso) {
+        const outcomes: unknown[] = [];
+        for (const tx of txs) outcomes.push(await signAndSendTransaction(tx));
+        return outcomes;
+      }
       const w = await activeWallet();
       return w.signAndSendTransactions({
         transactions: txs.map((t) => ({ receiverId: t.receiverId, actions: t.actions })),
         signerId: signedAccountId || undefined,
       });
     },
-    [activeWallet, signedAccountId],
+    [activeWallet, signedAccountId, sso, signAndSendTransaction],
   );
 
   const signMessage = useCallback(
     async (params: { message: string; recipient: string; nonce: Uint8Array }) => {
+      if (sso) throw new Error("Message signing is not available for email accounts");
       const w = await activeWallet();
       return w.signMessage({ ...params, network: env.network, signerId: signedAccountId || undefined });
     },
-    [activeWallet, signedAccountId],
+    [activeWallet, signedAccountId, sso],
   );
 
+  // Route a brand-new SSO user into onboarding once their account is ready.
+  useEffect(() => {
+    if (ssoOnboardingRoute) router.replace("/onboarding");
+  }, [ssoOnboardingRoute, router]);
+
   const walletId = wallet?.manifest.id ?? null;
+  const authKind: AuthKind | null = sso ? "sso" : signedAccountId ? "wallet" : null;
   // fcVersion invalidates the localStorage read after sign-in / sign-out.
   const hasFunctionCallKey = useMemo(() => {
     void fcVersion;
+    if (sso) return loadSsoFcKeyPair(sso.accountId) !== null;
     return readFcKey(signedAccountId);
-  }, [signedAccountId, fcVersion]);
+  }, [signedAccountId, fcVersion, sso]);
 
   const value = useMemo<NearContextValue>(
     () => ({
       network: env.network,
       signedAccountId,
+      authKind,
       walletId,
       loading,
       wallets,
       walletsReady,
       hasFunctionCallKey,
       connect,
+      connectEmail,
       signOut,
       signAndSendTransaction,
       signAndSendTransactions,
       signMessage,
-      supportsSignMessage: wallet?.manifest.features?.signMessage !== false,
+      supportsSignMessage: sso ? false : wallet?.manifest.features?.signMessage !== false,
     }),
     [
       signedAccountId,
+      authKind,
       walletId,
       loading,
       wallets,
       walletsReady,
       hasFunctionCallKey,
       connect,
+      connectEmail,
       signOut,
       signAndSendTransaction,
       signAndSendTransactions,
       signMessage,
+      sso,
       wallet,
     ],
   );

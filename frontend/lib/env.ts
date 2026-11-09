@@ -17,6 +17,12 @@ const schema = z.object({
   demoIdrRate: z.coerce.number().positive(),
   siteUrl: z.url(),
   demoFixtures: z.boolean(),
+  fastauthClientId: z.string().min(10),
+  fastauthContractId: z.string().min(2),
+  fastauthMpcContractId: z.string().min(2),
+  fastauthDomain: z.string().min(4),
+  fastauthApiAudience: z.string().min(4),
+  ssoAccountRoot: z.string().min(2),
 });
 
 export type PublicEnv = z.infer<typeof schema>;
@@ -32,6 +38,15 @@ const raw = {
   demoIdrRate: process.env.NEXT_PUBLIC_DEMO_IDR_RATE ?? "18000",
   siteUrl: (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, ""),
   demoFixtures: process.env.NEXT_PUBLIC_DEMO_FIXTURES === "1",
+  // NEAR Auth email SSO (docs.auth.near.org) — shared testnet deployment by default.
+  fastauthClientId: process.env.NEXT_PUBLIC_FASTAUTH_CLIENT_ID ?? "np8paqIpMWmNbzT4xAvOOapZBjsOpptl",
+  fastauthContractId: process.env.NEXT_PUBLIC_FASTAUTH_CONTRACT_ID ?? "fast-auth.testnet",
+  fastauthMpcContractId: process.env.NEXT_PUBLIC_FASTAUTH_MPC_CONTRACT_ID ?? "v1.signer-prod.testnet",
+  fastauthDomain: process.env.NEXT_PUBLIC_FASTAUTH_AUTH0_DOMAIN ?? "login.testnet.fast-auth.com",
+  fastauthApiAudience: process.env.NEXT_PUBLIC_FASTAUTH_API_AUDIENCE ?? "https://api.testnet.fast-auth.com",
+  // NEAR testnet rule: CreateAccount only works for the signer's own subaccounts,
+  // so SSO ids live under the sponsor wallet itself.
+  ssoAccountRoot: process.env.NEXT_PUBLIC_SSO_ACCOUNT_ROOT ?? "sponsor.pratala.testnet",
 };
 
 const parsed = schema.safeParse(raw);
@@ -53,4 +68,10 @@ export const env: PublicEnv = parsed.success
       demoIdrRate: 18000,
       siteUrl: "http://localhost:3000",
       demoFixtures: raw.demoFixtures,
+      fastauthClientId: raw.fastauthClientId,
+      fastauthContractId: raw.fastauthContractId,
+      fastauthMpcContractId: raw.fastauthMpcContractId,
+      fastauthDomain: raw.fastauthDomain,
+      fastauthApiAudience: raw.fastauthApiAudience,
+      ssoAccountRoot: raw.ssoAccountRoot,
     };

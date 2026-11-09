@@ -104,6 +104,14 @@ export const api = {
   logout: () => apiFetch<void>("/auth/logout", { method: "POST" }),
   me: () => apiFetch<Me>("/auth/me"),
 
+  /* auth + accounts for NEAR Auth email SSO */
+  fastauthCreateAccount: (body: { accountId: string; publicKey: string; token: string }) =>
+    apiFetch<{ accountId: string; txHash: string; seedNear: string }>("/fastauth/create-account", { method: "POST", body: json(body) }),
+  fastauthSignTx: (body: { guard_id: string; verify_payload: string; sign_payload: string | number[]; algorithm?: string }) =>
+    apiFetch<{ hash: string; result: { status?: { SuccessValue?: string; Failure?: unknown } } }>("/fastauth/sign-tx", { method: "POST", body: json(body) }),
+  verifySso: (body: { accountId: string; publicKey: string; token: string }) =>
+    apiFetch<{ accountId: string }>("/auth/verify-sso", { method: "POST", body: json(body) }),
+
   /* profiles */
   myProfile: () => apiFetch<Profile>("/users/me"),
   saveProfile: (profile: Profile) => apiFetch<Profile>("/users/me", { method: "PUT", body: json(profile) }),

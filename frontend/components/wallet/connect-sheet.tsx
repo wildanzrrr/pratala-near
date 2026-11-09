@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { ArrowRight, Info, ShieldCheck, Warning } from "@phosphor-icons/react";
+import { ArrowRight, EnvelopeSimple, Info, ShieldCheck, Warning } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 import {
@@ -34,14 +34,15 @@ const RECOMMENDED = [
 ] as const;
 
 /**
- * The one connect surface. HOT Wallet (MPC) and Meteor first, in plain words;
- * every other NEAR Connect wallet below. Bottom drawer on phones.
+ * The one connect surface. Email/Google SSO is the hero — the account, the key
+ * and the network costs are all handled for the user (docs/WALLETS.md §1).
+ * Existing NEAR wallets stay one tap away in a collapsed section.
  */
 export function ConnectSheet() {
   const open = useConnectSheetOpen();
   const t = useT();
   const router = useRouter();
-  const { connect, wallets, walletsReady } = useNear();
+  const { connect, connectEmail, wallets, walletsReady } = useNear();
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,17 +52,40 @@ export function ConnectSheet() {
   const available = others.filter((w) => w.supportsNetwork);
   const unavailable = others.filter((w) => !w.supportsNetwork);
 
+  async function finish(accountId: string) {
+    toast.success(t("wallet.signedIn", { account: accountId }));
+    if (accountId && !loadLocalProfile(accountId) && window.location.pathname === "/") router.push("/onboarding");
+  }
+
+  // The login window (Auth0/NEAR Connect) must not open behind our sheet: it is a
+  // modal dialog that sets `pointer-events: none` on <body> and traps focus — so
+  // close it before handing off, and reopen only on failure.
+  async function chooseEmail() {
+    setError(null);
+    setPending("email");
+    setConnectSheetOpen(false);
+    try {
+      // The page redirects to the login window; /auth/callback finishes the
+      // sign-in (account creation, funding, backend session) and routes on.
+      await connectEmail();
+    } catch (e) {
+      const err = classifyTxError(e);
+      if (!(err instanceof WalletRejectedError)) {
+        setError(err.message);
+        setConnectSheetOpen(true);
+      }
+    } finally {
+      setPending(null);
+    }
+  }
+
   async function choose(walletId: string) {
     setError(null);
     setPending(walletId);
-    // NEAR Connect renders the wallet's own modal (e.g. Meteor Connect). Our sheet is a modal
-    // dialog that sets `pointer-events: none` on <body> and traps focus, which would make the
-    // wallet's buttons unclickable — so close it before handing off, and reopen only on failure.
     setConnectSheetOpen(false);
     try {
       const accountId = await connect(walletId);
-      toast.success(t("wallet.signedIn", { account: accountId }));
-      if (accountId && !loadLocalProfile(accountId) && window.location.pathname === "/") router.push("/onboarding");
+      await finish(accountId);
     } catch (e) {
       const err = classifyTxError(e);
       if (!(err instanceof WalletRejectedError)) {
@@ -88,76 +112,110 @@ export function ConnectSheet() {
         </ResponsiveDialogHeader>
 
         <div className="flex flex-col gap-5 py-2">
-          <section aria-labelledby="wallets-recommended" className="flex flex-col gap-2">
-            <h3 id="wallets-recommended" className="font-sans text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              {t("wallet.recommended")}
-            </h3>
-            <ul className="flex flex-col gap-2">
-              {RECOMMENDED.map((r) => {
-                const manifest = byId.get(r.id);
-                const testnetGap = walletsReady && manifest ? !manifest.supportsNetwork : false;
-                return (
-                  <li key={r.id}>
-                    <WalletRow
-                      icon={manifest?.icon}
-                      name={t(r.name)}
-                      description={t(r.desc)}
-                      badge={t(r.badge)}
-                      note={testnetGap && r.id === "hot-wallet" ? t("wallet.hotTestnetNote") : null}
-                      emphasis
-                      pending={pending === r.id}
-                      disabled={Boolean(pending) && pending !== r.id}
-                      loading={!walletsReady}
-                      onSelect={() => choose(r.id)}
-                    />
-                  </li>
-                );
-              })}
-            </ul>
+          <section aria-labelledby="wallets-email" className="flex flex-col gap-2">
+            <h3 id="wallets-email" className="sr-only">{t("wallet.emailTitle")}</h3>
+            <button
+              type="button"
+              onClick={chooseEmail}
+              disabled={Boolean(pending)}
+              aria-busy={pending === "email"}
+              className={cn(
+                "flex w-full items-start gap-3 rounded-md border-2 border-primary bg-accent/70 p-4 text-left",
+                "transition-[border-color,background-color,transform] duration-(--pt-dur-short) ease-(--pt-ease-out)",
+                "hover:bg-accent active:translate-y-px disabled:opacity-60",
+              )}
+            >
+              <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+                {pending === "email" ? <Spinner className="text-primary-foreground" /> : <EnvelopeSimple className="size-5" weight="bold" />}
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{t("wallet.emailTitle")}</span>
+                  <Badge variant="lime">{t("wallet.emailBadge")}</Badge>
+                </span>
+                <span className="text-sm text-muted-foreground">{t("wallet.emailDesc")}</span>
+              </span>
+            </button>
           </section>
 
           {error ? (
             <Alert variant="destructive">
               <Warning />
               <AlertTitle>{t("wallet.failed")}</AlertTitle>
-              <AlertDescription>{t("wallet.failedHint")}</AlertDescription>
+              <AlertDescription>{error ?? t("wallet.failedHint")}</AlertDescription>
             </Alert>
           ) : null}
 
-          <Separator />
+          <details className="group">
+            <summary className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <ArrowRight aria-hidden className="size-4 shrink-0 transition-transform group-open:rotate-90" />
+              {t("wallet.existingWallets")}
+            </summary>
+            <div className="flex flex-col gap-5 pt-3">
+              <section aria-labelledby="wallets-recommended" className="flex flex-col gap-2">
+                <h3 id="wallets-recommended" className="font-sans text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  {t("wallet.recommended")}
+                </h3>
+                <ul className="flex flex-col gap-2">
+                  {RECOMMENDED.map((r) => {
+                    const manifest = byId.get(r.id);
+                    const testnetGap = walletsReady && manifest ? !manifest.supportsNetwork : false;
+                    return (
+                      <li key={r.id}>
+                        <WalletRow
+                          icon={manifest?.icon}
+                          name={t(r.name)}
+                          description={t(r.desc)}
+                          badge={t(r.badge)}
+                          note={testnetGap && r.id === "hot-wallet" ? t("wallet.hotTestnetNote") : null}
+                          emphasis
+                          pending={pending === r.id}
+                          disabled={Boolean(pending) && pending !== r.id}
+                          loading={!walletsReady}
+                          onSelect={() => choose(r.id)}
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
 
-          <section aria-labelledby="wallets-others" className="flex flex-col gap-2">
-            <h3 id="wallets-others" className="font-sans text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              {t("wallet.others")}
-            </h3>
-            {!walletsReady ? (
-              <div className="flex flex-col gap-2" aria-label={t("wallet.loadingWallets")}>
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-            ) : (
-              <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                {available.map((w) => (
-                  <li key={w.id}>
-                    <CompactWalletRow
-                      wallet={w}
-                      pending={pending === w.id}
-                      disabled={Boolean(pending) && pending !== w.id}
-                      onSelect={() => choose(w.id)}
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-            {walletsReady && unavailable.length > 0 ? (
-              <details className="group text-sm">
-                <summary className="cursor-pointer py-2 text-muted-foreground transition-colors hover:text-foreground">
-                  {t("wallet.mainnetOnly")} · {unavailable.length}
-                </summary>
-                <p className="pb-2 text-muted-foreground">{unavailable.map((w) => w.name).join(" · ")}</p>
-              </details>
-            ) : null}
-          </section>
+              <Separator />
+
+              <section aria-labelledby="wallets-others" className="flex flex-col gap-2">
+                <h3 id="wallets-others" className="font-sans text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  {t("wallet.others")}
+                </h3>
+                {!walletsReady ? (
+                  <div className="flex flex-col gap-2" aria-label={t("wallet.loadingWallets")}>
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : (
+                  <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                    {available.map((w) => (
+                      <li key={w.id}>
+                        <CompactWalletRow
+                          wallet={w}
+                          pending={pending === w.id}
+                          disabled={Boolean(pending) && pending !== w.id}
+                          onSelect={() => choose(w.id)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {walletsReady && unavailable.length > 0 ? (
+                  <details className="group text-sm">
+                    <summary className="cursor-pointer py-2 text-muted-foreground transition-colors hover:text-foreground">
+                      {t("wallet.mainnetOnly")} · {unavailable.length}
+                    </summary>
+                    <p className="pb-2 text-muted-foreground">{unavailable.map((w) => w.name).join(" · ")}</p>
+                  </details>
+                ) : null}
+              </section>
+            </div>
+          </details>
 
           <p className="flex gap-2 rounded-md bg-sunken p-3 text-sm text-ink-2">
             <ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
