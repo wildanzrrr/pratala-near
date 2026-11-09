@@ -16,7 +16,7 @@
 import { Auth0Client } from "@auth0/auth0-spa-js";
 import { JavascriptProvider } from "@fast-auth-near/javascript-provider";
 
-import { api } from "@/lib/api";
+import { api, ApiUnavailableError } from "@/lib/api";
 import { env } from "@/lib/env";
 import { rpc } from "@/lib/near/contracts";
 
@@ -50,8 +50,8 @@ export function auth0Client(): Auth0Client {
 /**
  * Redirect-based login: robust against every popup blocker (the login window
  * is the page itself). The browser returns to the app origin with ?code&state,
- * and the wallet provider's boot restore finishes the flow via
- * `completeSsoLogin()` (the shared testnet client allows the bare origin).
+ * and the wallet provider's boot restore finishes the flow (the shared testnet
+ * client allows the bare origin).
  */
 export async function beginSsoLogin(): Promise<void> {
   // Plain login asks for the tenant's default audience: the shared client only
@@ -120,11 +120,11 @@ export async function ssoDerivedPublicKey(): Promise<string> {
 }
 
 /**
- * Stable account id for a derived key: u + 10 hex of sha256(publicKey) under
- * the platform root, so the same login resolves to the same account on every
- * device. The sponsor wallet creates it on first sign-in.
+ * Legacy fallback account id (u + 10 hex of sha256(publicKey)) for accounts
+ * created before users chose their own names. Only consulted when the API is
+ * unreachable, so a returning user can still be recognised offline.
  */
-export async function ssoAccountIdFor(publicKey: string): Promise<string> {
+export async function ssoFallbackAccountId(publicKey: string): Promise<string> {
   const digest = new TextEncoder().encode(publicKey);
   const hash = await crypto.subtle.digest("SHA-256", digest);
   const hex = Array.from(new Uint8Array(hash))
@@ -140,7 +140,48 @@ export async function accountExistsOnChain(accountId: string): Promise<boolean> 
     .catch(() => false);
 }
 
-/** Ask the sponsor wallet to create + fund the account (once per login). */
+/** The full account id for a user-chosen label, e.g. `siti` → `siti.<sponsor>`. */
+export function ssoAccountIdForLabel(label: string): string {
+  return `${label}.${env.ssoAccountRoot}`;
+}
+
+/** Valid labels: 2–32 chars, lowercase letters/digits/-/_ , no leading/trailing -. */
+export const SSO_LABEL_PATTERN = /^[a-z0-9][a-z0-9_-]{0,30}[a-z0-9]$/;
+
+/** Login's email local part (sanitised) as a name suggestion, when known. */
+export async function ssoEmailSuggestion(): Promise<string | null> {
+  try {
+    const claims = await auth0Client().getIdTokenClaims();
+    const email = claims?.email;
+    if (typeof email !== "string" || !email.includes("@")) return null;
+    const local = email.split("@")[0].toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    return SSO_LABEL_PATTERN.test(local) ? local : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The login's identity: its MPC public key plus the account it already owns
+ * (null on first visit — the user hasn't chosen a name yet). When the API is
+ * unreachable, falls back to recognising a legacy auto-named account on-chain
+ * so a returning user is not asked to name a second account.
+ */
+export async function getSsoIdentity(): Promise<{ publicKey: string; accountId: string | null }> {
+  const publicKey = await ssoDerivedPublicKey();
+  try {
+    const token = await ssoToken();
+    return await api.fastauthResolveAccount({ token });
+  } catch (error) {
+    if (error instanceof ApiUnavailableError) {
+      const fallback = await ssoFallbackAccountId(publicKey);
+      if (await accountExistsOnChain(fallback)) return { publicKey, accountId: fallback };
+    }
+    throw error;
+  }
+}
+
+/** Ask the sponsor wallet to create + fund the chosen account (once per login). */
 export async function sponsorCreateAccount(accountId: string, publicKey: string): Promise<string> {
   const token = await ssoToken();
   const res = await api.fastauthCreateAccount({ accountId, publicKey, token });
@@ -153,28 +194,11 @@ export async function verifySsoSession(accountId: string, publicKey: string): Pr
   await api.verifySso({ accountId, publicKey, token });
 }
 
-/**
- * Finishes the redirect login on /auth/callback: consume ?code&state (through
- * the provider's session check), derive the MPC key, create + gas-seed the
- * account through the backend sponsor on first use, and set the backend
- * session (no NEP-413 needed on this path). Idempotent for returning users.
- */
-export async function completeSsoLogin(): Promise<{ accountId: string; created: boolean }> {
-  await ssoHandleRedirect(); // consumes ?code&state after the login redirect
-  const loggedIn = await ssoIsLoggedIn();
-  if (!loggedIn) throw new Error("Login window did not complete");
-  const mpcPublicKey = await ssoDerivedPublicKey();
-  const accountId = await ssoAccountIdFor(mpcPublicKey);
-  let created = false;
-  if (!(await accountExistsOnChain(accountId))) {
-    await sponsorCreateAccount(accountId, mpcPublicKey);
-    created = true;
-  }
-  await verifySsoSession(accountId, mpcPublicKey);
+/** Marks the SSO path as the active sign-in on this device. */
+export function markSsoActive(): void {
   try {
     localStorage.setItem(authKindStorageKey, "sso");
   } catch {
     // private mode
   }
-  return { accountId, created };
 }

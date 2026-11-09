@@ -105,6 +105,8 @@ export const api = {
   me: () => apiFetch<Me>("/auth/me"),
 
   /* auth + accounts for NEAR Auth email SSO */
+  fastauthResolveAccount: (body: { token: string }) =>
+    apiFetch<{ accountId: string | null; publicKey: string }>("/fastauth/resolve-account", { method: "POST", body: json(body) }),
   fastauthCreateAccount: (body: { accountId: string; publicKey: string; token: string }) =>
     apiFetch<{ accountId: string; txHash: string; seedNear: string }>("/fastauth/create-account", { method: "POST", body: json(body) }),
   fastauthSignTx: (body: { guard_id: string; verify_payload: string; sign_payload: string | number[]; algorithm?: string }) =>

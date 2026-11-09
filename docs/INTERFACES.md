@@ -127,7 +127,8 @@ Faucet UI = one transaction to pUSDC with two actions: `storage_deposit {}` (if 
 | `POST /auth/challenge` | `{ accountId }` | `{ nonce (base64, 32 bytes), message, recipient, expiresAt }` |
 | `POST /auth/verify` | `{ accountId, publicKey, signature (base64), nonce }` | `{ accountId }` + cookie |
 | `POST /auth/verify-sso` | `{ accountId, publicKey, token (Auth0 JWT) }` | `{ accountId }` + cookie — NEAR Auth binding: JWT verified via JWKS, `derived_public_key` must equal `publicKey` and be a full-access key on-chain |
-| `POST /fastauth/create-account` | `{ accountId, publicKey, token }` | `{ accountId, txHash, seedNear }` — sponsor pays `CreateAccount + AddKey + Transfer(seed)`; one seed per login and per account (409 `account_exists` / `already_sponsored`, 503 `sponsor_unconfigured`) |
+| `POST /fastauth/resolve-account` | `{ token }` | `{ accountId: string \| null, publicKey }` — which sponsored account this login already owns (null ⇒ first visit, name not chosen yet) |
+| `POST /fastauth/create-account` | `{ accountId, publicKey, token }` | `{ accountId, txHash, seedNear }` — the user-chosen `<name>.<sponsor>` id (400 `invalid_account_name` otherwise); sponsor pays `CreateAccount + AddKey + Transfer(seed)`; one seed per login and per account (409 `account_exists` / `already_sponsored`, 503 `sponsor_unconfigured`) |
 | `POST /fastauth/sign-tx` | `{ guard_id, verify_payload, sign_payload, algorithm? }` (NEAR Auth relayer protocol) | `{ hash, result }` — relays the `sign` call to the fast-auth contract (sponsor pays gas) |
 | `POST /auth/logout` · `GET /auth/me` | — | `{ accountId, roles: Role[], profile }` |
 | `GET/PUT /users/me` · `GET /users/:accountId` | `{ displayName, region, locale?: "en", phone?, intent: "farmer"|"buyer"|"verifier"|"supplier" }` | profile |

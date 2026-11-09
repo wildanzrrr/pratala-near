@@ -25,6 +25,11 @@ export default defineConfig({
       NEAR_INTENTS_BASE_URL: 'http://127.0.0.1:9/v0',
       GCS_BUCKET: 'pratala-e2e-fake-bucket',
       PUBLIC_API_URL: 'http://localhost:4100',
+      // Vitest loads backend/.env into process.env; the sponsor wallet (and its
+      // key file) must stay unset so the 503 sponsor_unconfigured paths are real.
+      SPONSOR_ACCOUNT_ID: '',
+      SPONSOR_PRIVATE_KEY: '',
+      SPONSOR_PRIVATE_KEY_FILE: '',
     },
   },
 });

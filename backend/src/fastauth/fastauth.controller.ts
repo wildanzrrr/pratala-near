@@ -4,8 +4,10 @@ import { Throttle } from '@nestjs/throttler';
 import { ApiZodBody } from '../common/zod.js';
 import {
   createAccountSchema,
+  resolveAccountSchema,
   signTxSchema,
   type CreateAccountDto,
+  type ResolveAccountDto,
   type SignTxDto,
 } from './fastauth.schemas.js';
 import { FastAuthService } from './fastauth.service.js';
@@ -19,6 +21,17 @@ import { FastAuthService } from './fastauth.service.js';
 @Controller('fastauth')
 export class FastAuthController {
   constructor(private readonly fastauth: FastAuthService) {}
+
+  @Post('resolve-account')
+  @HttpCode(200)
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
+  @ApiOperation({
+    summary: 'Which sponsored account (if any) this login already owns',
+  })
+  @ApiZodBody(resolveAccountSchema)
+  resolveAccount(@Body({ schema: resolveAccountSchema }) body: ResolveAccountDto) {
+    return this.fastauth.resolveAccount(body);
+  }
 
   @Post('create-account')
   @HttpCode(200)

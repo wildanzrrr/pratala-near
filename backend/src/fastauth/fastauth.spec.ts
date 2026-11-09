@@ -28,6 +28,7 @@ function makeService(overrides: {
         FASTAUTH_CONTRACT_ID: 'fast-auth.testnet',
         FASTAUTH_MPC_CONTRACT_ID: 'v1.signer-prod.testnet',
         SPONSOR_SEED_NEAR: '0.5',
+        SPONSOR_ACCOUNT_ID: 'sponsor.pratala.testnet',
       })[key],
   } as unknown as AppConfig;
 
@@ -62,18 +63,19 @@ function makeService(overrides: {
   const createRow = vi.fn().mockResolvedValue({});
   const updateRow = vi.fn().mockResolvedValue({});
   const deleteRow = vi.fn().mockResolvedValue({});
+  const findRow = vi.fn().mockResolvedValue(null);
   const prisma = {
-    sponsoredAccount: { create: createRow, update: updateRow, delete: deleteRow },
+    sponsoredAccount: { create: createRow, update: updateRow, delete: deleteRow, findUnique: findRow },
   } as unknown as PrismaService;
 
   const service = new FastAuthService(prisma, rpc, sponsor, config);
   // Unit tests stub the network JWKS verification; jose is covered by e2e.
   vi.spyOn(service, 'verifyAuth0Token').mockResolvedValue({ sub: SUB });
-  return { service, sponsor, rpc, prisma, createSponsoredAccount, relaySign, createRow, updateRow, deleteRow, viewAccessKey };
+  return { service, sponsor, rpc, prisma, createSponsoredAccount, relaySign, createRow, updateRow, deleteRow, viewAccessKey, findRow };
 }
 
 const createDto: CreateAccountDto = {
-  accountId: 'uabc12345.pratala.testnet',
+  accountId: 'siti.sponsor.pratala.testnet',
   publicKey: DERIVED_KEY,
   token: 'a.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaa',
 };
@@ -83,17 +85,17 @@ describe('FastAuthService.createAccount', () => {
     const { service, createSponsoredAccount, updateRow } = makeService();
     const result = await service.createAccount(createDto);
     expect(result).toEqual({
-      accountId: 'uabc12345.pratala.testnet',
+      accountId: 'siti.sponsor.pratala.testnet',
       txHash: 'TXHASH1111111111111111111111111111111111111111',
       seedNear: '0.5',
     });
     expect(createSponsoredAccount).toHaveBeenCalledWith(
-      'uabc12345.pratala.testnet',
+      'siti.sponsor.pratala.testnet',
       DERIVED_KEY,
       '0.5',
     );
     expect(updateRow).toHaveBeenCalledWith({
-      where: { accountId: 'uabc12345.pratala.testnet' },
+      where: { accountId: 'siti.sponsor.pratala.testnet' },
       data: { txHash: 'TXHASH1111111111111111111111111111111111111111' },
     });
   });
@@ -130,7 +132,7 @@ describe('FastAuthService.createAccount', () => {
       response: { error: 'chain_unavailable' },
     });
     expect(deleteRow).toHaveBeenCalledWith({
-      where: { accountId: 'uabc12345.pratala.testnet' },
+      where: { accountId: 'siti.sponsor.pratala.testnet' },
     });
   });
 
@@ -139,6 +141,57 @@ describe('FastAuthService.createAccount', () => {
     await expect(service.createAccount(createDto)).rejects.toMatchObject({
       response: { error: 'sponsor_unconfigured' },
     });
+  });
+});
+
+describe('FastAuthService.createAccount name validation', () => {
+  it('rejects a name outside the sponsor namespace', async () => {
+    const { service } = makeService();
+    await expect(
+      service.createAccount({ ...createDto, accountId: 'siti.pratala.testnet' }),
+    ).rejects.toMatchObject({ response: { error: 'invalid_account_name' } });
+  });
+
+  it('rejects an invalid label (uppercase, too short, bad chars)', async () => {
+    const { service } = makeService();
+    for (const bad of ['Siti.sponsor.pratala.testnet', 'x.sponsor.pratala.testnet', 'si ti.sponsor.pratala.testnet', 'a'.repeat(33) + '.sponsor.pratala.testnet']) {
+      await expect(
+        service.createAccount({ ...createDto, accountId: bad }),
+      ).rejects.toMatchObject({ response: { error: 'invalid_account_name' } });
+    }
+  });
+
+  it('accepts a clean label under the sponsor', async () => {
+    const { service, createSponsoredAccount } = makeService();
+    await expect(
+      service.createAccount({ ...createDto, accountId: 'siti-farms_2.sponsor.pratala.testnet' }),
+    ).resolves.toMatchObject({ accountId: 'siti-farms_2.sponsor.pratala.testnet' });
+    expect(createSponsoredAccount).toHaveBeenCalled();
+  });
+});
+
+describe('FastAuthService.resolveAccount', () => {
+  it('returns null when the login owns no account yet', async () => {
+    const { service } = makeService();
+    await expect(service.resolveAccount({ token: 't.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaa' })).resolves.toEqual({
+      accountId: null,
+      publicKey: DERIVED_KEY,
+    });
+  });
+
+  it('returns the existing account for a returning login', async () => {
+    const { service, findRow } = makeService();
+    findRow.mockResolvedValue({ accountId: 'siti.sponsor.pratala.testnet' });
+    await expect(service.resolveAccount({ token: 't.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaa' })).resolves.toEqual({
+      accountId: 'siti.sponsor.pratala.testnet',
+      publicKey: DERIVED_KEY,
+    });
+  });
+
+  it('rejects an invalid token', async () => {
+    const { service } = makeService();
+    vi.spyOn(service, 'verifyAuth0Token').mockRejectedValue(new UnauthorizedException('no'));
+    await expect(service.resolveAccount({ token: 't.b.b' })).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });
 
@@ -180,7 +233,7 @@ describe('FastAuthService.relaySignTx', () => {
 
 describe('FastAuthService.verifySsoBinding', () => {
   const ssoDto: VerifySsoDto = {
-    accountId: 'uabc12345.pratala.testnet',
+    accountId: 'siti.sponsor.pratala.testnet',
     publicKey: DERIVED_KEY,
     token: 'c.cccccccccccccccccccccccccccccccccccc.ccc',
   };

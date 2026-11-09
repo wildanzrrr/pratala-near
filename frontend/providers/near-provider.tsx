@@ -18,20 +18,20 @@
  * patterns apply, and adds `wallets` for our own connect sheet.
  */
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-import { useRouter } from "next/navigation";
 import { NearConnector } from "@hot-labs/near-connect";
 import { createAccessKeyPlugin } from "function-call-key-plugin";
 
 import { env } from "@/lib/env";
 import {
   beginSsoLogin,
-  completeSsoLogin,
+  getSsoIdentity,
+  markSsoActive,
+  sponsorCreateAccount,
+  ssoAccountIdForLabel,
   ssoHandleRedirect,
-  ssoAccountIdFor,
-  ssoDerivedPublicKey,
   ssoIsLoggedIn,
   ssoLogout,
+  verifySsoSession,
 } from "@/lib/fastauth/client";
 import {
   clearSsoFcKey,
@@ -71,8 +71,12 @@ export interface NearContextValue {
   /** true when a local function-call key for the lots contract exists */
   hasFunctionCallKey: boolean;
   connect: (walletId?: string) => Promise<string>;
-  /** Email/Google SSO — creates + funds the account on first use. */
+  /** Email/Google SSO — login redirect; account naming happens in onboarding. */
   connectEmail: () => Promise<void>;
+  /** True when an email login exists but its account (name) is not created yet. */
+  ssoPending: boolean;
+  /** Creates the pending email login's account under a user-chosen name. */
+  createEmailAccount: (label: string) => Promise<string>;
   signOut: () => Promise<void>;
   signAndSendTransaction: (tx: TxRequest) => Promise<unknown>;
   signAndSendTransactions: (txs: TxRequest[]) => Promise<unknown[]>;
@@ -84,8 +88,6 @@ const NearContext = createContext<NearContextValue | null>(null);
 
 const fcStorageKey = (accountId: string) => `access_key::plugin::${env.network}::${accountId}`;
 const authKindStorageKey = `pratala:authkind:${env.network}`;
-/** Set before the login redirect when the user has no profile yet (→ /onboarding after). */
-const onboardingFlagKey = "pratala:sso:new-user";
 
 function readFcKey(accountId: string): boolean {
   if (!accountId || typeof localStorage === "undefined") return false;
@@ -114,7 +116,6 @@ interface SsoSession {
 }
 
 export function NearProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const connectorRef = useRef<NearConnector | null>(null);
   const readyRef = useRef<Promise<void> | null>(null);
   const [wallet, setWallet] = useState<NearWalletBase | null>(null);
@@ -124,7 +125,8 @@ export function NearProvider({ children }: { children: ReactNode }) {
   const [walletsReady, setWalletsReady] = useState(false);
   const [fcVersion, setFcVersion] = useState(0);
   const [sso, setSso] = useState<SsoSession | null>(null);
-  const [ssoOnboardingRoute, setSsoOnboardingRoute] = useState(false);
+  /** Logged in via SSO but no account yet — the user must choose a name. */
+  const [ssoPending, setSsoPending] = useState<SsoSession | null>(null);
 
   useEffect(() => {
     const providers = { [env.network]: [env.rpcUrl] };
@@ -141,6 +143,7 @@ export function NearProvider({ children }: { children: ReactNode }) {
 
     const onSignIn = async (payload: { wallet: NearWalletBase; accounts: { accountId: string }[] }) => {
       setSso(null);
+      setSsoPending(null);
       setWallet(payload.wallet);
       setSignedAccountId(payload.accounts[0]?.accountId ?? "");
       setFcVersion((v) => v + 1);
@@ -156,11 +159,10 @@ export function NearProvider({ children }: { children: ReactNode }) {
     connector.on("selector:walletsChanged", refreshWallets);
 
     /**
-     * SSO session restore, also the landing path of the redirect login: when
-     * the browser returns from the login window with ?code&state, the SDK's
-     * isLoggedIn() consumes them and completeSsoLogin() finishes the flow
-     * (create + gas-seed the account on first use, set the backend session —
-     * idempotent on later loads). Returns true when signed in.
+     * SSO session restore, also the landing path of the redirect login. A
+     * returning login resolves to the account it already owns; a first-time
+     * login becomes "pending" (no account yet) until the user chooses a name
+     * in onboarding. Returns true when the Auth0 session was restored.
      */
     const restoreSso = async (lastKindKnown: boolean, cancelledRef: boolean, walletConnected: boolean): Promise<boolean> => {
       const returningFromLogin = typeof location !== "undefined" && /[?&]code=/.test(location.search);
@@ -171,25 +173,25 @@ export function NearProvider({ children }: { children: ReactNode }) {
       try {
         if (returningFromLogin) await ssoHandleRedirect();
         if (!(await ssoIsLoggedIn())) return false;
-        const mpcPublicKey = await ssoDerivedPublicKey();
-        const accountId = await ssoAccountIdFor(mpcPublicKey);
+        const identity = await getSsoIdentity();
         if (cancelledRef) return true;
-        setSso({ accountId, mpcPublicKey });
-        setSignedAccountId(accountId);
-        if (returningFromLogin || !lastKindKnown) {
-          // Finish (or re-confirm) account creation, funding and the backend
-          // session; clean the OAuth query params off the URL.
-          void completeSsoLogin()
-            .then(() => {
-              if (returningFromLogin) history.replaceState(null, "", location.pathname);
-              const flag = localStorage.getItem(onboardingFlagKey);
-              if (flag) {
-                localStorage.removeItem(onboardingFlagKey);
-                setSsoOnboardingRoute(true);
-              }
-            })
-            .catch((error: unknown) => console.warn("[pratala] sso completion failed", error));
+        if (identity.accountId) {
+          setSsoPending(null);
+          setSso({ accountId: identity.accountId, mpcPublicKey: identity.publicKey });
+          setSignedAccountId(identity.accountId);
+          // Re-confirm the backend session (idempotent); a failure only
+          // costs uploads/inbox, not chain features.
+          void verifySsoSession(identity.accountId, identity.publicKey).catch(
+            (error: unknown) => console.warn("[pratala] sso session re-confirm failed", error),
+          );
+          markSsoActive();
+        } else {
+          // First visit: no account until a name is chosen in onboarding.
+          setSso(null);
+          setSsoPending({ accountId: "", mpcPublicKey: identity.publicKey });
+          setSignedAccountId("");
         }
+        if (returningFromLogin) history.replaceState(null, "", location.pathname);
         return true;
       } catch {
         return false; // Auth0 session expired — stay signed out.
@@ -252,25 +254,39 @@ export function NearProvider({ children }: { children: ReactNode }) {
 
   /**
    * Email SSO entry point: redirects the page to the login window (no popups
-   * to block). /auth/callback finishes the flow — creating and gas-seeding
-   * the account through the backend sponsor on first use — and the provider
-   * restores the session on the next load.
+   * to block). The provider's boot restore finishes the flow on return — a
+   * returning login resolves its account, a first login becomes "pending"
+   * until a name is chosen in onboarding.
    */
   const connectEmail = useCallback(async () => {
-    try {
-      // Remember brand-new users so the login return routes to onboarding.
-      if (!signedAccountId) localStorage.setItem(onboardingFlagKey, "1");
-    } catch {
-      // private mode — the flag is best-effort routing only
-    }
     await beginSsoLogin();
-  }, [signedAccountId]);
+  }, []);
+
+  /**
+   * Creates the pending SSO login's account under the user-chosen name
+   * (`<label>.<sponsor root>`), gas-seeded by the platform sponsor, then sets
+   * the backend session and activates the account. Only valid while an email
+   * sign-in is pending (no account yet).
+   */
+  const createEmailAccount = useCallback(async (label: string) => {
+    if (!ssoPending) throw new Error("No email sign-in waiting for an account name");
+    const accountId = ssoAccountIdForLabel(label);
+    await sponsorCreateAccount(accountId, ssoPending.mpcPublicKey);
+    await verifySsoSession(accountId, ssoPending.mpcPublicKey);
+    markSsoActive();
+    setSsoPending(null);
+    setSso({ accountId, mpcPublicKey: ssoPending.mpcPublicKey });
+    setSignedAccountId(accountId);
+    setFcVersion((v) => v + 1);
+    return accountId;
+  }, [ssoPending]);
 
   const signOut = useCallback(async () => {
-    if (sso) {
-      clearSsoFcKey(sso.accountId);
+    if (sso || ssoPending) {
+      if (sso) clearSsoFcKey(sso.accountId);
       await ssoLogout();
       setSso(null);
+      setSsoPending(null);
       setSignedAccountId("");
       try {
         localStorage.removeItem(authKindStorageKey);
@@ -284,7 +300,7 @@ export function NearProvider({ children }: { children: ReactNode }) {
     await connector.disconnect(wallet ?? undefined).catch(() => undefined);
     setWallet(null);
     setSignedAccountId("");
-  }, [sso, wallet]);
+  }, [sso, ssoPending, wallet]);
 
   const activeWallet = useCallback(async () => {
     const connector = connectorRef.current;
@@ -342,11 +358,6 @@ export function NearProvider({ children }: { children: ReactNode }) {
     [activeWallet, signedAccountId, sso],
   );
 
-  // Route a brand-new SSO user into onboarding once their account is ready.
-  useEffect(() => {
-    if (ssoOnboardingRoute) router.replace("/onboarding");
-  }, [ssoOnboardingRoute, router]);
-
   const walletId = wallet?.manifest.id ?? null;
   const authKind: AuthKind | null = sso ? "sso" : signedAccountId ? "wallet" : null;
   // fcVersion invalidates the localStorage read after sign-in / sign-out.
@@ -368,6 +379,8 @@ export function NearProvider({ children }: { children: ReactNode }) {
       hasFunctionCallKey,
       connect,
       connectEmail,
+      ssoPending: ssoPending !== null,
+      createEmailAccount,
       signOut,
       signAndSendTransaction,
       signAndSendTransactions,
@@ -384,6 +397,8 @@ export function NearProvider({ children }: { children: ReactNode }) {
       hasFunctionCallKey,
       connect,
       connectEmail,
+      createEmailAccount,
+      ssoPending,
       signOut,
       signAndSendTransaction,
       signAndSendTransactions,

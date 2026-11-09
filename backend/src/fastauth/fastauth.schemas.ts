@@ -21,6 +21,10 @@ export const createAccountSchema = z.object({
 });
 export type CreateAccountDto = z.infer<typeof createAccountSchema>;
 
+/** Which account (if any) already belongs to this login. */
+export const resolveAccountSchema = z.object({ token: jwtSchema });
+export type ResolveAccountDto = z.infer<typeof resolveAccountSchema>;
+
 /**
  * Mirrors the NEAR Auth relayer protocol (`@fast-auth-near` FastAuthRelayer):
  * sign_payload is passed through verbatim into the `sign` call on the fast-auth

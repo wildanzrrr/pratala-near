@@ -6,6 +6,7 @@ import { NearRpcService } from '../common/near/rpc.service.js';
 import { apiError } from '../common/filters/http-exception.filter.js';
 import type {
   CreateAccountDto,
+  ResolveAccountDto,
   SignTxDto,
   VerifySsoDto,
 } from './fastauth.schemas.js';
@@ -72,9 +73,44 @@ export class FastAuthService {
   }
 
   /**
-   * Creates + funds a NEAR Auth account for a verified identity. One seed per
-   * identity and per account, ever (Prisma unique constraints); the funding tx
-   * is a CreateAccount + AddKey(full access) + Transfer batch from the sponsor.
+   * Which account a login already owns (if any), plus the MPC key it derives.
+   * Lets returning email users skip name selection on every device.
+   */
+  async resolveAccount(dto: ResolveAccountDto): Promise<{
+    accountId: string | null;
+    publicKey: string;
+  }> {
+    const { sub } = await this.verifyAuth0Token(dto.token);
+    const publicKey = await this.derivedPublicKey(sub);
+    const row = await this.prisma.sponsoredAccount.findUnique({
+      where: { authSub: sub },
+    });
+    return { accountId: row?.accountId ?? null, publicKey };
+  }
+
+  /**
+   * Validates a chosen account name: `<label>.<sponsor>` only (testnet lets
+   * the sponsor create just its own subaccounts) with a clean 2–32 char label.
+   */
+  private validateChosenAccountId(accountId: string): void {
+    const sponsorId = this.config.get('SPONSOR_ACCOUNT_ID');
+    const suffix = sponsorId ? `.${sponsorId}` : '';
+    const label = suffix && accountId.endsWith(suffix)
+      ? accountId.slice(0, accountId.length - suffix.length)
+      : null;
+    if (!label || !/^[a-z0-9][a-z0-9_-]{0,30}[a-z0-9]$/.test(label)) {
+      throw apiError(400, 'invalid_account_name', {
+        detail: `account id must be <name>${suffix || '.<sponsor>'} (2–32 chars: a-z, 0-9, -, _)`,
+      });
+    }
+  }
+
+  /**
+   * Creates + funds a NEAR Auth account for a verified identity. The user
+   * chooses the name (validated above); the chain-level duplicate guard is the
+   * on-chain existence check. One seed per identity and per account, ever
+   * (Prisma unique constraints); the funding tx is a CreateAccount +
+   * AddKey(full access) + Transfer batch from the sponsor.
    */
   async createAccount(dto: CreateAccountDto): Promise<{
     accountId: string;
@@ -82,6 +118,7 @@ export class FastAuthService {
     seedNear: string;
   }> {
     if (!this.sponsor.configured) throw apiError(503, 'sponsor_unconfigured');
+    this.validateChosenAccountId(dto.accountId);
 
     const { sub } = await this.verifyAuth0Token(dto.token);
     const derived = await this.derivedPublicKey(sub);

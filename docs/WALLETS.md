@@ -6,7 +6,7 @@ How people sign in to Pratala, which actions pop a window and which don't, and w
 
 The hero action in the connect sheet. A farmer signs in with **email, Google, Apple or a passkey** and gets a genuine, non-custodial NEAR account — no seed phrase, no extension, no gas to manage. This is [NEAR Auth](https://docs.auth.near.org), the official FastAuth successor (the old FastAuth repo was archived 2026-07-28; Web3Auth was also evaluated and rejected — Consensys acquired it in June 2025, folded it into MetaMask Embedded Wallets, and its service had a security pause on 2026-11-06).
 
-**How a login maps to an account.** The Auth0 identity (`sub`) deterministically derives an **MPC key** on `v1.signer-prod.testnet` (`derived_public_key`, path `jwt#https://login.testnet.fast-auth.com/#<sub>`). The account id is `u` + 10 hex of sha256(that public key) + `.sponsor.pratala.testnet` — the same login always resolves to the same account on every device. Nobody — including this app — ever holds the key: signing happens on the MPC network after the fast-auth contract's on-chain guard verifies the Auth0 JWT.
+**How a login maps to an account.** The Auth0 identity (`sub`) deterministically derives an **MPC key** on `v1.signer-prod.testnet` (`derived_public_key`, path `jwt#https://login.testnet.fast-auth.com/#<sub>`); nobody — including this app — ever holds the key. On first login the user **chooses their account name** in onboarding (2–32 chars, live availability check against the chain; the email's local part is pre-filled as a suggestion) and becomes `<name>.sponsor.pratala.testnet`. The backend records identity → account, so `POST /fastauth/resolve-account` resolves the same account on every later login and device. Nobody — including this app — ever holds the key: signing happens on the MPC network after the fast-auth contract's on-chain guard verifies the Auth0 JWT.
 
 **Who pays for what.** NEAR charges gas to the transaction signer, and `register_lot` needs a 0.1 NEAR attached deposit, so a brand-new account cannot transact on its own. Pratala sponsors it:
 
@@ -15,9 +15,10 @@ The hero action in the connect sheet. A farmer signs in with **email, Google, Ap
 
 **The user experience, cadence of windows:**
 
-1. Sign-in = one full-page redirect to `login.testnet.fast-auth.com` (redirect, not popup — nothing for a popup blocker to break) and back. Returning users are silent.
-2. The first on-chain action that qualifies for quick signing (§3) adds a **local function-call key** through one confirmation window — after that, attestations, price changes and claims sign invisibly.
-3. Actions that move money (`register_lot`, faucet, funding, NFT transfer) open **one confirmation window per action** (Auth0 shows what will be signed). No seed phrase is ever shown or needed.
+1. Sign-in = one full-page redirect to `login.testnet.fast-auth.com` (redirect, not popup — nothing for a popup blocker to break) and back. Returning users are silent; brand-new logins land in onboarding, where the account name is chosen before the account is created (`u…` prefixed names predate this and keep working).
+2. Onboarding is not optional: anyone signed in without a profile — wallet or SSO — is kept on `/onboarding` by the app-level gate until registration completes (`components/common/onboarding-gate.tsx`).
+3. The first on-chain action that qualifies for quick signing (§4) adds a **local function-call key** through one confirmation window — after that, attestations, price changes and claims sign invisibly.
+4. Actions that move money (`register_lot`, faucet, funding, NFT transfer) open **one confirmation window per action** (Auth0 shows what will be signed). No seed phrase is ever shown or needed.
 
 **Backend session without NEP-413.** The SDK cannot sign arbitrary NEP-413 payloads yet, so `POST /api/auth/verify-sso` binds the session differently: the Auth0 token is verified against the tenant's JWKS, the backend re-derives the expected MPC public key from the token's `sub` itself (`derived_public_key` view call), and checks that key is a **full-access key of the claimed account** on-chain. Regular-wallet users keep the NEP-413 flow (§4) unchanged.
 

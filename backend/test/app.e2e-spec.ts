@@ -200,6 +200,17 @@ describe('Pratala API (e2e)', () => {
       expect(res.body.error).toBe('sponsor_unconfigured');
     });
 
+    it('resolve-account rejects a malformed Auth0 token', async () => {
+      await request(server)
+        .post('/api/fastauth/resolve-account')
+        .send({ token: garbageToken })
+        .expect(401);
+    });
+
+    it('resolve-account rejects a malformed body', async () => {
+      await request(server).post('/api/fastauth/resolve-account').send({}).expect(400);
+    });
+
     it('verify-sso rejects a malformed Auth0 token without touching the network', async () => {
       const res = await request(server)
         .post('/api/auth/verify-sso')

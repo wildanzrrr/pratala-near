@@ -1,4 +1,7 @@
+import { Suspense } from "react";
+
 import { T } from "@/components/i18n/t";
+import { OnboardingGate } from "@/components/common/onboarding-gate";
 import { BottomBar } from "@/components/layout/bottom-bar";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -22,6 +25,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
       <SiteFooter />
       <BottomBar />
+      {/* Reads the URL (usePathname) — keep behind a Suspense boundary for static prerender. */}
+      <Suspense fallback={null}>
+        <OnboardingGate />
+      </Suspense>
       <ConnectSheet />
     </>
   );

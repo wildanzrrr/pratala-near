@@ -18,6 +18,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { CopyButton } from "@/components/common/copy-button";
 import { PageBody } from "@/components/layout/page-header";
 import { ConnectGate } from "@/components/wallet/connect-gate";
+import { AccountStep } from "@/app/onboarding/_components/account-step";
 import { RolePicker } from "@/app/onboarding/_components/role-picker";
 import { homeFor } from "@/lib/roles";
 import { cn } from "@/lib/utils";
@@ -62,8 +63,13 @@ export function OnboardingView() {
     },
   });
 
-  const steps = [t("onboarding.stepConnect"), t("onboarding.stepRole"), t("onboarding.stepProfile")];
-  const current = !session.accountId ? 0 : step;
+  const namingAccount = session.ssoPending && !session.accountId;
+  const steps = [
+    namingAccount ? t("onboarding.stepAccount") : t("onboarding.stepConnect"),
+    t("onboarding.stepRole"),
+    t("onboarding.stepProfile"),
+  ];
+  const current = session.accountId ? step : 0;
 
   async function finish(values: ProfileForm) {
     if (!session.accountId || !intent) return;
@@ -109,6 +115,9 @@ export function OnboardingView() {
         </ol>
       </header>
 
+      {namingAccount ? (
+        <AccountStep onReady={() => setStep(1)} />
+      ) : (
       <ConnectGate>
         {step === 1 ? (
           <div className="flex flex-col gap-6">
@@ -175,6 +184,7 @@ export function OnboardingView() {
           </form>
         )}
       </ConnectGate>
+      )}
     </PageBody>
   );
 }
