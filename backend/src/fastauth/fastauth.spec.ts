@@ -24,7 +24,7 @@ function makeService(overrides: {
     get: (key: string) =>
       ({
         FASTAUTH_AUTH0_DOMAIN: 'login.testnet.fast-auth.com',
-        FASTAUTH_SIGNING_AUDIENCE: 'auth0.jwt.fast-auth.testnet',
+        FASTAUTH_AUTH0_AUDIENCE: 'https://api.testnet.fast-auth.com',
         FASTAUTH_CONTRACT_ID: 'fast-auth.testnet',
         FASTAUTH_MPC_CONTRACT_ID: 'v1.signer-prod.testnet',
         SPONSOR_SEED_NEAR: '0.5',

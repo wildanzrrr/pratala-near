@@ -58,7 +58,7 @@ export const envSchema = z.object({
   FASTAUTH_CONTRACT_ID: z.string().min(2).default('fast-auth.testnet'),
   FASTAUTH_MPC_CONTRACT_ID: z.string().min(2).default('v1.signer-prod.testnet'),
   FASTAUTH_AUTH0_DOMAIN: z.string().min(4).default('login.testnet.fast-auth.com'),
-  FASTAUTH_SIGNING_AUDIENCE: z.string().min(4).default('auth0.jwt.fast-auth.testnet'),
+  FASTAUTH_AUTH0_AUDIENCE: z.string().min(4).default('https://api.testnet.fast-auth.com'),
   // Sponsor wallet: the ONLY account this API signs with (account creation +
   // MPC sign relaying). Unset ⇒ /fastauth/* returns 503 sponsor_unconfigured.
   SPONSOR_ACCOUNT_ID: optionalString,

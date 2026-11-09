@@ -33,6 +33,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 ## [Unreleased]
 
 ### Fixed
+- NEAR Auth identity tokens now use (and accept) the tenant's default API audience (`https://api.testnet.fast-auth.com`): the shared testnet client refuses to issue signing-audience tokens without a transaction payload, which made the first email login fail with `access_denied`. The signing audience stays internal to the per-action MPC flow. (`903f6ab` follow-up)
 - GCS boot check writes and deletes a probe object instead of reading bucket metadata — `roles/storage.objectAdmin` keys lack `storage.buckets.get` and the old check would have crashed boot with the least-privilege key.
 - `GCS_KEY_FILE` accepts a path relative to `backend/` (the key lives at `../config/…json`); it resolves identically from the dev source tree and the compiled `dist/` build.
 - Wallet modal ("Meteor Web" button) was unclickable: our connect sheet stayed open as a modal behind NEAR Connect's popup. The sheet now closes before handing off; all dialogs keep `.hot-connector-popup` clickable and don't treat it as an outside click (`290cce3`).

@@ -48,7 +48,7 @@ export class FastAuthService {
     try {
       const { payload } = await jwtVerify(token, this.jwks, {
         issuer: `https://${this.config.get('FASTAUTH_AUTH0_DOMAIN')}/`,
-        audience: this.config.get('FASTAUTH_SIGNING_AUDIENCE'),
+        audience: this.config.get('FASTAUTH_AUTH0_AUDIENCE'),
         algorithms: ['RS256'],
       });
       if (!payload.sub) throw new Error('token has no sub');
