@@ -40,6 +40,6 @@
 
 - Feature folders under `src/<feature>/` (`*.module.ts`, `*.controller.ts`, `*.service.ts`, `*.schemas.ts`, `*.spec.ts`). No barrels. 500-line cap per file.
 - HTTP shapes are defined by `docs/INTERFACES.md` §5. Changing one means editing that file in the same commit.
-- Never send blockchain transactions or deploy from this service. It only reads chain state.
+- The API never deploys contracts. The ONLY writer is the sponsor wallet (`src/fastauth/fastauth.signer.service.ts`, dedicated subaccount via `SPONSOR_ACCOUNT_ID` + `SPONSOR_PRIVATE_KEY(_FILE)`), used solely to create/seed NEAR Auth SSO accounts and relay the fast-auth `sign` call. Everything else reads chain state only.
 - Never commit `.env`, `data/` (uploads) or `dist/`.
 - Verify: `pnpm lint && pnpm typecheck && pnpm test && pnpm build`; `docker compose up -d --build` from the repo root then `curl -s localhost:4100/api/health`.

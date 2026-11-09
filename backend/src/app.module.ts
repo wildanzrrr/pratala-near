@@ -9,6 +9,7 @@ import { NearModule } from './common/near/near.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { HealthModule } from './health/health.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { FastAuthModule } from './fastauth/fastauth.module.js';
 import { UsersModule } from './users/users.module.js';
 import { EvidenceModule } from './evidence/evidence.module.js';
 import { PlotsModule } from './plots/plots.module.js';
@@ -39,6 +40,7 @@ import { StatsModule } from './stats/stats.module.js';
     }),
     HealthModule,
     AuthModule,
+    FastAuthModule,
     UsersModule,
     EvidenceModule,
     PlotsModule,

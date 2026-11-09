@@ -23,8 +23,10 @@ import { ChainRolesService } from '../common/near/roles.service.js';
 import {
   challengeSchema,
   verifySchema,
+  verifySsoSchema,
   type ChallengeDto,
   type VerifyDto,
+  type VerifySsoDto,
 } from './auth.schemas.js';
 import { AuthService } from './auth.service.js';
 
@@ -69,6 +71,23 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const { accountId, token } = await this.auth.verify(body);
+    res.cookie(SESSION_COOKIE, token, this.cookieOptions());
+    return { accountId };
+  }
+
+  @Post('verify-sso')
+  @HttpCode(200)
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
+  @ApiOperation({
+    summary:
+      'Verify a NEAR Auth (SSO) login and set the pratala_session cookie',
+  })
+  @ApiZodBody(verifySsoSchema)
+  async verifySso(
+    @Body({ schema: verifySsoSchema }) body: VerifySsoDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accountId, token } = await this.auth.verifySso(body);
     res.cookie(SESSION_COOKIE, token, this.cookieOptions());
     return { accountId };
   }

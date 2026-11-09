@@ -53,6 +53,21 @@ export const envSchema = z.object({
   NEAR_AI_FALLBACK_MODEL: z.string().default('z-ai/glm-5.3-flash'),
   INDEXER_POLL_MS: z.coerce.number().int().min(0).default(30_000),
   SEED_SUPPLIER_ID: z.string().default('supplier.pratala.testnet'),
+  // NEAR Auth (email SSO → MPC accounts). Mainnet overrides: fast-auth.near,
+  // v1.signer, login.auth.near.org, auth0.jwt.fast-auth.near.
+  FASTAUTH_CONTRACT_ID: z.string().min(2).default('fast-auth.testnet'),
+  FASTAUTH_MPC_CONTRACT_ID: z.string().min(2).default('v1.signer-prod.testnet'),
+  FASTAUTH_AUTH0_DOMAIN: z.string().min(4).default('login.testnet.fast-auth.com'),
+  FASTAUTH_SIGNING_AUDIENCE: z.string().min(4).default('auth0.jwt.fast-auth.testnet'),
+  // Sponsor wallet: the ONLY account this API signs with (account creation +
+  // MPC sign relaying). Unset ⇒ /fastauth/* returns 503 sponsor_unconfigured.
+  SPONSOR_ACCOUNT_ID: optionalString,
+  SPONSOR_PRIVATE_KEY: optionalString,
+  SPONSOR_PRIVATE_KEY_FILE: backendRelativeFile,
+  SPONSOR_SEED_NEAR: z
+    .string()
+    .regex(/^\d+(\.\d{1,6})?$/, 'Must be a NEAR amount like 0.5')
+    .default('0.5'),
 });
 
 export type Env = z.infer<typeof envSchema>;

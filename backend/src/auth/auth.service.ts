@@ -5,7 +5,8 @@ import { verifyMessage } from 'near-api-js/nep413';
 import { AppConfig } from '../config/app-config.service.js';
 import { NearRpcService } from '../common/near/rpc.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import type { ChallengeDto, VerifyDto } from './auth.schemas.js';
+import { FastAuthService } from '../fastauth/fastauth.service.js';
+import type { ChallengeDto, VerifyDto, VerifySsoDto } from './auth.schemas.js';
 
 const CHALLENGE_TTL_MS = 5 * 60_000;
 
@@ -22,6 +23,7 @@ export class AuthService {
     private readonly rpc: NearRpcService,
     private readonly jwt: JwtService,
     private readonly config: AppConfig,
+    private readonly fastauth: FastAuthService,
   ) {}
 
   async challenge({ accountId }: ChallengeDto) {
@@ -80,6 +82,22 @@ export class AuthService {
       );
     }
 
+    await this.prisma.user.upsert({
+      where: { accountId: dto.accountId },
+      create: { accountId: dto.accountId, lastLoginAt: new Date() },
+      update: { lastLoginAt: new Date() },
+    });
+    const token = await this.jwt.signAsync({ sub: dto.accountId });
+    return { accountId: dto.accountId, token };
+  }
+
+  /**
+   * SSO login for NEAR Auth (email/Google/Apple) accounts: no NEP-413 — the
+   * binding proof is the Auth0 token + the MPC key it derives + the on-chain
+   * full-access-key check, all in FastAuthService.verifySsoBinding.
+   */
+  async verifySso(dto: VerifySsoDto): Promise<{ accountId: string; token: string }> {
+    await this.fastauth.verifySsoBinding(dto);
     await this.prisma.user.upsert({
       where: { accountId: dto.accountId },
       create: { accountId: dto.accountId, lastLoginAt: new Date() },

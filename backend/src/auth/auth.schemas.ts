@@ -1,5 +1,9 @@
 import { z } from 'zod';
 import { accountIdSchema } from '../common/zod.js';
+import { publicKeySchema, verifySsoSchema } from '../fastauth/fastauth.schemas.js';
+
+export { publicKeySchema, verifySsoSchema };
+export type VerifySsoDto = z.infer<typeof verifySsoSchema>;
 
 export const challengeSchema = z.object({ accountId: accountIdSchema });
 export type ChallengeDto = z.infer<typeof challengeSchema>;

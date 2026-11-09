@@ -12,7 +12,8 @@
     "buyer1": "pratala-buyer1-69f5.testnet",
     "investor2": "pratala-investor2-69f5.testnet",
     "lots": "lots.pratala.testnet",
-    "pusdc": "pusdc.pratala.testnet"
+    "pusdc": "pusdc.pratala.testnet",
+    "sponsor": "sponsor.pratala.testnet"
   },
   "contracts": {
     "pusdc": {

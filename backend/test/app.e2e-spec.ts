@@ -180,6 +180,39 @@ describe('Pratala API (e2e)', () => {
     });
   });
 
+  describe('fastauth (NEAR Auth email SSO)', () => {
+    const publicKey = 'ed25519:2xfvkBfrDCMivmcmLJe4GyP6oLYvNyDjqQitDH3gaMdF';
+    const garbageToken = 'a.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaa';
+
+    it('create-account refuses without the sponsor wallet (no silent fallback)', async () => {
+      const res = await request(server)
+        .post('/api/fastauth/create-account')
+        .send({ accountId: 'u9f2c.pratala.testnet', publicKey, token: garbageToken })
+        .expect(503);
+      expect(res.body.error).toBe('sponsor_unconfigured');
+    });
+
+    it('sign-tx refuses without the sponsor wallet', async () => {
+      const res = await request(server)
+        .post('/api/fastauth/sign-tx')
+        .send({ guard_id: 'jwt#https://login.testnet.fast-auth.com/', verify_payload: garbageToken, sign_payload: [1, 2] })
+        .expect(503);
+      expect(res.body.error).toBe('sponsor_unconfigured');
+    });
+
+    it('verify-sso rejects a malformed Auth0 token without touching the network', async () => {
+      const res = await request(server)
+        .post('/api/auth/verify-sso')
+        .send({ accountId: 'u9f2c.pratala.testnet', publicKey, token: garbageToken })
+        .expect(401);
+      expect(([] as string[]).concat(res.headers['set-cookie'] ?? [])).toEqual([]);
+    });
+
+    it('verify-sso rejects a malformed body', async () => {
+      await request(server).post('/api/auth/verify-sso').send({ accountId: 'nope' }).expect(400);
+    });
+  });
+
   describe('profile, evidence, AI', () => {
     it('updates the profile', async () => {
       const res = await request(server)

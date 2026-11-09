@@ -97,6 +97,17 @@ model AuthChallenge {
   @@index([accountId])
 }
 
+/// One NEAR Auth (email SSO) account per Auth0 identity gets one Pratala gas
+/// seed, ever — both unique constraints are the abuse bound for the sponsor.
+model SponsoredAccount {
+  accountId String   @id
+  authSub   String   @unique
+  publicKey String
+  txHash    String?
+  seededAt  DateTime @default(now())
+}
+
+
 model Plot {
   id        String     @id @default(uuid())
   ownerId   String

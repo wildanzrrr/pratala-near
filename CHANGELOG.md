@@ -4,12 +4,12 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+7 (developer machine). Hackathon deadline: **2026-11-14 23:59 UTC** (aim to submit by 18:00 UTC).
 
-## Current status — 2026-11-07 23:40
+## Current status — 2026-11-09 16:05
 
 | Area | State | Verified by |
 | --- | --- | --- |
 | Smart contracts (`smart-contract/`) | `harvest-lot` (NEP-171 + escrow, pull claims) and `pusdc` (NEP-141 + faucet) complete | `make -C smart-contract test` → 60 unit + 9 sandbox tests pass |
-| Testnet deploy | **Live.** `lots.pratala.testnet`, `pusdc.pratala.testnet`, owner/treasury `pratala.testnet`, demo actors `pratala-*-69f5.testnet` (see `deploy/testnet.json`) | `scripts/05-verify-demo.sh` → all checks pass (396.90 / 8.10 / 45.00, lot-1 NFT owned by investor2) |
+| Testnet deploy | **Live.** `lots.pratala.testnet`, `pusdc.pratala.testnet`, owner/treasury `pratala.testnet`, demo actors `pratala-*-69f5.testnet`, SSO gas sponsor `sponsor.pratala.testnet` (0.5 NEAR, needs faucet top-up) (see `deploy/testnet.json`) | `scripts/05-verify-demo.sh` → all checks pass (396.90 / 8.10 / 45.00, lot-1 NFT owned by investor2) |
 | Demo lots | lot-1 Settled + all claims paid · lot-2 Listed (450 pUSDC) · lot-3 FieldVerified | `05-verify-demo.sh` |
 | Backend (`backend/`) | NestJS 12 + Prisma 7.10.1 + Postgres 16; all modules from `docs/INTERFACES.md` §5 | `pnpm test` 35/35, `pnpm test:e2e` 20/20, `docker compose up` healthy |
 | Frontend (`frontend/`) | Next.js 16.4, 18 routes, English-only UI, Hallmark custom theme, NEAR Connect + function-call keys | `pnpm lint && pnpm typecheck && pnpm build` pass; all routes 200 |
@@ -48,6 +48,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 - `docs/INTERFACES.md` §5.1 extended by the backend (AiCheck fields, error envelope, decimal amounts, payment `occurredAt`, order transfer hint) and §3 by the contracts (NFT transfer only after funding, `reference` on `register_lot`, per-lot `fee_bps`, claims return `bool`, ≥ 40 Tgas).
 
 ### Added
+- **NEAR Auth email SSO — backend** (`src/fastauth/`): `POST /fastauth/create-account` (sponsor wallet creates a fresh MPC account with `CreateAccount + AddKey + Transfer(0.5 NEAR)`; one seed per Auth0 login and per account, ever), `POST /fastauth/sign-tx` (relays the fast-auth `sign` call so MPC signatures are platform-paid), and `POST /auth/verify-sso` (session login without NEP-413: Auth0 JWT verified via JWKS, `derived_public_key` on `v1.signer-prod.testnet` must match the claimed key and be a full-access key on-chain). The sponsor wallet (`sponsor.pratala.testnet`, key in gitignored `config/sponsor-key.json` via `SPONSOR_PRIVATE_KEY_FILE`) is now the API's **only** transaction signer — `backend/AGENTS.md` amended accordingly; without it the endpoints fail fast with 503 `sponsor_unconfigured`. New `SponsoredAccount` Prisma model + migration, 14 unit + 4 e2e tests.
+- `deploy/testnet.json`: SSO gas sponsor account `sponsor.pratala.testnet`.
 - `deploy/testnet.json`: live testnet deployment record (`0fb19e5`).
 - `CHANGELOG.md` (this file) and the changelog rule in `AGENTS.md`.
 

@@ -6,6 +6,9 @@
 # JSON and point GCS_KEY_FILE at it, e.g.:
 #   volumes: [ "./gcp-service-account.json:/app/secrets/gcs.json:ro" ]
 #   environment: GCS_KEY_FILE: /app/secrets/gcs.json
+# The NEAR Auth sponsor key mounts the same way (../config/sponsor-key.json on
+# the host): mount it read-only and set SPONSOR_PRIVATE_KEY_FILE to the
+# container path; without it /api/fastauth/* returns 503 sponsor_unconfigured.
 
 name: pratala
 
