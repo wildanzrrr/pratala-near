@@ -12,8 +12,8 @@ Worked example used everywhere in this repo: 1,000 kg rice at 0.45 pUSDC/kg = 45
 | Folder | What | Docs |
 | --- | --- | --- |
 | [`smart-contract/`](smart-contract/) | Rust (near-sdk 5.30.1): `harvest-lot` (NEP-171 NFT + escrow, pull-based claims) and `pusdc` (NEP-141 test stablecoin with capped faucet) | [CONTRACTS](docs/CONTRACTS.md) · [NFT-CONTROL](docs/NFT-CONTROL.md) |
-| [`backend/`](backend/) | NestJS 12 + Prisma 7 + Postgres, Docker: NEP-413 wallet login, evidence uploads, NEAR AI Cloud evidence check (TEE model), tx indexer, payments ledger + CSV, NEAR Intents 1Click proxy | [PAYMENTS](docs/PAYMENTS.md) · [AI-VERIFICATION](docs/AI-VERIFICATION.md) · [INTENTS](docs/INTENTS.md) |
-| [`frontend/`](frontend/) | Next.js 16 App Router (Vercel): farmer, verifier, buyer, supplier and admin flows; NEAR Connect wallets (HOT, Meteor, …) with function-call keys | [WALLETS](docs/WALLETS.md) · [DESIGN](docs/DESIGN.md) |
+| [`backend/`](backend/) | NestJS 12 + Prisma 7 + Postgres, Docker: NEP-413 wallet login **and email SSO (NEAR Auth)**, sponsor wallet that creates + gas-seeds farmer accounts, evidence uploads, NEAR AI Cloud evidence check (TEE model), tx indexer, payments ledger + CSV, NEAR Intents 1Click proxy | [PAYMENTS](docs/PAYMENTS.md) · [AI-VERIFICATION](docs/AI-VERIFICATION.md) · [INTENTS](docs/INTENTS.md) |
+| [`frontend/`](frontend/) | Next.js 16 App Router (Vercel): farmer, verifier, buyer, supplier and admin flows; **sign in with email or Google → non-custodial MPC account, platform-paid gas and deposits**, NEAR Connect wallets (HOT, Meteor, …) for existing accounts | [WALLETS](docs/WALLETS.md) · [DESIGN](docs/DESIGN.md) |
 | [`scripts/`](scripts/) | Toolchain, skills, testnet accounts, deploy, seed, verify | [scripts/README](scripts/README.md) |
 | [`docs/`](docs/) | [ARCHITECTURE](docs/ARCHITECTURE.md) · [INTERFACES](docs/INTERFACES.md) · [DISCLOSURE](docs/DISCLOSURE.md) · [DEMO-SCRIPT](docs/DEMO-SCRIPT.md) · [SUBMISSION](docs/SUBMISSION.md) · [PLAN](docs/PLAN.md) | |
 
@@ -48,6 +48,8 @@ pnpm -C frontend install && pnpm -C frontend dev
 ```
 
 Until the contracts are deployed, pages show "Contracts not deployed yet". Set `NEXT_PUBLIC_DEMO_FIXTURES=1` in `frontend/.env.local` to preview the UI with three sample lots labelled "Sample".
+
+**Email sign-in (no wallet needed).** With the API running, open http://localhost:3000 → "Sign in" → **Continue with email or Google** → create any account in the login window → expect: you return signed in as `u… sponsor.pratala.testnet`, and on testnet the account is created and funded with 0.5 NEAR by the platform sponsor (see the tx on [nearblocks](https://testnet.nearblocks.io)) — no seed phrase, no gas to buy. The sponsor wallet must be configured (`SPONSOR_ACCOUNT_ID` + `SPONSOR_PRIVATE_KEY_FILE` in `backend/.env`, key at `config/sponsor-key.json`); without it the button fails fast with `sponsor_unconfigured`.
 
 ## Deploy to testnet (requires approval — changes chain state)
 

@@ -91,7 +91,8 @@ Most of the code and docs were written by AI coding agents, with the human owner
 | `@nestjs/throttler` | 6.7.1 | rate limiting (intents, AI) |
 | `@prisma/client`, `@prisma/adapter-pg`, `prisma` | 7.10.1 | ORM, migrations |
 | `pg` | ^8.23.1 | Postgres driver |
-| `near-api-js` | 7.4.0 | RPC reads, NEP-413 `verifyMessage` |
+| `near-api-js` | 7.4.0 | RPC reads, NEP-413 `verifyMessage`, sponsor-wallet transactions (account creation + fast-auth `sign` relay) |
+| `jose` | ^6 | Auth0 JWT verification (JWKS) for NEAR Auth email SSO |
 | `openai` | 7.53.0 | OpenAI-compatible client for NEAR AI Cloud |
 | `exifr` | 7.1.3 | photo EXIF GPS/time |
 | `multer` | ^2.5.0 | multipart uploads |
@@ -109,7 +110,10 @@ Most of the code and docs were written by AI coding agents, with the human owner
 | `next` | 16.4.5 | App Router framework |
 | `react`, `react-dom` | 19.3.0 | UI |
 | `@hot-labs/near-connect` | ^0.12.0 | wallet selector (HOT, Meteor, MyNearWallet, …) |
-| `function-call-key-plugin` | ^2.2.0 | function-call access keys for popup-free verifier/farmer actions |
+| `function-call-key-plugin` | ^2.2.0 | function-call access keys for popup-free verifier/farmer actions (wallet path) |
+| `@fast-auth-near/javascript-provider`, `@fast-auth-near/browser-sdk`, `@fast-auth-near/react-sdk` | 1.4.1 / 1.4.2 / 1.3.1 | NEAR Auth email SSO: Auth0 login, MPC transaction signing via the fast-auth contract |
+| `@auth0/auth0-spa-js` | ^2.30.0 | Auth0 session (refresh tokens) for the SSO path |
+| `bs58` | ^6.0.0 | base58 block hashes for transaction building |
 | `near-api-js` | ^7.4.0 | RPC views, transaction building |
 | `@tanstack/react-query` | ^5.107.1 | data fetching / cache |
 | `react-hook-form`, `@hookform/resolvers`, `zod` | ^7.91.0, ^7.0.3, ^4.6.7 | forms + validation |
