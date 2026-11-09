@@ -7,6 +7,7 @@ import { Camera, CheckCircle, MapPin, Plus, Trash, WarningCircle } from "@phosph
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/lib/api";
+import { heicToJpeg, isHeicFile, readPhotoExif } from "@/lib/heic";
 import { shortHash } from "@/lib/near/format";
 import { cn, sha256Hex } from "@/lib/utils";
 import { useT } from "@/providers/locale-provider";
@@ -66,25 +67,48 @@ export function EvidenceUploader({
   const patch = (localId: string, next: Partial<EvidenceItem>) =>
     onItemsChange((list) => list.map((item) => (item.localId === localId ? { ...item, ...next } : item)));
 
-  async function addFile(file: File) {
+  async function addFile(raw: File) {
     const localId = crypto.randomUUID();
-    if (!file.type.startsWith("image/")) {
-      onItemsChange((l) => [...l, { localId, previewUrl: "", fileName: file.name, sha256: null, gps: null, evidence: null, status: "error", error: t("evidence.notImage") }]);
+    if (raw.size > MAX_BYTES) {
+      onItemsChange((l) => [...l, { localId, previewUrl: "", fileName: raw.name, sha256: null, gps: null, evidence: null, status: "error", error: t("evidence.tooBig") }]);
       return;
     }
-    if (file.size > MAX_BYTES) {
-      onItemsChange((l) => [...l, { localId, previewUrl: "", fileName: file.name, sha256: null, gps: null, evidence: null, status: "error", error: t("evidence.tooBig") }]);
+    let file = raw;
+    let heicExif: Awaited<ReturnType<typeof readPhotoExif>> | null = null;
+    if (await isHeicFile(raw)) {
+      // Chrome/Firefox can't decode HEIC (blank preview), so convert to JPEG and
+      // re-embed the photo's GPS + capture time before hashing and uploading.
+      try {
+        heicExif = await readPhotoExif(raw);
+        file = await heicToJpeg(raw, heicExif);
+      } catch {
+        onItemsChange((l) => [...l, { localId, previewUrl: "", fileName: raw.name, sha256: null, gps: null, evidence: null, status: "error", error: t("evidence.convertFailed") }]);
+        return;
+      }
+      if (file.size > MAX_BYTES) {
+        onItemsChange((l) => [...l, { localId, previewUrl: "", fileName: file.name, sha256: null, gps: null, evidence: null, status: "error", error: t("evidence.tooBig") }]);
+        return;
+      }
+    }
+    if (!file.type.startsWith("image/")) {
+      onItemsChange((l) => [...l, { localId, previewUrl: "", fileName: file.name, sha256: null, gps: null, evidence: null, status: "error", error: t("evidence.notImage") }]);
       return;
     }
     const previewUrl = URL.createObjectURL(file);
     onItemsChange((l) => [...l, { localId, previewUrl, fileName: file.name, sha256: null, gps: null, evidence: null, status: "reading" }]);
 
+    const gpsFromHeic =
+      heicExif && heicExif.lat !== null && heicExif.lng !== null
+        ? ({ lat: heicExif.lat, lng: heicExif.lng, source: "photo" } as GeoPoint)
+        : null;
     const [sha256, gps] = await Promise.all([
       file.arrayBuffer().then(sha256Hex),
-      import("exifr")
-        .then((m) => m.gps(file))
-        .then((g) => (g && Number.isFinite(g.latitude) ? ({ lat: g.latitude, lng: g.longitude, source: "photo" } as GeoPoint) : null))
-        .catch(() => null),
+      gpsFromHeic
+        ? Promise.resolve(gpsFromHeic)
+        : import("exifr")
+            .then((m) => m.gps(file))
+            .then((g) => (g && Number.isFinite(g.latitude) ? ({ lat: g.latitude, lng: g.longitude, source: "photo" } as GeoPoint) : null))
+            .catch(() => null),
     ]);
     if (!canUpload) {
       patch(localId, { sha256, gps, status: "error", error: t("evidence.signInToUpload") });

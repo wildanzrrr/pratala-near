@@ -4,7 +4,7 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+7 (developer machine). Hackathon deadline: **2026-11-14 23:59 UTC** (aim to submit by 18:00 UTC).
 
-## Current status — 2026-11-09 18:58
+## Current status — 2026-11-09 19:50
 
 | Area | State | Verified by |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 | Demo lots | lot-1 Settled + all claims paid · lot-2 Listed (450 pUSDC) · lot-3 FieldVerified | `05-verify-demo.sh` |
 | Backend (`backend/`) | NestJS 12 + Prisma 7.10.1 + Postgres 16; all modules from `docs/INTERFACES.md` §5 | `pnpm test` 35/35, `pnpm test:e2e` 20/20, `docker compose up` healthy |
 | Frontend (`frontend/`) | Next.js 16.4, 18 routes, English-only UI, Hallmark custom theme, **email SSO via NEAR Auth (live-verified end-to-end on testnet: chosen-name accounts + mandatory onboarding)**, NEAR Connect + function-call keys | `pnpm lint && pnpm typecheck && pnpm build` pass; all routes 200; signup → named sponsored account → gate → onboarding verified in-browser |
-| NEAR AI evidence check | Wired to NEAR AI Cloud, `Qwen/Qwen3-VL-30B-A3B-Instruct` (private TEE tier) | Key configured locally and accepted by the API; **live image check not yet exercised end-to-end** |
+| NEAR AI evidence check | Wired to NEAR AI Cloud, `Qwen/Qwen3-VL-30B-A3B-Instruct` (private TEE tier); blocked on the account's spending limit (`no_limit_configured`) | key accepted; direct API probe 2026-11-09 returns `no_limit_configured` for every completion |
 | NEAR Intents | 1Click proxy, mainnet `dry: true` quotes; partner key configured locally | `GET /v0/tokens` 200 with key |
 | Scripts / CI | `scripts/00–05`, four GitHub workflows | `bash -n`; CI not yet run (no remote) |
 | Git | `main`, one commit per unit of work, tag `v0.1.0-contracts` | — |
@@ -22,18 +22,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 
 ### Open items (in priority order)
 
-1. **Indonesian strings on-chain.** Lots 1–3 were registered before the English pass, so their `region` reads e.g. "Karawang, Jawa Barat". The contract has no edit method. Decision pending from the user: keep, or deploy fresh contracts to new accounts (e.g. `lots-v2.pratala.testnet`) and reseed with the English `scripts/04-seed-demo.sh`. Changing chain state needs the user's OK.
-2. **Wallet + SSO testing in a real browser.** The email-SSO path is live-verified end-to-end in a popup-less browser (signup → sponsored account `u7f95675b38.sponsor.pratala.testnet` with 0.5 NEAR, tx `E9rpn1pq…`, backend session, onboarding). Still untested in a popup-capable browser: the per-action MPC confirmation window (register_lot, faucet, funding), the quick-signing key bootstrap and silent signing. Meteor "Meteor Web" opens via a relayed `window.open`; browsers may block it as a popup. Function-call-key creation and NEP-413 `signMessage` not yet verified with a real wallet.
-3. **Developer test account** `prataladev.testnet` (Meteor) has 0 NEAR and no roles. Needs testnet NEAR from a faucet, then `/faucet` for pUSDC. Granting a verifier role requires an owner `add_role` call (user approval).
-4. **Testnet accounts need faucet top-ups**: `pratala.testnet` ≈ 0.07 NEAR and `sponsor.pratala.testnet` ≈ 0.43 NEAR (≈ 0 funded SSO accounts left). Top both up from https://testnet.near.org/faucet before the demo; each SSO account costs the sponsor ~0.51 NEAR.
-5. **Hosting**: API host (Railway/Render) not chosen; Vercel frontend not deployed. Cross-site cookie needs `SameSite=None; Secure` when API and web are on different sites.
-6. **GitHub remote**: org/repo name not given yet; nothing pushed. Repo must be public before submission.
-7. **Submission tasks** (`docs/SUBMISSION.md`): demo video, X post, finalize `docs/DISCLOSURE.md` §5/§8, decide on adding the Privacy track (TEE model confirmed), mainnet payout account, submission payload shown to the user before sending.
-8. **Optional: rotate the `lots`/`pusdc` contract keys.** During the `config/keys` migration a redaction bug briefly echoed both private keys into the terminal log of that one run (fixed in `scripts/lib.sh` in the same commit; the key files themselves were never exposed). Testnet-only and valueless, but a key rotation (add key → delete old) would close it. User decision, low priority.
+1. **NEAR AI Cloud needs a spending limit before live checks work.** The configured key is accepted, but every completion returns `no_limit_configured` ("No spending limit configured. Please contact support to set up credits."). User action in the NEAR AI Cloud console (cloud.near.ai → API keys → set a spend cap on the key); no code change needed. The verify UI now shows this upstream reason next to "AI check unavailable".
+2. **Indonesian strings on-chain.** Lots 1–3 were registered before the English pass, so their `region` reads e.g. "Karawang, Jawa Barat". The contract has no edit method. Decision pending from the user: keep, or deploy fresh contracts to new accounts (e.g. `lots-v2.pratala.testnet`) and reseed with the English `scripts/04-seed-demo.sh`. Changing chain state needs the user's OK.
+3. **Wallet + SSO testing in a real browser.** The email-SSO path is live-verified end-to-end in a popup-less browser (signup → sponsored account `u7f95675b38.sponsor.pratala.testnet` with 0.5 NEAR, tx `E9rpn1pq…`, backend session, onboarding). Still untested in a popup-capable browser: the per-action MPC confirmation window (register_lot, faucet, funding), the quick-signing key bootstrap and silent signing. Meteor "Meteor Web" opens via a relayed `window.open`; browsers may block it as a popup. Function-call-key creation and NEP-413 `signMessage` not yet verified with a real wallet.
+4. **Developer test account** `prataladev.testnet` (Meteor) has 0 NEAR and no roles. Needs testnet NEAR from a faucet, then `/faucet` for pUSDC. Granting a verifier role requires an owner `add_role` call (user approval).
+5. **Testnet accounts need faucet top-ups**: `pratala.testnet` ≈ 0.07 NEAR and `sponsor.pratala.testnet` ≈ 0.43 NEAR (≈ 0 funded SSO accounts left). Top both up from https://testnet.near.org/faucet before the demo; each SSO account costs the sponsor ~0.51 NEAR.
+6. **Hosting**: API host (Railway/Render) not chosen; Vercel frontend not deployed. Cross-site cookie needs `SameSite=None; Secure` when API and web are on different sites.
+7. **GitHub remote**: org/repo name not given yet; nothing pushed. Repo must be public before submission.
+8. **Submission tasks** (`docs/SUBMISSION.md`): demo video, X post, finalize `docs/DISCLOSURE.md` §5/§8, decide on adding the Privacy track (TEE model confirmed), mainnet payout account, submission payload shown to the user before sending.
+9. **Optional: rotate the `lots`/`pusdc` contract keys.** During the `config/keys` migration a redaction bug briefly echoed both private keys into the terminal log of that one run (fixed in `scripts/lib.sh` in the same commit; the key files themselves were never exposed). Testnet-only and valueless, but a key rotation (add key → delete old) would close it. User decision, low priority.
 
 ## [Unreleased]
 
 ### Fixed
+- **iPhone HEIC photos no longer upload as HEIC**: the evidence uploader now detects HEIC by magic bytes, converts it to JPEG in the browser (`heic2any`, loaded only when needed) and re-embeds the photo's GPS + capture-time EXIF into the JPEG (`piexifjs`) before hashing and uploading. Before, Chrome/Firefox showed a blank preview (only Safari decodes HEIC) and the stored evidence + AI check received HEIC bytes. Conversion failure is a hard error on the photo, never a silent HEIC upload. Verified in-browser: HEIC in → JPEG stored (`image/jpeg`, hash matches the UI fingerprint), preview decodes.
+- 5xx API responses no longer swallow the server's message: `ApiUnavailableError` keeps the body's `message` (e.g. the NEAR AI upstream error), and the verify AiPanel shows it after "AI check unavailable" instead of hiding the cause.
 - E2E env no longer inherits the developer's `backend/.env` (Vitest loads it): the sponsor wallet vars are pinned empty so the 503 `sponsor_unconfigured` paths test for real.
 - NEAR Auth identity tokens now use (and accept) the tenant's default API audience (`https://api.testnet.fast-auth.com`): the shared testnet client refuses to issue signing-audience tokens without a transaction payload, which made the first email login fail with `access_denied`. The signing audience stays internal to the per-action MPC flow. (`903f6ab` follow-up)
 - GCS boot check writes and deletes a probe object instead of reading bucket metadata — `roles/storage.objectAdmin` keys lack `storage.buckets.get` and the old check would have crashed boot with the least-privilege key.

@@ -29,9 +29,11 @@ import type {
   Profile,
 } from "@/lib/near/types";
 
+export const API_UNAVAILABLE_MESSAGE = "Pratala API is unavailable";
+
 export class ApiUnavailableError extends Error {
-  constructor(cause?: unknown) {
-    super("Pratala API is unavailable", { cause });
+  constructor(cause?: unknown, serverMessage?: string) {
+    super(serverMessage ?? API_UNAVAILABLE_MESSAGE, { cause });
     this.name = "ApiUnavailableError";
   }
 }
@@ -71,7 +73,16 @@ export async function apiFetch<T>(path: string, init: RequestInit & { query?: Qu
     if (error instanceof DOMException && error.name === "AbortError" && rest.signal?.aborted) throw error;
     throw new ApiUnavailableError(error);
   }
-  if (response.status >= 500 || response.status === 0) throw new ApiUnavailableError(response.status);
+  if (response.status >= 500 || response.status === 0) {
+    // Keep the server's message (e.g. the NEAR AI upstream error) — a generic
+    // "API unavailable" hides the actual cause of 5xx responses.
+    const text = await response.text().catch(() => "");
+    const body = text ? safeJson(text) : null;
+    const record = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+    const raw = record.message;
+    const serverMessage = typeof raw === "string" && raw ? raw : undefined;
+    throw new ApiUnavailableError(response.status, serverMessage);
+  }
   const text = await response.text();
   const body = text ? safeJson(text) : null;
   if (!response.ok) {

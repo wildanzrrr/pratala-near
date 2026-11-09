@@ -115,6 +115,9 @@ Most of the code and docs were written by AI coding agents, with the human owner
 | `@auth0/auth0-spa-js` | ^2.30.0 | Auth0 session (refresh tokens) for the SSO path |
 | `bs58` | ^6.0.0 | base58 block hashes for transaction building |
 | `near-api-js` | ^7.4.0 | RPC views, transaction building |
+| `exifr` | ^7.1.3 | read photo EXIF GPS/capture time in the uploader (same lib as the backend) |
+| `heic2any` | ^0.0.4 | decode iPhone HEIC photos to JPEG in the browser (Chrome/Firefox can't decode HEIC) |
+| `piexifjs` | ^1.0.6 | re-embed GPS + capture-time EXIF into the converted JPEG before upload |
 | `@tanstack/react-query` | ^5.107.1 | data fetching / cache |
 | `react-hook-form`, `@hookform/resolvers`, `zod` | ^7.91.0, ^7.0.3, ^4.6.7 | forms + validation |
 | `radix-ui`, `shadcn`, `class-variance-authority`, `clsx`, `tailwind-merge`, `tw-animate-css`, `vaul`, `sonner`, `next-themes` | see manifest | shadcn/ui component stack |
