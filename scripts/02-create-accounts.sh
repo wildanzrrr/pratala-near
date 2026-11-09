@@ -10,11 +10,12 @@
 #   3. tops root up from the actors if it cannot fund the contract accounts
 #   4. lots.<root> and pusdc.<root>, funded from root (sized from the wasm, 1 NEAR ≈ 100 KB)
 #
-# Keys are saved by near-cli-rs to the OS keychain (NEAR_KEYCHAIN=keychain, default) or to
-# ~/.near-credentials (NEAR_KEYCHAIN=legacy-keychain). Nothing secret is written to the repo.
+# Keys are saved to config/keys/<account>.json (gitignored, chmod 600) in near-cli-rs
+# credential format. Accounts that already exist get their key migrated there from the
+# macOS Keychain (near-cli-rs "keychain" storage) on first re-run. Nothing secret is tracked by git.
 #
 # Env overrides: ROOT_ID, ROOT_EXISTING=1 (adopt an existing root you hold the key for),
-#   ACTOR_SUFFIX, LOTS_FUND_NEAR, PUSDC_FUND_NEAR, ROOT_RESERVE_NEAR, FAUCET_DELAY, NEAR_KEYCHAIN.
+#   ACTOR_SUFFIX, LOTS_FUND_NEAR, PUSDC_FUND_NEAR, ROOT_RESERVE_NEAR, FAUCET_DELAY, KEYS_DIR.
 # Re-running is safe: accounts already recorded in deploy/testnet.json are skipped.
 #
 # Expect: "✓ accounts ready", a table of ids with explorer links, deploy/testnet.json .accounts filled.
@@ -91,7 +92,7 @@ PUSDC_FUND="$(fund_for_wasm "$PUSDC_WASM" "$PUSDC_MIN_NEAR" 1)"
 [[ -f "$PUSDC_WASM" ]] || warn "no $PUSDC_WASM yet — using ${PUSDC_FUND} NEAR"
 
 log ""
-log "Plan (network: $NEAR_NETWORK, keys → $NEAR_KEYCHAIN):"
+log "Plan (network: $NEAR_NETWORK, keys → ${KEYS_DIR#"$ROOT_DIR"/}):"
 log "  root / owner / treasury : $ROOT   (faucet)"
 for a in "${ACTORS[@]}"; do log "  $(printf '%-24s' "$a") : $(actor_id "$a")   (faucet)"; done
 log "  lots contract           : $LOTS   (${LOTS_FUND} NEAR from root)"
@@ -117,6 +118,7 @@ faucet_create() { # faucet_create <role> <account-id>
     if [[ -n "$(state_get ".accounts.\"$role\"")" || ( "$role" == "root" && "${ROOT_EXISTING:-0}" == "1" ) ]]; then
       ok "$role $id already exists — skipped"
       state_set_str ".accounts.\"$role\"" "$id"
+      key_migrate_from_keychain "$id"
       return 0
     fi
     die "$id exists but is not ours (not in $DEPLOY_FILE). Re-run with ACTOR_SUFFIX=<new 4 hex> or a different ROOT_ID."
@@ -124,7 +126,8 @@ faucet_create() { # faucet_create <role> <account-id>
   [[ "$st" == "missing" ]] || die "could not query $id (network error)"
   info "creating $role → $id via faucet"
   near_run "accounts.$role" account create-account sponsor-by-faucet-service "$id" \
-    autogenerate-new-keypair --signature-scheme ed25519 "save-to-$NEAR_KEYCHAIN" network-config "$NEAR_NETWORK" create
+    autogenerate-new-keypair --signature-scheme ed25519 save-to-legacy-keychain network-config "$NEAR_NETWORK" create
+  key_adopt_generated "$id"
   wait_exists "$id" || die "$id was not visible on-chain after creation"
   state_set_str ".accounts.\"$role\"" "$id"
   ok "$role $id created  $(explorer_account "$id")"
@@ -155,7 +158,7 @@ if (( missing_subs == 1 )) && float_lt "$have" "$need"; then
     amt="$(awk -v s="$spare" -v n="$short" 'BEGIN{printf "%.2f", (s<n)?s:n}')"
     info "  $id → $ROOT  ${amt} NEAR"
     near_run "accounts.topup.$a" tokens "$id" send-near "$ROOT" "$amt NEAR" \
-      network-config "$NEAR_NETWORK" "sign-with-$NEAR_KEYCHAIN" send
+      network-config "$NEAR_NETWORK" $(sign_with "$id") send
     short="$(awk -v s="$short" -v a="$amt" 'BEGIN{printf "%.2f", s-a}')"
   done
   float_lt 0 "$short" && die "root still short by ${short} NEAR — fund $ROOT from https://near-faucet.io and re-run"
@@ -171,13 +174,15 @@ sub_create() { # sub_create <role> <id> <NEAR>
   if [[ "$st" == "exists" ]]; then
     ok "$role $id already exists — skipped"
     state_set_str ".accounts.\"$role\"" "$id"
+    key_migrate_from_keychain "$id"
     return 0
   fi
   [[ "$st" == "missing" ]] || die "could not query $id (network error)"
   info "creating $id with ${amount} NEAR from $ROOT"
   near_run "accounts.$role" account create-account fund-myself "$id" "$amount NEAR" \
-    autogenerate-new-keypair --signature-scheme ed25519 "save-to-$NEAR_KEYCHAIN" sign-as "$ROOT" \
-    network-config "$NEAR_NETWORK" "sign-with-$NEAR_KEYCHAIN" send
+    autogenerate-new-keypair --signature-scheme ed25519 save-to-legacy-keychain sign-as "$ROOT" \
+    network-config "$NEAR_NETWORK" $(sign_with "$ROOT") send
+  key_adopt_generated "$id"
   wait_exists "$id" || die "$id was not visible on-chain after creation"
   state_set_str ".accounts.\"$role\"" "$id"
   ok "$role $id created  $(explorer_account "$id")"

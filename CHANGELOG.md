@@ -4,7 +4,7 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+7 (developer machine). Hackathon deadline: **2026-11-14 23:59 UTC** (aim to submit by 18:00 UTC).
 
-## Current status — 2026-11-09 16:05
+## Current status — 2026-11-09 18:58
 
 | Area | State | Verified by |
 | --- | --- | --- |
@@ -29,6 +29,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 5. **Hosting**: API host (Railway/Render) not chosen; Vercel frontend not deployed. Cross-site cookie needs `SameSite=None; Secure` when API and web are on different sites.
 6. **GitHub remote**: org/repo name not given yet; nothing pushed. Repo must be public before submission.
 7. **Submission tasks** (`docs/SUBMISSION.md`): demo video, X post, finalize `docs/DISCLOSURE.md` §5/§8, decide on adding the Privacy track (TEE model confirmed), mainnet payout account, submission payload shown to the user before sending.
+8. **Optional: rotate the `lots`/`pusdc` contract keys.** During the `config/keys` migration a redaction bug briefly echoed both private keys into the terminal log of that one run (fixed in `scripts/lib.sh` in the same commit; the key files themselves were never exposed). Testnet-only and valueless, but a key rotation (add key → delete old) would close it. User decision, low priority.
 
 ## [Unreleased]
 
@@ -40,7 +41,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 - `scripts/02-create-accounts.sh` aborted on near-cli-rs 0.31's new key-scheme prompt; now passes `--signature-scheme ed25519` (`6dd4bae`).
 
 ### Changed
-- **Evidence upload is required, no device-only fallback** (frontend): the uploader's "Device only" state is gone — a photo that is not uploaded is an error. Attestations (field/co-op/weigh-in/failure) and lot registration only count photos with status "ready" (uploaded), and the register wizard no longer falls back to locally-computed plot hashes when the API is unreachable: plot creation must succeed before `register_lot` is signed.
+- **Testnet signing keys moved out of the macOS Keychain into gitignored `config/keys/<account>.json`** (near-cli-rs credential format, chmod 600; the Keychain's `master_seed_phrase` is deliberately not copied). `scripts/02-create-accounts.sh` saves new-account keys there and one-time-migrates existing accounts from the Keychain when it skips them; `NEAR_KEYCHAIN` is gone — every signed call reads its key file via `sign-with-plaintext-private-key` (`sign_with` in `scripts/lib.sh`), a missing/malformed key is a hard error (no fallback source), and `near_run` redacts inline keys from its echo. `config/README.txt` documents the folder; `scripts/README.md`, `docs/CONTRACTS.md` and `docs/DEMO-SCRIPT.md` updated (demo actors' keys now come straight from `config/keys/*.json`).
+- Both contracts re-deployed with the key-file flow (`REDEPLOY=1`, code-only, state kept; current wasm hashes recorded in `deploy/testnet.json` as `deploy.pusdc.upgrade` / `deploy.lots.upgrade`); `scripts/05-verify-demo.sh` reproduces all demo numbers afterwards.
 - **Evidence storage is Google Cloud Storage only** (backend): `@aws-sdk/client-s3` and the local-disk store were removed. `GCS_BUCKET` is required env (boot fails without it or when the bucket is unreachable); `GCS_KEY_FILE` optionally points at a service-account JSON, otherwise Application Default Credentials. Evidence is still served through `GET /api/evidence/:sha256` (private bucket, no public URLs). E2E tests use an in-memory storage fake; docker-compose dropped the MinIO profile and uploads volume. (`26be0b0`)
 - Onboarding "Finish" is now a single "Complete registration" button that also signs the NEP-413 backend login when needed and supported; the separate "Sign in to Pratala services" card was removed. A rejected or failed signature still completes registration (profile saved locally).
 - Demo USDC→IDR conversion rate raised from 16,000 to 18,000 (frontend env default, `.env.example`, README table) — user decision to match the current rate. (`6570dfd`)

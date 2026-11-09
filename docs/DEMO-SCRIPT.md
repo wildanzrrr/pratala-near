@@ -6,7 +6,7 @@ This is the script for the submission video. It follows the core journeys in [`P
 
 1. `scripts/05-verify-demo.sh` → `all checks passed`. lot-1 is Settled (the finished example), lot-2 is Listed and lot-3 is FieldVerified.
 2. **The farmer needs no wallet at all.** Open the site in a normal browser (popups allowed), "Sign in" → **Continue with email or Google** → create any login. Expect: signed in as `u…​.sponsor.pratala.testnet`, the platform pays account creation + a 0.5 NEAR gas seed (show the tx on nearblocks), and you land in onboarding. Say on camera: "no seed phrase, no gas, Pratala covers it." Use this account in place of farmer1 below.
-3. Put the **other** demo actors in browser wallets. Their keys are in the near-cli-rs keychain, so export each one with `near account export-account <id> using-private-key network-config testnet` and import it into Meteor or MyNearWallet. Use a separate browser profile per role, or one wallet with account switching. These are **testnet-only** keys; never paste them anywhere public.
+3. Put the **other** demo actors in browser wallets. Their key files are in `config/keys/<account>.json` (e.g. `config/keys/pratala-agent1-<sfx>.testnet.json`); read the private key with `jq -r .private_key config/keys/<account>.json` and import it into Meteor or MyNearWallet. Use a separate browser profile per role, or one wallet with account switching. These are **testnet-only** keys; never paste them anywhere public.
    - Farmer `pratala-farmer1-<sfx>.testnet` (only if you prefer a wallet for the farmer)
    - Field agent `pratala-agent1-<sfx>.testnet`
    - Co-op `pratala-coop1-<sfx>.testnet`

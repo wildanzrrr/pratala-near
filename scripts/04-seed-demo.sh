@@ -48,7 +48,7 @@ near_view_json "$LOTS" get_config >/dev/null || die "$LOTS has no harvest-lot co
 near_view_json "$PUSDC" ft_metadata >/dev/null || die "$PUSDC has no pusdc contract — run scripts/03-deploy-contracts.sh"
 
 log ""
-log "Plan (network: $NEAR_NETWORK, ~30 transactions, all signed from the local keychain):"
+log "Plan (network: $NEAR_NETWORK, ~30 transactions, all signed with keys from ${KEYS_DIR#"$ROOT_DIR"/}):"
 log "  roles → $AGENT FieldAgent, $COOP Coop, $WAREHOUSE Warehouse"
 log "  pUSDC storage for 6 actors + $ROOT + $LOTS; faucet 1,000 pUSDC → $BUYER"
 log "  lot-1 → Settled, lot-2 → Listed, lot-3 → FieldVerified (harvest month $HARVEST_MONTH)"

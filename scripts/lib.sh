@@ -87,14 +87,10 @@ NEAR_ARCHIVAL_RPC_URL="${NEAR_ARCHIVAL_RPC_URL:-https://archival-rpc.testnet.fas
 EXPLORER_BASE="${EXPLORER_BASE:-https://testnet.nearblocks.io}"
 DEPLOY_FILE="${DEPLOY_FILE:-$ROOT_DIR/deploy/testnet.json}"
 LOG_DIR="${LOG_DIR:-$ROOT_DIR/deploy/logs}"
-# keychain = OS keychain (macOS Keychain / libsecret); legacy-keychain = ~/.near-credentials
-NEAR_KEYCHAIN="${NEAR_KEYCHAIN:-keychain}"
-export NEAR_NETWORK NEAR_RPC_URL NEAR_ARCHIVAL_RPC_URL EXPLORER_BASE DEPLOY_FILE LOG_DIR NEAR_KEYCHAIN
-
-case "$NEAR_KEYCHAIN" in
-  keychain|legacy-keychain) ;;
-  *) die "NEAR_KEYCHAIN must be 'keychain' or 'legacy-keychain' (got '$NEAR_KEYCHAIN')" ;;
-esac
+# All signing keys are files in KEYS_DIR (default config/keys/, gitignored), one JSON per
+# account in near-cli-rs credential format: {account_id, public_key, private_key}.
+KEYS_DIR="${KEYS_DIR:-$ROOT_DIR/config/keys}"
+export NEAR_NETWORK NEAR_RPC_URL NEAR_ARCHIVAL_RPC_URL EXPLORER_BASE DEPLOY_FILE LOG_DIR KEYS_DIR
 
 require_testnet() {
   [[ "$NEAR_NETWORK" == "testnet" ]] || die "these scripts only target testnet (NEAR_NETWORK=$NEAR_NETWORK)"
@@ -151,6 +147,74 @@ require_acct() {
   printf '%s' "$v"
 }
 
+# ------------------------------------------------------------ signing keys ---
+# Keys live in KEYS_DIR (config/keys/<account>.json, gitignored) in near-cli-rs credential
+# format. There is no fallback: a missing or malformed file is a hard error.
+
+key_file() { printf '%s/%s.json' "$KEYS_DIR" "$1"; }
+
+# require_key <account> → validates the credential file and prints its path.
+require_key() {
+  local account="$1" f
+  f="$(key_file "$account")"
+  if [[ ! -f "$f" ]]; then
+    die "no signing key for $account at $f — re-run scripts/02-create-accounts.sh (it saves
+new-account keys there and migrates existing macOS-keychain keys on skipped accounts)"
+  fi
+  jq -e --arg a "$account" \
+    '.account_id == $a and .private_key and (.private_key | startswith("ed25519:") or startswith("secp256k1:"))' \
+    "$f" >/dev/null 2>&1 || die "$f is not a valid credential for $account (needs account_id, public_key, private_key)"
+  printf '%s' "$f"
+}
+
+# sign_with <account> → prints "sign-with-plaintext-private-key <key>". Use UNQUOTED in an
+# argument list so it expands to the two near-cli-rs arguments.
+sign_with() {
+  local f
+  f="$(require_key "$1")"
+  printf 'sign-with-plaintext-private-key %s' "$(jq -r .private_key "$f")"
+}
+
+# key_adopt_generated <account> → move a just-generated ~/.near-credentials key into KEYS_DIR.
+# 02-create-accounts.sh generates new keys with save-to-legacy-keychain, then adopts them here.
+key_adopt_generated() {
+  local account="$1" src dst
+  src="$HOME/.near-credentials/$NEAR_NETWORK/$account.json"
+  dst="$(key_file "$account")"
+  [[ -f "$src" ]] || die "near-cli-rs did not write $src for the new key of $account"
+  mkdir -p "$KEYS_DIR" && chmod 700 "$KEYS_DIR"
+  ( umask 177; cat "$src" > "$dst" ) && rm -f "$src"
+  chmod 600 "$dst"
+  rmdir "$HOME/.near-credentials/$NEAR_NETWORK" "$HOME/.near-credentials" 2>/dev/null || true
+  ok "key saved → ${dst#"$ROOT_DIR"/} (gitignored)"
+  require_key "$account" >/dev/null
+}
+
+# key_migrate_from_keychain <account> → one-time export of a near-cli-rs "keychain"-stored key
+# (macOS Keychain, service near-<network>-<account>) into KEYS_DIR. No-op if the file exists.
+# Only for accounts created before keys moved to config/keys; the keychain copy becomes a
+# stale duplicate and is not deleted.
+key_migrate_from_keychain() {
+  local account="$1" svc out f
+  f="$(key_file "$account")"
+  [[ -f "$f" ]] && return 0
+  command -v security >/dev/null 2>&1 \
+    || die "no key for $account at $f and not on macOS (no near-cli-rs keychain to migrate from)"
+  svc="near-$NEAR_NETWORK-$account"
+  info "migrating $account key from macOS Keychain → ${f#"$ROOT_DIR"/} (macOS may ask for access)"
+  out="$(security find-generic-password -s "$svc" -w 2>/dev/null)" || out=""
+  [[ -n "$out" ]] || die "no '$svc' item in the macOS Keychain and no $f — add the key file manually or recreate the account"
+  # Keychain items hold near-cli-rs' internal record (implicit_account_id, master_seed_phrase,
+  # private_key, public_key, seed_phrase_hd_path). Keep only the keypair + the account name;
+  # the master seed phrase is deliberately NOT copied into KEYS_DIR.
+  jq -e '(.private_key | startswith("ed25519:") or startswith("secp256k1:")) and (.public_key | startswith("ed25519:") or startswith("secp256k1:"))' \
+    <<<"$out" >/dev/null || die "keychain item '$svc' has no usable keypair"
+  mkdir -p "$KEYS_DIR" && chmod 700 "$KEYS_DIR"
+  ( umask 177; jq --arg a "$account" '{account_id:$a, public_key, private_key}' <<<"$out" > "$f" )
+  chmod 600 "$f"
+  ok "key migrated → ${f#"$ROOT_DIR"/} (gitignored)"
+}
+
 # ------------------------------------------------------------ near-cli-rs ---
 # near_view <contract> <method> [json-args] → raw JSON on stdout.
 near_view() {
@@ -190,7 +254,7 @@ near_call() {
   dim "  near: $signer → $contract.$method $args  [$gas, $deposit]"
   near contract call-function as-transaction "$contract" "$method" json-args "$args" \
     prepaid-gas "$gas" attached-deposit "$deposit" \
-    sign-as "$signer" network-config "$NEAR_NETWORK" "sign-with-$NEAR_KEYCHAIN" send \
+    sign-as "$signer" network-config "$NEAR_NETWORK" $(sign_with "$signer") send \
     >"$base.out" 2>"$base.err" || rc=$?
   LAST_CALL_OUT="$base.out"
   LAST_TX_HASH="$(extract_tx_hash "$base.out" "$base.err")"
@@ -216,7 +280,8 @@ near_run() {
   shift
   mkdir -p "$LOG_DIR"
   base="$LOG_DIR/$(date -u +%Y%m%dT%H%M%S)-${1:-near}-$$-${RANDOM}"
-  dim "  near $*"
+  # Redact inline private keys (sign_with passes them as CLI arguments) before echoing.
+  dim "  near $(printf '%s ' "$@" | sed -E 's/(ed25519|secp256k1):[A-Za-z0-9]+/\1:<redacted>/g')"
   near "$@" >"$base.out" 2>"$base.err" || rc=$?
   LAST_CALL_OUT="$base.out"
   LAST_TX_HASH="$(extract_tx_hash "$base.out" "$base.err")"

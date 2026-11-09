@@ -86,7 +86,7 @@ deploy() { # deploy <key> <id> <wasm> <init-json> <state> <view-to-verify>
     if [[ "${REDEPLOY:-0}" == "1" ]]; then
       info "upgrading code on $id (no init)"
       near_run "deploy.$key.upgrade" contract deploy "$id" use-file "$wasm" without-init-call \
-        network-config "$NEAR_NETWORK" "sign-with-$NEAR_KEYCHAIN" send
+        network-config "$NEAR_NETWORK" $(sign_with "$id") send
     else
       ok "$key already deployed and initialised on $id — skipped (REDEPLOY=1 to upgrade)"
       return 0
@@ -94,7 +94,7 @@ deploy() { # deploy <key> <id> <wasm> <init-json> <state> <view-to-verify>
   else
     info "deploying $key → $id with init new"
     near_run "deploy.$key" contract deploy "$id" use-file "$wasm" with-init-call new json-args "$init" \
-      prepaid-gas '100 Tgas' attached-deposit '0 NEAR' network-config "$NEAR_NETWORK" "sign-with-$NEAR_KEYCHAIN" send
+      prepaid-gas '100 Tgas' attached-deposit '0 NEAR' network-config "$NEAR_NETWORK" $(sign_with "$id") send
   fi
   near_view_json "$id" "$view" '{}' >/dev/null || die "$id.$view failed after deploy — check $LOG_DIR"
   record_contract "$key" "$id" "$wasm" "$init"
@@ -122,7 +122,7 @@ if float_lt "$free" "$LOTS_STORAGE_POOL_NEAR"; then
   amt="$(awk -v p="$LOTS_STORAGE_POOL_NEAR" -v f="$free" 'BEGIN{printf "%.2f", p-f+0.1}')"
   info "lots has ${free} NEAR free → sending ${amt} NEAR from $ROOT"
   near_run "deploy.lots.storage_pool" tokens "$ROOT" send-near "$LOTS" "$amt NEAR" \
-    network-config "$NEAR_NETWORK" "sign-with-$NEAR_KEYCHAIN" send
+    network-config "$NEAR_NETWORK" $(sign_with "$ROOT") send
 else
   ok "lots has ${free} NEAR free for attestation storage"
 fi

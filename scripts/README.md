@@ -28,7 +28,7 @@ Each step reads chain state first, so re-running 02, 03 or 04 picks up where the
 
 - `deploy/testnet.json` holds account ids, contract wasm hash and size, init args, lot ids and every tx hash under `.txs`. It contains no keys. Commit it after a real deploy so judges and `05` can find the contracts. The schema is in `deploy/testnet.json.example`.
 - `deploy/logs/` holds the raw near-cli output of every call. It is git-ignored by `deploy/.gitignore`.
-- Keys stay where near-cli-rs puts them: the OS keychain by default, or `~/.near-credentials` with `NEAR_KEYCHAIN=legacy-keychain`. Nothing secret is written to the repo.
+- Keys live in `config/keys/<account>.json` (gitignored via `config/*`, chmod 600) in near-cli-rs credential format. 02 saves each new account's key there; for accounts that already exist it migrates the key from the macOS Keychain on first re-run. Nothing secret is tracked by git.
 
 ## Environment overrides
 
@@ -38,7 +38,7 @@ Each step reads chain state first, so re-running 02, 03 or 04 picks up where the
 | `CHECK_ONLY` | `0` | 00: report only |
 | `DRY_RUN`, `FOLDERS` | `0`, `smart-contract backend frontend` | 01 |
 | `ROOT_ID` | `pratala.testnet` | 02: root/owner/treasury. Falls back to `<base>-hack.testnet`, then `<base>-<4hex>.testnet` if taken |
-| `ROOT_EXISTING` | `0` | 02: adopt an existing `ROOT_ID` whose key is already in your keychain |
+| `ROOT_EXISTING` | `0` | 02: adopt an existing `ROOT_ID` whose key you hold (`config/keys/<id>.json`, or the macOS Keychain to migrate from) |
 | `ACTOR_SUFFIX` | random 4 hex, then kept in testnet.json | 02: `pratala-<actor>-<suffix>.testnet` |
 | `LOTS_FUND_NEAR`, `PUSDC_FUND_NEAR` | `6`, `3` (or wasm size ÷ 100 KB + headroom, if larger) | 02 |
 | `ROOT_RESERVE_NEAR`, `ACTOR_KEEP_NEAR`, `FAUCET_DELAY` | `2`, `3`, `3` s | 02 |
@@ -49,7 +49,7 @@ Each step reads chain state first, so re-running 02, 03 or 04 picks up where the
 | `NEAR_NETWORK` | `testnet` | all |
 | `NEAR_RPC_URL`, `NEAR_ARCHIVAL_RPC_URL` | `https://test.rpc.fastnear.com`, `https://archival-rpc.testnet.fastnear.com` | balance and tx lookups (05 reads old claim txs from archival) |
 | `EXPLORER_BASE` | `https://testnet.nearblocks.io` | links |
-| `NEAR_KEYCHAIN` | `keychain` | `save-to-…` / `sign-with-…` for near-cli-rs |
+| `KEYS_DIR` | `config/keys` | all signed calls: one `<account>.json` credential file per account (`account_id`, `public_key`, `private_key`) |
 | `DEPLOY_FILE`, `LOG_DIR`, `ENV_FILE` | `deploy/testnet.json`, `deploy/logs`, `.env` | all |
 
 `.env` at the repo root is optional and only fills in variables that are not already set. Contract ids always come from `deploy/testnet.json` once it exists.
@@ -60,11 +60,13 @@ near-cli-rs 0.31.x (`near`), cargo-near 0.23.0, Rust 1.95.0 with `wasm32-unknown
 
 ```sh
 near account view-account-summary <id> network-config testnet now
-near account create-account sponsor-by-faucet-service <id> autogenerate-new-keypair --signature-scheme ed25519 save-to-keychain network-config testnet create
-near account create-account fund-myself <sub.id> '<n> NEAR' autogenerate-new-keypair --signature-scheme ed25519 save-to-keychain sign-as <root> network-config testnet sign-with-keychain send
-near tokens <from> send-near <to> '<n> NEAR' network-config testnet sign-with-keychain send
-near contract deploy <id> use-file <wasm> with-init-call new json-args '<json>' prepaid-gas '100 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-keychain send
-near contract deploy <id> use-file <wasm> without-init-call network-config testnet sign-with-keychain send
-near contract call-function as-transaction <contract> <method> json-args '<json>' prepaid-gas '<g> Tgas' attached-deposit '<d>' sign-as <signer> network-config testnet sign-with-keychain send
+near account create-account sponsor-by-faucet-service <id> autogenerate-new-keypair --signature-scheme ed25519 save-to-legacy-keychain network-config testnet create
+near account create-account fund-myself <sub.id> '<n> NEAR' autogenerate-new-keypair --signature-scheme ed25519 save-to-legacy-keychain sign-as <root> network-config testnet sign-with-plaintext-private-key '<root key from config/keys>' send
+near tokens <from> send-near <to> '<n> NEAR' network-config testnet sign-with-plaintext-private-key '<key from config/keys>' send
+near contract deploy <id> use-file <wasm> with-init-call new json-args '<json>' prepaid-gas '100 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-plaintext-private-key '<key from config/keys>' send
+near contract deploy <id> use-file <wasm> without-init-call network-config testnet sign-with-plaintext-private-key '<key from config/keys>' send
+near contract call-function as-transaction <contract> <method> json-args '<json>' prepaid-gas '<g> Tgas' attached-deposit '<d>' sign-as <signer> network-config testnet sign-with-plaintext-private-key '<signer key from config/keys>' send
 near --quiet contract call-function as-read-only <contract> <method> json-args '<json>' network-config testnet now
 ```
+
+New-account keys are generated to `~/.near-credentials` by `save-to-legacy-keychain` and immediately moved into `config/keys/<account>.json` (`key_adopt_generated` in `lib.sh`); every signed call reads its key from there (`sign_with`). A missing key file is a hard error — there is no fallback key source.

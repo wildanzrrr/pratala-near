@@ -94,7 +94,7 @@ Funding is one call on **pUSDC** (the buyer signs it):
 near contract call-function as-transaction pusdc.pratala.testnet ft_transfer_call \
   json-args '{"receiver_id":"lots.pratala.testnet","amount":"450000000","msg":"{\"action\":\"fund\",\"lot_id\":\"lot-1\"}"}' \
   prepaid-gas '100 Tgas' attached-deposit '1 yoctoNEAR' \
-  sign-as buyer.testnet network-config testnet sign-with-keychain send
+  sign-as buyer.testnet network-config testnet sign-with-plaintext-private-key '<buyer key from config/keys>' send
 ```
 
 `ft_on_transfer` checks, in order: predecessor is the configured pUSDC, not paused, msg parses as exactly `{"action":"fund","lot_id":"…"}`, the lot exists and is Listed, sender ≠ farmer, `amount ≥ total`. Any failure panics, and pUSDC's `ft_resolve_transfer` returns the full amount to the sender. On success it stores `escrow = total`, `funder`, `funded_at_ms`, freezes `fee_bps`, moves the NFT with the standard's `internal_transfer` (which clears approvals and emits `nft_transfer`; verified in near-contract-standards 5.30.1 `core_impl.rs`), and returns `amount − total`, which pUSDC refunds.

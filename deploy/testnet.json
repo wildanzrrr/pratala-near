@@ -19,8 +19,8 @@
     "pusdc": {
       "account_id": "pusdc.pratala.testnet",
       "wasm": "smart-contract/target/near/pusdc/pusdc.wasm",
-      "wasm_bytes": 173885,
-      "wasm_sha256": "1c8a1ffae261f0afe95b10929a0a7d12b934478280d02bd66c853190eba833e6",
+      "wasm_bytes": 172389,
+      "wasm_sha256": "f2ada15e70a1d07e26dd55a7ed78465761d203fbc93c41a5485c1265c81f404f",
       "init_args": {
         "owner_id": "pratala.testnet",
         "total_supply": "1000000000000",
@@ -39,8 +39,8 @@
     "lots": {
       "account_id": "lots.pratala.testnet",
       "wasm": "smart-contract/target/near/harvest_lot/harvest_lot.wasm",
-      "wasm_bytes": 371281,
-      "wasm_sha256": "d899e42d1bda5fb2a497c506c24e7a7eced24d82d55492b717e29132526802ab",
+      "wasm_bytes": 367395,
+      "wasm_sha256": "45500025390ffb60e742516bc31b22392a2ab45af1c32cafc30d72261cf6c837",
       "init_args": {
         "owner_id": "pratala.testnet",
         "usdc_contract": "pusdc.pratala.testnet",
@@ -118,8 +118,10 @@
     "seed.lot2.attest_coop": "HEwuxachuGutUYXJqzWk2yCbiWrq9Ke2ubqPUJkNihN7",
     "seed.lot2.list": "6F3NhJfHNABfhZiKxsMNLKx4JnJKhau63fsht6ZStM7H",
     "seed.lot3.register": "2uzot1AVhd7i2mZb1fK6e7fpjxR6XzY58277NtTXu84y",
-    "seed.lot3.attest_field": "Dz2mJDhcaH7fYMLGJwtp2ZKUspf7M46qsH2WWMTjYvXa"
+    "seed.lot3.attest_field": "Dz2mJDhcaH7fYMLGJwtp2ZKUspf7M46qsH2WWMTjYvXa",
+    "deploy.pusdc.upgrade": "753RNorEr5Vi8GAFsx2kmwvPCSVWNC7jcUYAcJUh8jiA",
+    "deploy.lots.upgrade": "Hpupm4c1neqCbzytvT7jPQBGjePyNwh6HPjsyEAdCb5V"
   },
   "actor_suffix": "69f5",
-  "updated_at": "2026-11-07T16:17:04Z"
+  "updated_at": "2026-11-09T11:57:26Z"
 }
