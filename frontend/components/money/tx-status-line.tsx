@@ -4,7 +4,7 @@ import { CheckCircle, Lightning, WarningCircle } from "@phosphor-icons/react";
 
 import { ProofLink } from "@/components/common/explorer-link";
 import { Spinner } from "@/components/ui/spinner";
-import { WalletRejectedError } from "@/lib/near/errors";
+import { WalletRejectedError, WindowBlockedError } from "@/lib/near/errors";
 import { useT } from "@/providers/locale-provider";
 
 import type { TxResult } from "@/hooks/mutations/use-tx-mutation";
@@ -43,7 +43,11 @@ export function TxStatusLine({
         <>
           <WarningCircle aria-hidden className="size-4 text-destructive" />
           <span className="text-destructive">
-            {error instanceof WalletRejectedError ? t("tx.rejected") : (error?.message ?? t("tx.failedGeneric"))}
+            {error instanceof WindowBlockedError
+              ? t("tx.windowBlocked")
+              : error instanceof WalletRejectedError
+                ? t("tx.rejected")
+                : (error?.message ?? t("tx.failedGeneric"))}
           </span>
         </>
       ) : silent ? (

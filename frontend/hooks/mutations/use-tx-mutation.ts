@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { explorer } from "@/lib/explorer";
 import { lastResultOf, txHashOf } from "@/lib/near/contracts";
-import { WalletRejectedError, classifyTxError, contractPanicMessage } from "@/lib/near/errors";
+import { WalletRejectedError, WindowBlockedError, classifyTxError, contractPanicMessage } from "@/lib/near/errors";
 import { useNear } from "@/providers/near-provider";
 import { useT } from "@/providers/locale-provider";
 
@@ -82,6 +82,10 @@ export function useTxMutation<V = void, R = unknown>(config: TxMutationConfig<V,
       await config.onSuccess?.(result, vars);
     },
     onError: (error) => {
+      if (error instanceof WindowBlockedError) {
+        toast.message(t("tx.windowBlocked"));
+        return;
+      }
       if (error instanceof WalletRejectedError) {
         toast.message(t("tx.rejected"));
         return;

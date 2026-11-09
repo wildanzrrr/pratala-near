@@ -29,6 +29,14 @@ export class WalletRejectedError extends Error {
   }
 }
 
+/** The confirmation window never opened (popup blocker) or timed out — not a user rejection. */
+export class WindowBlockedError extends Error {
+  constructor(cause?: unknown) {
+    super("The confirmation window did not open", { cause });
+    this.name = "WindowBlockedError";
+  }
+}
+
 const NOT_DEPLOYED =
   /does not exist|AccountDoesNotExist|CodeDoesNotExist|Contract code for contract ID|MethodNotFound|method is not found|CompilationError/i;
 const NETWORK = /fetch failed|Failed to fetch|NetworkError|ECONNREFUSED|ETIMEDOUT|timeout|503|502|504/i;

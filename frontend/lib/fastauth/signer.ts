@@ -27,7 +27,7 @@ import {
 import { api } from "@/lib/api";
 import { env } from "@/lib/env";
 import { FC_KEY_ALLOWANCE, FC_METHODS, LOTS, rpc } from "@/lib/near/contracts";
-import { WalletRejectedError } from "@/lib/near/errors";
+import { WalletRejectedError, WindowBlockedError } from "@/lib/near/errors";
 import { fastAuthProvider } from "@/lib/fastauth/client";
 
 import type { ConnectorAction } from "@hot-labs/near-connect";
@@ -36,11 +36,18 @@ import type { TxRequest } from "@/lib/near/contracts";
 
 const fcStorageKey = (accountId: string) => `pratala:sso:fc:${env.network}:${accountId}`;
 
-/** Rejection-looking failures from the Auth0 popup become WalletRejectedError. */
+/**
+ * Failures from the Auth0 confirmation window. A popup that never opened
+ * (blocker) or timed out is NOT a user rejection — reporting it as "you
+ * cancelled" hides the real problem.
+ */
 export function classifySsoError(error: unknown): Error {
   const message = error instanceof Error ? error.message : String(error);
-  if (/popup|closed|cancel|denied|timed?\s?out/i.test(message)) {
-    return new WalletRejectedError();
+  if (/block|timed?\s?out|timeout|initialization/i.test(message)) {
+    return new WindowBlockedError(error);
+  }
+  if (/popup|closed|cancel|denied|reject/i.test(message)) {
+    return new WalletRejectedError(error);
   }
   return error instanceof Error ? error : new Error(message);
 }
@@ -65,6 +72,8 @@ export async function signSsoActions(
   v7Actions: Action[],
 ): Promise<unknown> {
   const provider = fastAuthProvider();
+  // RPC prep stays outside the classify block: a chain failure must not be
+  // reported as a popup problem.
   const accessKey = await rpc().viewAccessKey({ accountId, publicKey: mpcPublicKey });
   const block = await rpc().viewBlock({ finality: "optimistic" });
   const transaction = createTransaction(

@@ -628,6 +628,7 @@ export const en = {
     silent: "Recording without an approval window…",
     done: "Recorded",
     rejected: "You cancelled the approval. Nothing changed.",
+    windowBlocked: "The confirmation window could not open. Allow popups for this site, then try again.",
     failed: "Transaction failed: {reason}",
     failedGeneric: "Transaction failed. No funds moved.",
     returned: "Approval received",

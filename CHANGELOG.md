@@ -4,7 +4,7 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+7 (developer machine). Hackathon deadline: **2026-11-14 23:59 UTC** (aim to submit by 18:00 UTC).
 
-## Current status — 2026-11-09 21:52
+## Current status — 2026-11-09 22:12
 
 | Area | State | Verified by |
 | --- | --- | --- |
@@ -35,6 +35,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 ## [Unreleased]
 
 ### Fixed
+- **Email-SSO signing no longer lies "You cancelled the approval" or double-prompts**: every confirmation-window failure (popup blocked by the browser, window timeout) was classified as a user rejection, so a blocked window showed "You cancelled the approval. Nothing changed." — and declining the one-time quick-signing-key window immediately chained a second surprise window for the action itself. Popup-blocked/timeout failures are now a distinct `WindowBlockedError` with copy telling the user to allow popups (`tx.windowBlocked`, in the toast and the inline status line), and a declined or blocked key-bootstrap stops the action cleanly — one predictable confirmation per click, after which the action signs silently in the same click (docs/WALLETS.md §1 updated).
 - **Intents checkout tab no longer fails with a bare "Internal server error"**: 1Click runs on mainnet only and answers testnet recipients — every account in this demo — with a generic 400 of exactly that text, which the API passed through verbatim, so the "Other chains" estimate could never complete. `POST /intents/quote` now rejects `*.testnet`/`*.betanet` recipients up front with an actionable message, and rewraps 1Click's generic rejection bodies into a hint that carries the provider `correlationId`. The checkout tab gains an explicit "Recipient on NEAR (mainnet)" field, prefilled with the signed-in account and flagged inline when it is a testnet id, so the dry estimate completes for any mainnet name (INTERFACES §5.1 documents the rule). Live-verified: 360 USDC (Base) → 359.96 USDC on NEAR.
 - **iPhone HEIC photos no longer upload as HEIC**: the evidence uploader now detects HEIC by magic bytes, converts it to JPEG in the browser (`heic2any`, loaded only when needed) and re-embeds the photo's GPS + capture-time EXIF into the JPEG (`piexifjs`) before hashing and uploading. Before, Chrome/Firefox showed a blank preview (only Safari decodes HEIC) and the stored evidence + AI check received HEIC bytes. Conversion failure is a hard error on the photo, never a silent HEIC upload. Verified in-browser: HEIC in → JPEG stored (`image/jpeg`, hash matches the UI fingerprint), preview decodes.
 - 5xx API responses no longer swallow the server's message: `ApiUnavailableError` keeps the body's `message` (e.g. the NEAR AI upstream error), and the verify AiPanel shows it after "AI check unavailable" instead of hiding the cause.

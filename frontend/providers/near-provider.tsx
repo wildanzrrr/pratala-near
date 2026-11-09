@@ -313,14 +313,12 @@ export function NearProvider({ children }: { children: ReactNode }) {
     async (tx: TxRequest) => {
       if (sso) {
         if (tx.silent && !loadSsoFcKeyPair(sso.accountId)) {
-          // First silent-eligible action on this device: add the quick-signing
-          // key through one MPC confirmation, inside the user's click.
-          try {
-            await ensureSsoFcKey(sso.accountId, sso.mpcPublicKey);
-            setFcVersion((v) => v + 1);
-          } catch {
-            // popup blocked or declined — fall through to the MPC path
-          }
+          // First silent-eligible action on this device: ONE confirmation
+          // adds the quick-signing key; when it lands, the action itself is
+          // signed silently below, in the same click. A declined or blocked
+          // window stops here — never a surprise second popup.
+          await ensureSsoFcKey(sso.accountId, sso.mpcPublicKey);
+          setFcVersion((v) => v + 1);
         }
         if (tx.silent && loadSsoFcKeyPair(sso.accountId)) {
           return signSsoSilent(sso.accountId, tx);
