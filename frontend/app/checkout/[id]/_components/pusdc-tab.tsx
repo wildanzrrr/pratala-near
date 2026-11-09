@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { CheckCircle, Coins, LockSimple, SignIn, Wallet } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { Money, MoneyBlock } from "@/components/money/money";
+import { AmountInput } from "@/components/money/amount-input";
+import { Money } from "@/components/money/money";
 import { TxStatusLine } from "@/components/money/tx-status-line";
 import { openConnectSheet } from "@/components/wallet/connect-store";
 import { env } from "@/lib/env";
-import { formatUsdc, toBig } from "@/lib/near/format";
+import { formatUsdc, parseUsdc, toBig, usdcToDecimal } from "@/lib/near/format";
 import { cn } from "@/lib/utils";
 import { usePusdcBalance } from "@/hooks/queries/use-pusdc-balance";
 import { useStorageDeposit, useStorageRegistered } from "@/hooks/queries/use-storage-registered";
@@ -40,9 +42,27 @@ export function PusdcTab({ lot }: { lot: LotView }) {
     }
   });
 
+  // The buyer chooses how much to send; the contract (escrow.rs ft_on_transfer)
+  // requires amount >= funding_total and refunds any excess, so the input is
+  // free above the lot price. Null until the user types — the default follows
+  // the lot, so re-navigation between lots never shows a stale amount.
+  const [amountText, setAmountText] = useState<string | null>(null);
+  const amountInput = amountText ?? usdcToDecimal(lot.funding_total);
+  const parsed = parseUsdc(amountInput);
+  const pay = parsed !== null ? toBig(parsed) : 0n;
   const need = toBig(lot.funding_total);
   const have = toBig(balance.data);
   const short = need > have ? need - have : 0n;
+  const payable = parsed !== null && pay >= need;
+  const shortInput = payable && balance.data !== undefined && pay > have ? pay - have : 0n;
+  const amountError = !payable
+    ? parsed === null
+      ? t("checkout.amountInvalid")
+      : t("checkout.amountMin", { amount: formatUsdc(lot.funding_total, locale) })
+    : shortInput > 0n
+      ? t("checkout.short", { amount: formatUsdc(shortInput, locale) })
+      : null;
+  const payWith = payable && shortInput === 0n && parsed !== null ? parsed : lot.funding_total;
   const step1 = Boolean(signedAccountId);
   const step2 = step1 && registered.data === true && balance.isSuccess && short === 0n;
   const fixtures = env.demoFixtures;
@@ -121,18 +141,16 @@ export function PusdcTab({ lot }: { lot: LotView }) {
       <Step n={3} title={t("checkout.step3")} done={fund.isSuccess} active={step2}>
         {step2 || fixtures ? (
           <div className="flex flex-col gap-4">
-            <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+              <AmountInput label={t("checkout.youPay")} value={amountInput} onChange={setAmountText} error={amountError} />
               <div className="flex flex-col gap-1">
-                <dt className="text-muted-foreground">{t("checkout.youPay")}</dt>
-                <dd>
-                  <MoneyBlock base={lot.funding_total} />
-                </dd>
+                <span className="text-muted-foreground">{t("checkout.youGet")}</span>
+                <p className="text-ink-2">{t("checkout.youGetBody", { lot: lot.lot_id })}</p>
               </div>
-              <div className="flex flex-col gap-1">
-                <dt className="text-muted-foreground">{t("checkout.youGet")}</dt>
-                <dd className="text-ink-2">{t("checkout.youGetBody", { lot: lot.lot_id })}</dd>
-              </div>
-            </dl>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t("checkout.amountFloor", { amount: formatUsdc(lot.funding_total, locale) })}
+            </p>
             <p className="flex items-start gap-2 text-sm text-muted-foreground">
               <LockSimple aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
               {t("money.escrowBody")}
@@ -140,11 +158,11 @@ export function PusdcTab({ lot }: { lot: LotView }) {
             <Button
               size="lg"
               className="w-full sm:w-fit"
-              disabled={!step2 || fund.isPending}
-              onClick={() => fund.mutate({ lotId: lot.lot_id, amount: lot.funding_total })}
+              disabled={!step2 || !payable || shortInput > 0n || fund.isPending}
+              onClick={() => fund.mutate({ lotId: lot.lot_id, amount: payWith })}
             >
               {fund.isPending ? <Spinner data-icon="inline-start" /> : <Coins data-icon="inline-start" />}
-              {fund.isPending ? t("checkout.paying") : t("checkout.pay", { amount: formatUsdc(lot.funding_total, locale) })}
+              {fund.isPending ? t("checkout.paying") : t("checkout.pay", { amount: formatUsdc(payWith, locale) })}
             </Button>
             <TxStatusLine status={fund.status} data={fund.data} error={fund.error} />
           </div>

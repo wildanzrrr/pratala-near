@@ -329,6 +329,9 @@ export const en = {
     youPay: "You pay",
     youGet: "You receive",
     youGetBody: "NFT {lot} — the claim on the harvest and on a refund if it falls short.",
+    amountInvalid: "Enter a valid amount.",
+    amountMin: "This lot needs at least {amount} pUSDC.",
+    amountFloor: "Lot price {amount} pUSDC — send at least this much; anything above is refunded to you instantly.",
     pay: "Pay {amount} pUSDC",
     paying: "Waiting for approval…",
     notListed: "This lot is not open for funding right now.",
@@ -472,6 +475,7 @@ export const en = {
     hash: "Photo fingerprint",
     tooBig: "The photo is over 8 MB. Pick a smaller one.",
     notImage: "This file is not a photo.",
+    convertFailed: "This iPhone photo (HEIC) couldn't be converted. Retake it or export it as JPEG.",
     uploadFailed: "The photo didn't upload — remove it and try again.",
   },
   verify: {
