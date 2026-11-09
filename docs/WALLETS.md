@@ -10,7 +10,7 @@ The hero action in the connect sheet. A farmer signs in with **email, Google, Ap
 
 **Who pays for what.** NEAR charges gas to the transaction signer, and `register_lot` needs a 0.1 NEAR attached deposit, so a brand-new account cannot transact on its own. Pratala sponsors it:
 
-- **Account creation + gas seed** — the backend's sponsor wallet (`sponsor.pratala.testnet`, key in gitignored `config/sponsor-key.json`) sends one `CreateAccount + AddKey(full access, the MPC key) + Transfer(0.5 NEAR)` batch, once per login and once per account ever (`SponsoredAccount` table). That seed covers the registration deposit and gas for the whole demo.
+- **Account creation + gas seed** — the backend's sponsor wallet (`sponsor.pratala.testnet`, key in gitignored `config/keys/sponsor.pratala.testnet.json`) sends one `CreateAccount + AddKey(full access, the MPC key) + Transfer(0.5 NEAR)` batch, once per login and once per account ever (`SponsoredAccount` table). That seed covers the registration deposit and gas for the whole demo.
 - **MPC signature calls** — each signed action needs a `sign` call on `fast-auth.testnet` (the guard verifies the JWT on-chain, the MPC network signs). The backend relays that call, so the platform pays its gas too (`POST /api/fastauth/sign-tx`).
 
 **The user experience, cadence of windows:**

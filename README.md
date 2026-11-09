@@ -49,7 +49,7 @@ pnpm -C frontend install && pnpm -C frontend dev
 
 Until the contracts are deployed, pages show "Contracts not deployed yet". Set `NEXT_PUBLIC_DEMO_FIXTURES=1` in `frontend/.env.local` to preview the UI with three sample lots labelled "Sample".
 
-**Email sign-in (no wallet needed).** With the API running, open http://localhost:3000 → "Sign in" → **Continue with email or Google** → create any account in the login window → expect: you return signed in as `u… sponsor.pratala.testnet`, and on testnet the account is created and funded with 0.5 NEAR by the platform sponsor (see the tx on [nearblocks](https://testnet.nearblocks.io)) — no seed phrase, no gas to buy. The sponsor wallet must be configured (`SPONSOR_ACCOUNT_ID` + `SPONSOR_PRIVATE_KEY_FILE` in `backend/.env`, key at `config/sponsor-key.json`); without it the button fails fast with `sponsor_unconfigured`.
+**Email sign-in (no wallet needed).** With the API running, open http://localhost:3000 → "Sign in" → **Continue with email or Google** → create any account in the login window → expect: you return signed in as `u… sponsor.pratala.testnet`, and on testnet the account is created and funded with 0.5 NEAR by the platform sponsor (see the tx on [nearblocks](https://testnet.nearblocks.io)) — no seed phrase, no gas to buy. The sponsor wallet must be configured (`SPONSOR_ACCOUNT_ID` + `SPONSOR_PRIVATE_KEY_FILE` in `backend/.env`, key at `config/keys/sponsor.pratala.testnet.json`); without it the button fails fast with `sponsor_unconfigured`.
 
 ## Deploy to testnet (requires approval — changes chain state)
 
