@@ -4,13 +4,13 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+7 (developer machine). Hackathon deadline: **2026-11-14 23:59 UTC** (aim to submit by 18:00 UTC).
 
-## Current status — 2026-11-09 22:12
+## Current status — 2026-11-10 23:00
 
 | Area | State | Verified by |
 | --- | --- | --- |
 | Smart contracts (`smart-contract/`) | `harvest-lot` (NEP-171 + escrow, pull claims) and `pusdc` (NEP-141 + faucet) complete | `make -C smart-contract test` → 60 unit + 9 sandbox tests pass |
 | Testnet deploy | **Live.** `lots.pratala.testnet`, `pusdc.pratala.testnet`, owner/treasury `pratala.testnet`, demo actors `pratala-*-69f5.testnet`, SSO gas sponsor `sponsor.pratala.testnet` (see `deploy/testnet.json`; sponsor has funded 3 SSO accounts) | `scripts/05-verify-demo.sh` → all checks pass (396.90 / 8.10 / 45.00, lot-1 NFT owned by investor2) |
-| Demo lots | lot-1 Settled + all claims paid · lot-2 Listed (450 pUSDC) · lot-3 FieldVerified | `05-verify-demo.sh` |
+| Demo lots | **Full lifecycle completed live 2026-11-10 (SSO farmer): register → field check (with AI evidence) → co-op review → funding (360 pUSDC) → weigh-in → Settled.** lot-1 Settled, claims paid · lot-2 Settled, claims pending (farmer 352.80, treasury 7.20, holder 0 — full delivery) · lot-3 FieldVerified · lot-4 Registered | user walkthrough in-browser; `GET /api/lots/lot-2` 2026-11-10 |
 | Backend (`backend/`) | NestJS 12 + Prisma 7.10.1 + Postgres 16; all modules from `docs/INTERFACES.md` §5 | `pnpm test` 35/35, `pnpm test:e2e` 20/20, `docker compose up` healthy |
 | Frontend (`frontend/`) | Next.js 16.4, 18 routes, English-only UI, Hallmark custom theme, **email SSO via NEAR Auth (live-verified end-to-end on testnet: chosen-name accounts + mandatory onboarding)**, NEAR Connect + function-call keys | `pnpm lint && pnpm typecheck && pnpm build` pass; all routes 200; signup → named sponsored account → gate → onboarding verified in-browser |
 | NEAR AI evidence check | **Live end-to-end** on NEAR AI Cloud, `Qwen/Qwen3-VL-30B-A3B-Instruct` (private TEE tier): upload → vision check → `provider_tee` signature → verify URL (account topped up with $1 credit) | real `POST /api/ai/check` via a signed-in browser session 2026-11-09: 200, verdict+findings+signature stored |
@@ -23,7 +23,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 ### Open items (in priority order)
 
 1. **Indonesian strings on-chain.** Lots 1–3 were registered before the English pass, so their `region` reads e.g. "Karawang, Jawa Barat". The contract has no edit method. Decision pending from the user: keep, or deploy fresh contracts to new accounts (e.g. `lots-v2.pratala.testnet`) and reseed with the English `scripts/04-seed-demo.sh`. Changing chain state needs the user's OK.
-2. **Wallet + SSO testing in a real browser.** The email-SSO path is live-verified end-to-end in a popup-less browser (signup → sponsored account `u7f95675b38.sponsor.pratala.testnet` with 0.5 NEAR, tx `E9rpn1pq…`, backend session, onboarding). Still untested in a popup-capable browser: the per-action MPC confirmation window (register_lot, faucet, funding), the quick-signing key bootstrap and silent signing. Meteor "Meteor Web" opens via a relayed `window.open`; browsers may block it as a popup. Function-call-key creation and NEP-413 `signMessage` not yet verified with a real wallet.
+2. **Wallet + SSO testing in a real browser.** The email-SSO path is live-verified: signup → sponsored account → onboarding (popup-less), and — after four relayer fixes (`24771ca`…`a577b97`) — the **per-action MPC confirmation window works in a real browser** (register_lot with the SSO farmer account, full lifecycle to Settled, 2026-11-10). Still untested: the quick-signing-key bootstrap + silent signing by an SSO account, the faucet, and claim pulls by the SSO farmer. Meteor "Meteor Web" opens via a relayed `window.open` and may be popup-blocked; function-call-key creation and NEP-413 `signMessage` are not yet verified with a real wallet.
 3. **Developer test account** `prataladev.testnet` (Meteor) has 0 NEAR and no roles. Needs testnet NEAR from a faucet, then `/faucet` for pUSDC. Granting a verifier role requires an owner `add_role` call (user approval).
 4. **Testnet accounts need faucet top-ups**: `pratala.testnet` ≈ 0.07 NEAR and `sponsor.pratala.testnet` ≈ 0.43 NEAR (≈ 0 funded SSO accounts left). Top both up from https://testnet.near.org/faucet before the demo; each SSO account costs the sponsor ~0.51 NEAR.
 5. **Hosting**: API host (Railway/Render) not chosen; Vercel frontend not deployed. Cross-site cookie needs `SameSite=None; Secure` when API and web are on different sites.
