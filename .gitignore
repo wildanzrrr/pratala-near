@@ -7,6 +7,9 @@
 neardev/
 .near-credentials/
 
+# agent tooling session state (plans, scratch)
+.zcode/
+
 # local config/secret keys (config/README.txt stays tracked)
 config/*
 !config/README.txt
