@@ -8,6 +8,7 @@ import type {
   SignTxDto,
   VerifySsoDto,
 } from './fastauth.schemas.js';
+import { signTxSchema } from './fastauth.schemas.js';
 import { FastAuthService } from './fastauth.service.js';
 import type { SponsorSignerService } from './fastauth.signer.service.js';
 
@@ -208,8 +209,22 @@ describe('FastAuthService.relaySignTx', () => {
     const result = await service.relaySignTx(signDto);
     expect(result.hash).toBe('SIGNHASH111111111111111111111111111111111111111');
     expect(relaySign).toHaveBeenCalledWith(
-      expect.objectContaining({ signPayload: [104, 101, 108, 108, 111] }),
+      expect.objectContaining({
+        guardId: signDto.guard_id,
+        verifyPayload: signDto.verify_payload,
+        signPayload: [104, 101, 108, 108, 111],
+        algorithm: 'eddsa',
+      }),
     );
+  });
+
+  it('schema defaults algorithm to eddsa when the client omits it', () => {
+    const parsed = signTxSchema.parse({
+      guard_id: signDto.guard_id,
+      verify_payload: signDto.verify_payload,
+      sign_payload: [1, 2, 3],
+    });
+    expect(parsed.algorithm).toBe('eddsa');
   });
 
   it('verifies verify_payload against the signing audience, not the API audience', async () => {

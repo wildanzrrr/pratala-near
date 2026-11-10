@@ -37,7 +37,9 @@ export const signTxSchema = z.object({
     z.string().max(16_384),
     z.array(z.number().int().min(0).max(255)).max(16_384),
   ]),
-  algorithm: z.enum(['eddsa', 'secp256k1', 'ecdsa']).optional(),
+  // The contract's `sign` deserializer requires the field; the SDK's
+  // createSignAction always sends it, defaulting to eddsa.
+  algorithm: z.enum(['eddsa', 'secp256k1', 'ecdsa']).default('eddsa'),
 });
 export type SignTxDto = z.infer<typeof signTxSchema>;
 

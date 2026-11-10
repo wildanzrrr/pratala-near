@@ -103,7 +103,7 @@ export class SponsorSignerService {
     guardId: string;
     verifyPayload: string;
     signPayload: string | number[];
-    algorithm?: string;
+    algorithm: string;
   }): Promise<SponsorTxOutcome> {
     return this.require().signAndSendTransaction({
       receiverId: args.contractId,
@@ -114,7 +114,7 @@ export class SponsorSignerService {
             guard_id: args.guardId,
             verify_payload: args.verifyPayload,
             sign_payload: args.signPayload,
-            ...(args.algorithm ? { algorithm: args.algorithm } : {}),
+            algorithm: args.algorithm,
           },
           300_000_000_000_000n, // 300 Tgas — matches the SDK's createSignAction default
           0n,
