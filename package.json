@@ -4,6 +4,7 @@
   "private": true,
   "description": "Pratala — verified harvest lots as NEAR NFTs with stablecoin escrow. NEAR Hackathon 2026.",
   "license": "MIT",
+  "packageManager": "pnpm@12.18.0",
   "engines": {
     "node": ">=24"
   },
