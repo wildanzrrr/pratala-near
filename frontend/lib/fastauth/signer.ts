@@ -25,6 +25,7 @@ import {
 } from "near-api-js";
 
 import { api } from "@/lib/api";
+import type { SignRelayResult } from "@/lib/api";
 import { env } from "@/lib/env";
 import { FC_KEY_ALLOWANCE, FC_METHODS, LOTS, rpc } from "@/lib/near/contracts";
 import { WalletRejectedError, WindowBlockedError } from "@/lib/near/errors";
@@ -64,6 +65,45 @@ function toV7Action(a: ConnectorAction): Action {
   );
 }
 
+/**
+ * The MPC signature rides FastAuth.sign's promise chain (guard verify → MPC
+ * sign → callback): it surfaces as the SuccessValue of one of the receipt
+ * outcomes, while the top-level status is null when the chain ends on the
+ * callback. Returns the first base64 value that decodes to an MPC response
+ * ({signature} for eddsa, {big_r, s} for secp256k1).
+ */
+function findMpcSignatureValue(result: SignRelayResult): string | null {
+  const values = [
+    result?.status?.SuccessValue,
+    ...(result?.receipts_outcome ?? []).map((r) => r?.outcome?.status?.SuccessValue),
+  ].filter((v): v is string => typeof v === "string" && v.length > 0);
+  for (const value of values) {
+    let decoded: unknown;
+    try {
+      decoded = JSON.parse(atob(value));
+    } catch {
+      continue;
+    }
+    if (
+      decoded !== null &&
+      typeof decoded === "object" &&
+      ("signature" in decoded || "big_r" in decoded)
+    ) {
+      return value;
+    }
+  }
+  return null;
+}
+
+/** Human-readable diagnosis when no MPC signature came back. */
+function describeRelayFailure(result: SignRelayResult): string {
+  const statuses = [result?.status, ...(result?.receipts_outcome ?? []).map((r) => r?.outcome?.status)];
+  const failure = statuses.find((s) => s?.Failure)?.Failure;
+  if (failure) return JSON.stringify(failure);
+  const logs = (result?.receipts_outcome ?? []).flatMap((r) => r?.outcome?.logs ?? []);
+  return logs.length ? logs.join(" | ") : "no signature in any receipt";
+}
+
 /** Sign raw v7 actions with the login's MPC key (one Auth0 popup) and send. */
 export async function signSsoActions(
   accountId: string,
@@ -94,10 +134,9 @@ export async function signSsoActions(
       verify_payload: signatureRequest.verifyPayload,
       sign_payload: signatureRequest.signPayload as string | number[],
     });
-    const successValue = relayed.result.status?.SuccessValue;
+    const successValue = findMpcSignatureValue(relayed.result);
     if (!successValue) {
-      const failure = JSON.stringify(relayed.result.status?.Failure ?? "no signature returned");
-      throw new Error(`MPC signature failed: ${failure.slice(0, 160)}`);
+      throw new Error(`MPC signature failed: ${describeRelayFailure(relayed.result).slice(0, 200)}`);
     }
     const signature = FastAuthSignature.fromBase64(successValue).recover("ed25519");
     const signed = new SignedTransaction({

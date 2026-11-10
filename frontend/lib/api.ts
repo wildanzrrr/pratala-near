@@ -31,6 +31,18 @@ import type {
 
 export const API_UNAVAILABLE_MESSAGE = "Pratala API is unavailable";
 
+/** Execution status of one receipt in a relayed sign transaction. */
+export type SignRelayStatus = { SuccessValue?: string; Failure?: unknown };
+/**
+ * The sign relay's final outcome. FastAuth.sign is a promise chain (guard
+ * verify → MPC sign → callback), so the MPC response surfaces as the
+ * SuccessValue of a receipt in the chain — the top-level status can be null.
+ */
+export type SignRelayResult = {
+  status?: SignRelayStatus;
+  receipts_outcome?: { outcome?: { status?: SignRelayStatus; logs?: string[] } }[];
+};
+
 export class ApiUnavailableError extends Error {
   constructor(cause?: unknown, serverMessage?: string) {
     super(serverMessage ?? API_UNAVAILABLE_MESSAGE, { cause });
@@ -121,7 +133,7 @@ export const api = {
   fastauthCreateAccount: (body: { accountId: string; publicKey: string; token: string }) =>
     apiFetch<{ accountId: string; txHash: string; seedNear: string }>("/fastauth/create-account", { method: "POST", body: json(body) }),
   fastauthSignTx: (body: { guard_id: string; verify_payload: string; sign_payload: string | number[]; algorithm?: string }) =>
-    apiFetch<{ hash: string; result: { status?: { SuccessValue?: string; Failure?: unknown } } }>("/fastauth/sign-tx", { method: "POST", body: json(body) }),
+    apiFetch<{ hash: string; result: SignRelayResult }>("/fastauth/sign-tx", { method: "POST", body: json(body) }),
   verifySso: (body: { accountId: string; publicKey: string; token: string }) =>
     apiFetch<{ accountId: string }>("/auth/verify-sso", { method: "POST", body: json(body) }),
 

@@ -221,6 +221,7 @@ export class FastAuthService {
       this.logger.error(`relay sign-tx failed: ${String(err)}`);
       throw apiError(502, 'chain_unavailable', { detail: 'sign relay tx failed' });
     }
+    this.logger.log(`relayed MPC sign tx ${outcome.transaction_outcome.id}`);
     return { hash: outcome.transaction_outcome.id, result: outcome };
   }
 
