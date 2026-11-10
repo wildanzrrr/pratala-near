@@ -16,6 +16,17 @@ import { SponsorNotConfiguredError, SponsorSignerService } from './fastauth.sign
 const ED25519_DOMAIN_ID = 1;
 
 /**
+ * Per-action MPC tokens (the `fatxn` JWT the SDK embeds in every signature
+ * request) ride the tenant's *signing* audience, not the API audience identity
+ * tokens use. Same mapping as @fast-auth-near's FAST_AUTH_AUTH0_DEFAULTS —
+ * keyed by the configured domain so the two can never drift apart.
+ */
+const SIGNING_AUDIENCES: Record<string, string> = {
+  'login.auth.near.org': 'auth0.jwt.fast-auth.near',
+  'login.testnet.fast-auth.com': 'auth0.jwt.fast-auth.testnet',
+};
+
+/**
  * NEAR Auth (docs.auth.near.org) account service: email/Google/Apple SSO users
  * get a non-custodial MPC account whose key is derived deterministically from
  * their Auth0 identity. This service binds an Auth0 identity to a NEAR account
@@ -34,6 +45,8 @@ export class FastAuthService {
   private readonly logger = new Logger(FastAuthService.name);
   private readonly jwks: ReturnType<typeof createRemoteJWKSet>;
 
+  private readonly signingAudience: string;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly rpc: NearRpcService,
@@ -42,20 +55,34 @@ export class FastAuthService {
   ) {
     const domain = this.config.get('FASTAUTH_AUTH0_DOMAIN');
     this.jwks = createRemoteJWKSet(new URL(`https://${domain}/.well-known/jwks.json`));
+    this.signingAudience = SIGNING_AUDIENCES[domain] ?? '';
+    if (!this.signingAudience) {
+      throw new Error(
+        `FASTAUTH_AUTH0_DOMAIN ${domain} has no known signing audience ` +
+          `(expected one of: ${Object.keys(SIGNING_AUDIENCES).join(', ')})`,
+      );
+    }
   }
 
-  /** Verifies an Auth0 access token for the NEAR Auth signing audience. */
-  async verifyAuth0Token(token: string): Promise<{ sub: string }> {
+  /**
+   * Verifies an Auth0 access token. Identity tokens (login, account creation,
+   * SSO binding) use the API audience; relayed `sign` calls use the tenant's
+   * signing audience, passed by relaySignTx.
+   */
+  async verifyAuth0Token(
+    token: string,
+    audience: string = this.config.get('FASTAUTH_AUTH0_AUDIENCE'),
+  ): Promise<{ sub: string }> {
     try {
       const { payload } = await jwtVerify(token, this.jwks, {
         issuer: `https://${this.config.get('FASTAUTH_AUTH0_DOMAIN')}/`,
-        audience: this.config.get('FASTAUTH_AUTH0_AUDIENCE'),
+        audience,
         algorithms: ['RS256'],
       });
       if (!payload.sub) throw new Error('token has no sub');
       return { sub: payload.sub };
     } catch (err) {
-      this.logger.debug(`Auth0 token verify failed: ${String(err)}`);
+      this.logger.warn(`Auth0 token verify failed (audience ${audience}): ${String(err)}`);
       throw new UnauthorizedException('Invalid NEAR Auth token');
     }
   }
@@ -176,7 +203,9 @@ export class FastAuthService {
   async relaySignTx(dto: SignTxDto): Promise<{ hash: string; result: unknown }> {
     if (!this.sponsor.configured) throw apiError(503, 'sponsor_unconfigured');
 
-    await this.verifyAuth0Token(dto.verify_payload);
+    // The SDK mints verify_payload with the tenant's signing audience (fatxn),
+    // not the API audience identity tokens use — verify against that one.
+    await this.verifyAuth0Token(dto.verify_payload, this.signingAudience);
 
     let outcome;
     try {

@@ -212,6 +212,13 @@ describe('FastAuthService.relaySignTx', () => {
     );
   });
 
+  it('verifies verify_payload against the signing audience, not the API audience', async () => {
+    const { service } = makeService();
+    const verify = vi.spyOn(service, 'verifyAuth0Token').mockResolvedValue({ sub: SUB });
+    await service.relaySignTx(signDto);
+    expect(verify).toHaveBeenCalledWith(signDto.verify_payload, 'auth0.jwt.fast-auth.testnet');
+  });
+
   it('rejects an invalid Auth0 token before touching the chain', async () => {
     const { service, relaySign } = makeService();
     vi.spyOn(service, 'verifyAuth0Token').mockRejectedValue(
