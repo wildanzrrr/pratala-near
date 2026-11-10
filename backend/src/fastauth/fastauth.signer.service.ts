@@ -117,7 +117,7 @@ export class SponsorSignerService {
             algorithm: args.algorithm,
           },
           300_000_000_000_000n, // 300 Tgas — matches the SDK's createSignAction default
-          0n,
+          1n, // the contract's assert_one_yocto guard; refunded with the signature
         ),
       ],
     });
