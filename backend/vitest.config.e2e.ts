@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config';
 
-// E2E runs against the real Postgres from the root docker-compose.yml
-// (`docker compose up -d postgres && pnpm db:deploy`). NEAR RPC and the
+// E2E runs against the external Postgres at DATABASE_URL (dev default
+// localhost:5432; run `pnpm db:deploy` first). NEAR RPC and the
 // evidence storage provider are replaced by in-memory fakes inside the
 // tests; 1Click and NEAR AI are never called. GCS_BUCKET only satisfies
 // the required env validation — no GCS request is made.
@@ -16,7 +16,7 @@ export default defineConfig({
     env: {
       NODE_ENV: 'test',
       DATABASE_URL:
-        process.env.DATABASE_URL ?? 'postgresql://pratala:pratala@localhost:5433/pratala',
+        process.env.DATABASE_URL ?? 'postgresql://pratala:pratala@localhost:5432/pratala',
       JWT_SECRET: 'e2e-test-secret-0123456789abcdef',
       AUTH_RECIPIENT: 'lots.pratala.testnet',
       AUTH_MESSAGE: 'Sign in to Pratala',

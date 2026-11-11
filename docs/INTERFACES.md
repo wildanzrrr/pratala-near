@@ -12,7 +12,7 @@
 | RPC | `https://test.rpc.fastnear.com` | `NEAR_RPC_URL` / `NEXT_PUBLIC_RPC_URL` |
 | Explorer tx URL | `https://testnet.nearblocks.io/txns/<hash>` | `EXPLORER_BASE` |
 | pUSDC decimals | `6` (1 pUSDC = `"1000000"`) | — |
-| Ports | web `3000`, api `4100`, postgres host `5433` | — |
+| Ports | web `3000`, api `4100`, postgres `5432` (external, not in compose) | — |
 
 Ids may fall back to other names if taken; `deploy/testnet.json` is authoritative after deploy. Never hard-code ids outside env/config.
 

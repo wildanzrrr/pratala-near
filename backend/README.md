@@ -6,12 +6,12 @@ The chain is the source of truth. This service only **reads** NEAR (RPC view cal
 
 Stack: NestJS 12 (ESM), Prisma 7.10.1 with `@prisma/adapter-pg`, Postgres 16, near-api-js 7.4.0, `openai` 7.53.0 (NEAR AI Cloud), Vitest, oxlint.
 
-## Run with Docker (API + Postgres)
+## Run with Docker (API only — external Postgres)
 
 From the repository root:
 
 ```bash
-cp backend/.env.example backend/.env     # optional; defaults boot without it
+cp backend/.env.example backend/.env     # required: DATABASE_URL (+ GCS_BUCKET)
 docker compose up -d --build
 curl -s localhost:4100/api/health
 ```
@@ -22,7 +22,7 @@ Expected (before the contracts are deployed):
 {"ok":true,"db":"ok","chain":{"network":"testnet","rpc":"ok","lotsContract":"missing","pusdcContract":"missing",...},"ai":{"configured":false,"model":"Qwen/Qwen3-VL-30B-A3B-Instruct","tier":"private-tee"},...}
 ```
 
-The container runs `prisma migrate deploy` and then starts the API on port **4100**. Postgres is exposed on host port **5433**. Uploads live in the `uploads` volume. Optional demo listings: `docker compose exec api node dist/seed/run.js` (or set `SEED_DEMO=true`). Stop with `docker compose down` (add `-v` to delete data).
+The container runs `prisma migrate deploy` and then starts the API on port **4100**. Postgres is external: point `DATABASE_URL` in `backend/.env` at your instance — inside the container use host `host.docker.internal` to reach a Postgres on the docker host (the compose file maps that name on Linux servers too). Optional demo listings: `docker compose exec api node dist/seed/run.js` (or set `SEED_DEMO=true`). Stop with `docker compose down`.
 
 If `JWT_SECRET` is not set, the API generates a random one at boot and logs a warning: sessions then reset whenever it restarts.
 
@@ -31,7 +31,7 @@ If `JWT_SECRET` is not set, the API generates a random one at boot and logs a wa
 ```bash
 cd backend
 cp .env.example .env
-docker compose -f ../docker-compose.yml up -d postgres
+# ensure your Postgres is up on localhost:5432 (DATABASE_URL in .env)
 pnpm install                 # also runs prisma generate
 pnpm db:deploy               # apply migrations
 pnpm db:seed                 # 3 demo farm-input listings
@@ -44,11 +44,11 @@ pnpm start:dev               # http://localhost:4100/api, Swagger at /api/docs
 pnpm lint          # oxlint (type-aware)
 pnpm typecheck     # tsc --noEmit
 pnpm test          # unit: decimalToBaseUnits, CSV + money format, EVENT_JSON parser + ledger projections, plotHash, AI parser, AI service (openai mocked)
-pnpm test:e2e      # supertest against the compose Postgres; NEAR RPC replaced by an in-memory fake, no network
+pnpm test:e2e      # supertest against the DATABASE_URL Postgres; NEAR RPC replaced by an in-memory fake, no network
 pnpm build
 ```
 
-E2E needs Postgres running and migrated (`docker compose up -d postgres && pnpm db:deploy`). It signs a NEP-413 payload with a freshly generated ed25519 `KeyPair` and mocks only the RPC access-key lookup.
+E2E needs Postgres running and migrated at `DATABASE_URL` (default `localhost:5432`; `pnpm db:deploy`). It signs a NEP-413 payload with a freshly generated ed25519 `KeyPair` and mocks only the RPC access-key lookup.
 
 ## Environment
 

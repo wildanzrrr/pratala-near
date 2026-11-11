@@ -32,11 +32,12 @@ make -C smart-contract build   # → smart-contract/target/near/{harvest_lot,pus
 make -C smart-contract test    # expect: all "test result: ok", 0 failed
 ```
 
-Backend + database (API on port 4100, Postgres on 5433):
+Backend + database (API on port 4100; Postgres is external — your own instance on localhost:5432, the compose stack runs the API only):
 
 ```bash
-cp backend/.env.example backend/.env
-docker compose up -d --build
+cp backend/.env.example backend/.env   # DATABASE_URL → your Postgres, e.g. postgresql://pratala:pratala@localhost:5432/pratala
+pnpm -C backend db:deploy              # apply migrations
+pnpm -C backend start:dev              # or: docker compose up -d --build (set the DATABASE_URL host to host.docker.internal)
 curl -s localhost:4100/api/health   # expect: {"ok":true,"db":"ok",...}
 ```
 

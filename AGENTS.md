@@ -18,7 +18,7 @@ Pratala is an Indonesian agriculture marketplace where a verified harvest projec
 | Folder | Stack | Owner rules |
 | --- | --- | --- |
 | `smart-contract/` | Rust, near-sdk 5.30.1, Cargo workspace `contracts/*` | `smart-contract/AGENTS.md` |
-| `backend/` | NestJS 12, Prisma 7.10.1, Postgres 16, Docker | `backend/AGENTS.md` |
+| `backend/` | NestJS 12, Prisma 7.10.1, Postgres 16 (external), Docker (API only) | `backend/AGENTS.md` |
 | `frontend/` | Next.js 16 App Router, Tailwind v4, shadcn, NEAR Connect | `frontend/AGENTS.md` |
 | `docs/` | One Markdown file per topic | this file |
 | `scripts/` | Bash: toolchain, accounts, deploy, seed, verify | this file |
@@ -48,7 +48,7 @@ Each folder installs agent skills into `<folder>/.claude/skills/` (pinned in `<f
 ## 6. Verification before handoff
 
 - `smart-contract`: `cargo fmt --all -- --check && cargo clippy && cargo test` from `smart-contract/`.
-- `backend`: `pnpm lint && pnpm typecheck && pnpm test` from `backend/`; `docker compose up -d --build` boots `api` + `postgres`.
+- `backend`: `pnpm lint && pnpm typecheck && pnpm test` from `backend/`; `docker compose up -d --build` boots `api` against the external Postgres (`DATABASE_URL` in `backend/.env`).
 - `frontend`: `pnpm lint && pnpm typecheck && pnpm build` from `frontend/`; mobile widths 320/375/414/768 checked.
 - Root: `scripts/05-verify-demo.sh` reproduces the README numbers against testnet.
 

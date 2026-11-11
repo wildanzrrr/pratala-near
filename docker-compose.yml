@@ -1,7 +1,10 @@
-# Pratala local stack: Postgres 16 + API. Frontend runs separately (pnpm -C frontend dev).
-#   cp backend/.env.example backend/.env   # fill GCS_BUCKET + GCS_KEY_FILE (required)
+# Pratala local stack: API only — Postgres is external (bring your own).
+#   cp backend/.env.example backend/.env   # fill DATABASE_URL (+ GCS_BUCKET + GCS_KEY_FILE, required)
 #   docker compose up -d --build
 #   curl -s localhost:4100/api/health
+# DATABASE_URL comes from backend/.env. Inside the container reach a Postgres
+# on the docker host via host "host.docker.internal" (extra_hosts below makes
+# that name resolve on Linux servers too); on the dev machine use localhost.
 # Evidence photos live in Google Cloud Storage only. Mount the service-account
 # JSON and point GCS_KEY_FILE at it, e.g.:
 #   volumes: [ "./gcp-service-account.json:/app/secrets/gcs.json:ro" ]
@@ -13,37 +16,15 @@
 name: pratala
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: pratala
-      POSTGRES_PASSWORD: pratala
-      POSTGRES_DB: pratala
-    ports:
-      - '5433:5432'
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U pratala -d pratala']
-      interval: 5s
-      timeout: 3s
-      retries: 20
-    restart: unless-stopped
-
   api:
     build: ./backend
     env_file:
       - path: backend/.env
         required: false
     environment:
-      DATABASE_URL: postgresql://pratala:pratala@postgres:5432/pratala
       PORT: '4100'
-    depends_on:
-      postgres:
-        condition: service_healthy
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - '4100:4100'
     restart: unless-stopped
-
-volumes:
-  pgdata:
