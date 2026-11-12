@@ -18,7 +18,7 @@ import { useLocale } from "@/providers/locale-provider";
 
 import type { ChainEvent } from "@/lib/near/contracts";
 
-const AMOUNT_FIELDS = ["amount", "farmer_claim", "holder_claim", "total"] as const;
+const AMOUNT_FIELDS = ["amount", "farmer_claim", "holder_pool", "total"] as const;
 
 function amountOf(events: ChainEvent[]): { amount: string | null; lotId: string | null; to: string | null } {
   for (const e of events) {

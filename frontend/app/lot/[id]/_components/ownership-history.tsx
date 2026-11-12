@@ -1,7 +1,7 @@
 "use client";
 
 import { ProofLink, AccountLink } from "@/components/common/explorer-link";
-import { formatDateTime } from "@/lib/near/format";
+import { formatDateTime, formatKg } from "@/lib/near/format";
 import { useLotHistory } from "@/hooks/queries/use-lot-history";
 import { useLocale } from "@/providers/locale-provider";
 
@@ -14,30 +14,33 @@ interface Hop {
   hash?: string | null;
 }
 
-/** Who held the NFT, and when — the reason a refund lands with today's holder. */
+/**
+ * Who holds a piece of this harvest, and when they got it: the farmer minted the
+ * certificate, each purchase minted a kg share NFT to its buyer, and share NFTs may
+ * move on. With the API offline only the mint is known (buyers live in tx history).
+ */
 export function OwnershipHistory({ lot }: { lot: LotView }) {
   const { t, locale } = useLocale();
   const history = useLotHistory(lot.lot_id);
 
-  let hops: Hop[];
-  const transfers = (history.data ?? []).filter((e) => e.event === "nft_transfer" || e.event === "lot_funded");
-  if (transfers.length) {
-    hops = [
-      { owner: lot.farmer_id, label: t("lot.ownershipMinted"), at: lot.created_at_ms },
-      ...transfers.map((e) => {
-        const d = e.data as { new_owner_id?: string; funder?: string };
-        return {
-          owner: d.new_owner_id ?? d.funder ?? e.signerId,
-          label: e.event === "lot_funded" ? t("lot.ownershipFunded") : t("lot.ownershipTransferred"),
-          at: e.blockTimestamp,
-          hash: e.txHash,
-        };
-      }),
-    ];
-  } else {
-    hops = [{ owner: lot.farmer_id, label: t("lot.ownershipMinted"), at: lot.created_at_ms }];
-    if (lot.funder) hops.push({ owner: lot.funder, label: t("lot.ownershipFunded"), at: lot.funded_at_ms });
-    if (lot.holder !== (lot.funder ?? lot.farmer_id)) hops.push({ owner: lot.holder, label: t("lot.ownershipTransferred") });
+  const hops: Hop[] = [{ owner: lot.farmer_id, label: t("lot.ownershipMinted"), at: lot.created_at_ms }];
+  for (const e of history.data ?? []) {
+    const d = e.data as { buyer?: string; kg?: number; new_owner_id?: string; token_ids?: unknown };
+    if (e.event === "lot_funded" && d.buyer) {
+      hops.push({
+        owner: d.buyer,
+        label: t("lot.ownershipFunded", { kg: formatKg(d.kg ?? null) }),
+        at: e.blockTimestamp,
+        hash: e.txHash,
+      });
+    } else if (
+      e.event === "nft_transfer" &&
+      d.new_owner_id &&
+      Array.isArray(d.token_ids) &&
+      d.token_ids.some((id) => typeof id === "string" && id.includes(":"))
+    ) {
+      hops.push({ owner: d.new_owner_id, label: t("lot.ownershipTransferred"), at: e.blockTimestamp, hash: e.txHash });
+    }
   }
 
   return (

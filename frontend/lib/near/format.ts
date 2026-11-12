@@ -113,15 +113,16 @@ export function shortAccount(accountId: string | null | undefined): string {
   return accountId.length > 28 ? `${accountId.slice(0, 18)}…${accountId.slice(-8)}` : accountId;
 }
 
-/** Settlement preview — the exact INTERFACES §3 math, in base units. */
+/** Settlement preview — the exact INTERFACES §3 math, in base units.
+ *  `soldKg` caps the delivered kg: the farmer is paid only for kg the escrow covers. */
 export function settlementPreview(input: {
   actualKg: number;
-  projectedKg: number;
+  soldKg: number;
   pricePerKg: string;
   escrow: string;
   feeBps: number;
 }) {
-  const delivered = BigInt(Math.max(0, Math.min(Math.floor(input.actualKg), input.projectedKg)));
+  const delivered = BigInt(Math.max(0, Math.min(Math.floor(input.actualKg), input.soldKg)));
   const price = toBig(input.pricePerKg);
   const gross = delivered * price;
   const fee = (gross * BigInt(input.feeBps)) / 10_000n;

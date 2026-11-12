@@ -8,10 +8,10 @@ import { useTxMutation } from "@/hooks/mutations/use-tx-mutation";
 
 import type { TxResult } from "@/hooks/mutations/use-tx-mutation";
 
-/** Funding = ft_transfer_call on pUSDC (1 yocto) → always a wallet approval. */
+/** Buying kg = ft_transfer_call on pUSDC (1 yocto) → always a wallet approval. */
 export function useFundLotMutation(onFunded?: (result: TxResult) => void) {
-  return useTxMutation<{ lotId: string; amount: string }>({
-    build: (v) => tx.fundLot(v.lotId, v.amount),
+  return useTxMutation<{ lotId: string; kg: number; amount: string }>({
+    build: (v) => tx.fundLot(v.lotId, v.kg, v.amount),
     success: "tx.funded",
     invalidate: (v, a) => [lotKeys.detail(v.lotId), lotKeys.forHolder(a), lotKeys.all, pusdcKeys.balance(a), statsKeys.all],
     context: (v) => ({ lotId: v.lotId }),

@@ -19,6 +19,7 @@ import type {
   LotView,
   NftToken,
   Role,
+  ShareView,
   Stats,
   Status,
   StorageBalance,
@@ -32,8 +33,8 @@ export const TGAS = 1_000_000_000_000n;
 export const gas = (tgas: number) => (BigInt(tgas) * TGAS).toString();
 
 export const ONE_YOCTO = "1";
-/** register_lot storage deposit — 0.1 NEAR, excess refunded by the contract. */
-export const REGISTER_LOT_DEPOSIT = "100000000000000000000000";
+/** register_lot storage deposit — 0.6 NEAR (lot + share-mint reserve), excess refunded. */
+export const REGISTER_LOT_DEPOSIT = "600000000000000000000000";
 /** Fallback for pUSDC storage_balance_bounds.min (≈ 0.00125 NEAR). */
 export const STORAGE_DEPOSIT_FALLBACK = "1250000000000000000000";
 /** Default faucet grant: 1,000 pUSDC. Contract cap is 10,000 pUSDC. */
@@ -54,6 +55,7 @@ export const FC_METHODS = [
   "list_lot",
   "update_price",
   "delist_lot",
+  "close_funding",
   "cancel_lot",
   "claim_payout",
   "claim_refund",
@@ -95,14 +97,28 @@ export const getLotsByStatus = (status: Status, fromIndex = 0, limit = 100) =>
 export const getLotsByFarmer = (accountId: string) =>
   view<LotView[]>(LOTS(), "get_lots_by_farmer", { account_id: accountId });
 
-export const getLotsForHolder = (accountId: string) =>
-  view<LotView[]>(LOTS(), "get_lots_for_holder", { account_id: accountId });
+export const getShare = (shareId: string) => view<ShareView | null>(LOTS(), "get_share", { share_id: shareId });
+
+export const getShares = (lotId: string) => view<ShareView[]>(LOTS(), "get_shares", { lot_id: lotId });
+
+/** A holder's share NFTs: NEP-181 tokens with ids like "lot-N:M" (≤ 100, INTERFACES §3). */
+export async function getSharesForOwner(accountId: string): Promise<ShareView[]> {
+  const tokens = await view<NftToken[]>(LOTS(), "nft_tokens_for_owner", {
+    account_id: accountId,
+  });
+  const shareIds = tokens.map((t) => t.token_id).filter((id) => /^lot-\d{1,12}:\d{1,10}$/.test(id));
+  const shares = await Promise.all(shareIds.map((id) => getShare(id)));
+  return shares.filter((s): s is ShareView => s !== null);
+}
 
 export const getAttestations = (lotId: string) => view<Attestation[]>(LOTS(), "get_attestations", { lot_id: lotId });
 
 export const getClaims = (lotId: string) => view<Claims>(LOTS(), "get_claims", { lot_id: lotId });
 
 export const quoteFunding = (lotId: string) => view<string>(LOTS(), "quote_funding", { lot_id: lotId });
+
+export const quotePurchase = (lotId: string, kg: number) =>
+  view<string>(LOTS(), "quote_purchase", { lot_id: lotId, kg });
 
 export const getRoles = (accountId: string) => view<Role[]>(LOTS(), "get_roles", { account_id: accountId });
 
@@ -190,8 +206,11 @@ export const tx = {
     lotsTx("declare_failure", args),
 
   claimPayout: (lotId: string) => lotsTx("claim_payout", { lot_id: lotId }, 60),
-  claimRefund: (lotId: string) => lotsTx("claim_refund", { lot_id: lotId }, 60),
+  claimRefund: (shareId: string) => lotsTx("claim_refund", { share_id: shareId }, 60),
   claimFee: (lotId: string) => lotsTx("claim_fee", { lot_id: lotId }, 60),
+
+  /** Farmer/owner ends a partially-funded listing early: Listed → Funded with the sold kg. */
+  closeFunding: (lotId: string) => lotsTx("close_funding", { lot_id: lotId }),
 
   nftTransfer: (receiverId: string, tokenId: string, memo?: string) =>
     lotsTx("nft_transfer", { receiver_id: receiverId, token_id: tokenId, memo: memo ?? null }, 30, ONE_YOCTO),
@@ -202,14 +221,14 @@ export const tx = {
   setTreasury: (accountId: string) => lotsTx("set_treasury", { account_id: accountId }),
   setPaused: (paused: boolean) => lotsTx("set_paused", { paused }),
 
-  /** Funding = ft_transfer_call on pUSDC (1 yocto, 100 Tgas). Excess is refunded by the lots contract. */
-  fundLot: (lotId: string, amount: string): TxRequest => ({
+  /** Buying kg = ft_transfer_call on pUSDC (1 yocto, 100 Tgas); each purchase mints a share NFT. */
+  fundLot: (lotId: string, kg: number, amount: string): TxRequest => ({
     receiverId: PUSDC(),
     silent: false,
     actions: [
       call(
         "ft_transfer_call",
-        { receiver_id: LOTS(), amount, msg: JSON.stringify({ action: "fund", lot_id: lotId }) },
+        { receiver_id: LOTS(), amount, msg: JSON.stringify({ action: "fund", lot_id: lotId, kg }) },
         100,
         ONE_YOCTO,
       ),
@@ -242,9 +261,12 @@ export const tx = {
   }),
 };
 
-/** NFT transfers are allowed only after funding and while no claim is in flight. */
+/** Lot certificate NFTs move only after funding closes and while no claim is in flight. */
 export const TRANSFERABLE: readonly Status[] = ["Funded", "Settled", "Refunded"];
 export const canTransfer = (lot: Pick<LotView, "status" | "claim_lock">) => TRANSFERABLE.includes(lot.status) && !lot.claim_lock;
+
+/** Share NFTs carry escrow-backed claims from mint; they move unless a payout is in flight. */
+export const canTransferShare = (lot: Pick<LotView, "claim_lock">) => !lot.claim_lock;
 
 /* ── outcome helpers ───────────────────────────────────────── */
 

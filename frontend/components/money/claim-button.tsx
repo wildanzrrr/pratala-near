@@ -17,10 +17,22 @@ import type { ClaimKind } from "@/lib/near/types";
 const LABEL = { Farmer: "lot.claimPayout", Holder: "lot.claimRefund", Treasury: "lot.claimFee" } as const;
 
 /**
- * One claim (payout / refund / fee). Pre-checks pUSDC registration so the
- * transfer can land; claims themselves are FC-key signed (no popup).
+ * One claim (payout / refund / fee). Holder claims are per share NFT (`shareId`).
+ * Pre-checks pUSDC registration so the transfer can land; claims themselves are
+ * FC-key signed (no popup).
  */
-export function ClaimButton({ lotId, kind, amount }: { lotId: string; kind: ClaimKind; amount: string }) {
+export function ClaimButton({
+  lotId,
+  shareId,
+  kind,
+  amount,
+}: {
+  lotId: string;
+  /** Required for Holder claims — the contract pays the share NFT's owner. */
+  shareId?: string;
+  kind: ClaimKind;
+  amount: string;
+}) {
   const { t, locale } = useLocale();
   const { signedAccountId, hasFunctionCallKey } = useNear();
   const registered = useStorageRegistered(signedAccountId);
@@ -46,7 +58,7 @@ export function ClaimButton({ lotId, kind, amount }: { lotId: string; kind: Clai
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Button size="lg" disabled={claim.isPending || amount === "0"} onClick={() => claim.mutate({ lotId })}>
+      <Button size="lg" disabled={claim.isPending || amount === "0"} onClick={() => claim.mutate({ lotId, shareId })}>
         {claim.isPending ? <Spinner data-icon="inline-start" /> : <ArrowDownRight data-icon="inline-start" />}
         {t(LABEL[kind], { amount: formatUsdc(amount, locale) })}
       </Button>

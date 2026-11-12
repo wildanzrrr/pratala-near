@@ -2,19 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { CheckCircle, Coins, LockSimple, SignIn, Wallet } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { AmountInput } from "@/components/money/amount-input";
-import { Money } from "@/components/money/money";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group";
+import { Money, Rupiah } from "@/components/money/money";
 import { TxStatusLine } from "@/components/money/tx-status-line";
 import { openConnectSheet } from "@/components/wallet/connect-store";
 import { env } from "@/lib/env";
-import { formatUsdc, parseUsdc, toBig, usdcToDecimal } from "@/lib/near/format";
+import { formatKg, formatNumber, formatUsdc, toBig } from "@/lib/near/format";
 import { cn } from "@/lib/utils";
 import { usePusdcBalance } from "@/hooks/queries/use-pusdc-balance";
 import { useStorageDeposit, useStorageRegistered } from "@/hooks/queries/use-storage-registered";
@@ -26,7 +27,7 @@ import { useLocale } from "@/providers/locale-provider";
 import type { ReactNode } from "react";
 import type { LotView } from "@/lib/near/types";
 
-/** Live testnet path: sign in → balance & registration → one ft_transfer_call. */
+/** Live testnet path: sign in → balance & registration → one ft_transfer_call for N kg. */
 export function PusdcTab({ lot }: { lot: LotView }) {
   const { t, locale } = useLocale();
   const router = useRouter();
@@ -42,27 +43,25 @@ export function PusdcTab({ lot }: { lot: LotView }) {
     }
   });
 
-  // The buyer chooses how much to send; the contract (escrow.rs ft_on_transfer)
-  // requires amount >= funding_total and refunds any excess, so the input is
-  // free above the lot price. Null until the user types — the default follows
-  // the lot, so re-navigation between lots never shows a stale amount.
-  const [amountText, setAmountText] = useState<string | null>(null);
-  const amountInput = amountText ?? usdcToDecimal(lot.funding_total);
-  const parsed = parseUsdc(amountInput);
-  const pay = parsed !== null ? toBig(parsed) : 0n;
-  const need = toBig(lot.funding_total);
+  // The buyer picks how many kg to buy (integer, 1..remaining). The tab sends the exact
+  // cost with the funding msg; the contract mints a share NFT for those kg.
+  const maxKg = lot.remaining_kg;
+  const [kgText, setKgText] = useState<string | null>(null);
+  const kgInput = kgText ?? String(maxKg);
+  const kg = /^\d+$/.test(kgText ?? kgInput) ? Number(kgText ?? kgInput) : null;
+  const validKg = kg !== null && kg >= 1 && kg <= maxKg;
+  const cost = validKg ? toBig(lot.price_per_kg) * BigInt(kg) : 0n;
   const have = toBig(balance.data);
-  const short = need > have ? need - have : 0n;
-  const payable = parsed !== null && pay >= need;
-  const shortInput = payable && balance.data !== undefined && pay > have ? pay - have : 0n;
-  const amountError = !payable
-    ? parsed === null
-      ? t("checkout.amountInvalid")
-      : t("checkout.amountMin", { amount: formatUsdc(lot.funding_total, locale) })
+  const short = cost > have ? cost - have : 0n;
+  const payable = validKg && cost > 0n;
+  const shortInput = payable && balance.data !== undefined && cost > have ? cost - have : 0n;
+  const kgError = !payable
+    ? kg === null
+      ? t("checkout.kgInvalid")
+      : t("checkout.kgRange", { kg: formatNumber(maxKg, locale) })
     : shortInput > 0n
       ? t("checkout.short", { amount: formatUsdc(shortInput, locale) })
       : null;
-  const payWith = payable && shortInput === 0n && parsed !== null ? parsed : lot.funding_total;
   const step1 = Boolean(signedAccountId);
   const step2 = step1 && registered.data === true && balance.isSuccess && short === 0n;
   const fixtures = env.demoFixtures;
@@ -116,7 +115,7 @@ export function PusdcTab({ lot }: { lot: LotView }) {
               <div className="flex flex-col gap-0.5">
                 <dt className="text-muted-foreground">{t("checkout.needed")}</dt>
                 <dd>
-                  <Money base={lot.funding_total} />
+                  <Money base={cost.toString()} />
                 </dd>
               </div>
             </dl>
@@ -142,14 +141,25 @@ export function PusdcTab({ lot }: { lot: LotView }) {
         {step2 || fixtures ? (
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
-              <AmountInput label={t("checkout.youPay")} value={amountInput} onChange={setAmountText} error={amountError} />
+              <KgInput
+                label={t("checkout.kgTitle")}
+                value={kgInput}
+                onChange={setKgText}
+                error={kgError}
+                description={t("checkout.kgRange", { kg: formatNumber(maxKg, locale) })}
+              />
               <div className="flex flex-col gap-1">
                 <span className="text-muted-foreground">{t("checkout.youGet")}</span>
-                <p className="text-ink-2">{t("checkout.youGetBody", { lot: lot.lot_id })}</p>
+                <p className="text-ink-2">{t("checkout.youGetBody", { kg: formatKg(kg, locale), lot: lot.lot_id })}</p>
               </div>
             </div>
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+              <span className="text-muted-foreground">{t("checkout.youPay")}</span>
+              <Money base={cost.toString()} className="text-lg" />
+              <Rupiah base={cost.toString()} />
+            </div>
             <p className="text-sm text-muted-foreground">
-              {t("checkout.amountFloor", { amount: formatUsdc(lot.funding_total, locale) })}
+              {t("checkout.kgFloor", { price: formatUsdc(lot.price_per_kg, locale, 2) })}
             </p>
             <p className="flex items-start gap-2 text-sm text-muted-foreground">
               <LockSimple aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
@@ -159,16 +169,54 @@ export function PusdcTab({ lot }: { lot: LotView }) {
               size="lg"
               className="w-full sm:w-fit"
               disabled={!step2 || !payable || shortInput > 0n || fund.isPending}
-              onClick={() => fund.mutate({ lotId: lot.lot_id, amount: payWith })}
+              onClick={() => validKg && fund.mutate({ lotId: lot.lot_id, kg: kg!, amount: cost.toString() })}
             >
               {fund.isPending ? <Spinner data-icon="inline-start" /> : <Coins data-icon="inline-start" />}
-              {fund.isPending ? t("checkout.paying") : t("checkout.pay", { amount: formatUsdc(payWith, locale) })}
+              {fund.isPending ? t("checkout.paying") : t("checkout.pay", { amount: formatUsdc(cost.toString(), locale) })}
             </Button>
             <TxStatusLine status={fund.status} data={fund.data} error={fund.error} />
           </div>
         ) : null}
       </Step>
     </ol>
+  );
+}
+
+/** Whole-kg purchase field: integer input, unit "kg". */
+function KgInput({
+  label,
+  value,
+  onChange,
+  error,
+  description,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string | null;
+  description?: string;
+}) {
+  const id = useId();
+  return (
+    <Field data-invalid={error ? true : undefined}>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <InputGroup>
+        <InputGroupInput
+          id={id}
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="1"
+          value={value}
+          aria-invalid={error ? true : undefined}
+          onChange={(e) => onChange(e.target.value.replace(/[^\d]/g, ""))}
+          className="tnum font-mono"
+        />
+        <InputGroupAddon align="inline-end">
+          <InputGroupText>kg</InputGroupText>
+        </InputGroupAddon>
+      </InputGroup>
+      {error ? <FieldError>{error}</FieldError> : <FieldDescription>{description ?? " "}</FieldDescription>}
+    </Field>
   );
 }
 

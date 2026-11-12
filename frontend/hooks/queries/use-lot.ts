@@ -6,7 +6,7 @@ import { getLot } from "@/lib/near/contracts";
 
 import type { Status } from "@/lib/near/types";
 
-/** Hierarchical keys for every chain lot read; mutations invalidate `lotKeys.all`. */
+/** Hierarchical keys for every chain lot/share read; mutations invalidate `lotKeys.all`. */
 export const lotKeys = {
   all: ["lots"] as const,
   detail: (lotId: string) => ["lots", "detail", lotId] as const,
@@ -14,6 +14,7 @@ export const lotKeys = {
   byStatus: (status: Status) => ["lots", "status", status] as const,
   byFarmer: (accountId: string) => ["lots", "farmer", accountId] as const,
   forHolder: (accountId: string) => ["lots", "holder", accountId] as const,
+  sharesForOwner: (accountId: string) => ["lots", "shares", accountId] as const,
 };
 
 export function useLot(lotId: string) {

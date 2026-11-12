@@ -42,3 +42,12 @@ export function useCancelLotMutation() {
     context: (v) => ({ lotId: v.lotId }),
   });
 }
+
+export function useCloseFundingMutation() {
+  return useTxMutation<{ lotId: string }>({
+    build: (v) => tx.closeFunding(v.lotId),
+    success: "tx.fundingClosed",
+    invalidate: (v, a) => lotScoped(v.lotId, a),
+    context: (v) => ({ lotId: v.lotId }),
+  });
+}

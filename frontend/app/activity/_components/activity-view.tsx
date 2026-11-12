@@ -55,8 +55,14 @@ export function ActivityView() {
           text: t("activity.attested", { signer: shortAccount(a.signer), kind: t(KIND_KEY[a.kind]), lot: lot.lot_id }),
         });
       }
-      if (lot.funded_at_ms && lot.funder) {
-        items.push({ key: `${lot.lot_id}-fund`, at: lot.funded_at_ms, icon: Coins, lotId: lot.lot_id, text: t("activity.funded", { funder: shortAccount(lot.funder), lot: lot.lot_id }) });
+      if (lot.funded_at_ms && lot.share_count > 0) {
+        items.push({
+          key: `${lot.lot_id}-fund`,
+          at: lot.funded_at_ms,
+          icon: Coins,
+          lotId: lot.lot_id,
+          text: t("activity.funded", { count: String(lot.share_count), kg: formatKg(lot.sold_kg, locale), lot: lot.lot_id }),
+        });
       }
       if (lot.settled_at_ms && lot.actual_kg !== null) {
         items.push({ key: `${lot.lot_id}-settle`, at: lot.settled_at_ms, icon: Scales, lotId: lot.lot_id, text: t("activity.settled", { lot: lot.lot_id, kg: formatKg(lot.actual_kg, locale) }) });

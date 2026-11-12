@@ -50,7 +50,7 @@ export function WeighTask({ lot, onDone }: { lot: LotView; onDone: () => void })
   const valid = Number.isFinite(actualKg) && actualKg >= 0;
   const feeBps = lot.fee_bps > 0 ? lot.fee_bps : (session.config?.fee_bps ?? 0);
   const split = valid
-    ? settlementPreview({ actualKg, projectedKg: lot.projected_kg, pricePerKg: lot.price_per_kg, escrow: lot.escrow, feeBps })
+    ? settlementPreview({ actualKg, soldKg: lot.sold_kg, pricePerKg: lot.price_per_kg, escrow: lot.escrow, feeBps })
     : null;
   const ready = photos.filter((p) => p.status === "ready");
 

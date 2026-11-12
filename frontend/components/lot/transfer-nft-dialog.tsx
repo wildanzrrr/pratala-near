@@ -16,7 +16,6 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/common/responsive-dialog";
-import { canTransfer } from "@/lib/near/contracts";
 import { isNearAccountId } from "@/lib/utils";
 import { useNftTransferMutation } from "@/hooks/mutations/use-nft-transfer-mutation";
 import { useNear } from "@/providers/near-provider";
@@ -24,8 +23,20 @@ import { useT } from "@/providers/locale-provider";
 
 import type { LotView } from "@/lib/near/types";
 
-/** NEP-171 transfer (1 yocto, wallet approval). The refund claim moves with the token. */
-export function TransferNftButton({ lot }: { lot: LotView }) {
+/**
+ * NEP-171 transfer (1 yocto, wallet approval). Works for the lot certificate and for
+ * kg share NFTs — the refund claim moves with the token either way.
+ */
+export function TransferNftButton({
+  lot,
+  tokenId,
+  label,
+}: {
+  lot: LotView;
+  /** Defaults to the lot certificate; share rows pass "lot-N:M". */
+  tokenId?: string;
+  label?: string;
+}) {
   const t = useT();
   const { signedAccountId } = useNear();
   const [open, setOpen] = useState(false);
@@ -46,18 +57,17 @@ export function TransferNftButton({ lot }: { lot: LotView }) {
       : value === signedAccountId
         ? t("portfolio.selfTransfer")
         : null;
-  const allowed = canTransfer(lot);
 
   return (
     <>
-      <Button variant="outline" disabled={!allowed} onClick={() => setOpen(true)} title={allowed ? undefined : t("portfolio.transferBlocked")}>
+      <Button variant="outline" onClick={() => setOpen(true)}>
         <PaperPlaneTilt data-icon="inline-start" />
-        {t("lot.transfer")}
+        {label ?? t("lot.transfer")}
       </Button>
       <ResponsiveDialog open={open} onOpenChange={(o) => !transfer.isPending && setOpen(o)}>
         <ResponsiveDialogContent>
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>{t("portfolio.transferTitle", { lot: lot.lot_id })}</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>{t("portfolio.transferTitle", { lot: tokenId ?? lot.lot_id })}</ResponsiveDialogTitle>
             <ResponsiveDialogDescription>{t("portfolio.transferLead")}</ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
           <form
@@ -67,7 +77,7 @@ export function TransferNftButton({ lot }: { lot: LotView }) {
               e.preventDefault();
               setTouched(true);
               if (!value || error) return;
-              transfer.mutate({ lotId: lot.lot_id, receiverId: value });
+              transfer.mutate({ tokenId: tokenId ?? lot.lot_id, lotId: lot.lot_id, receiverId: value });
             }}
           >
             <Field data-invalid={touched && error ? true : undefined}>
@@ -84,7 +94,7 @@ export function TransferNftButton({ lot }: { lot: LotView }) {
                 onBlur={() => setTouched(true)}
                 className="font-mono"
               />
-              {touched && error ? <FieldError>{error}</FieldError> : <FieldDescription>{lot.claim_lock ? t("lot.lockedNote") : " "}</FieldDescription>}
+              {touched && error ? <FieldError>{error}</FieldError> : <FieldDescription>{lot.claim_lock ? t("lot.lockedNote") : " "}</FieldDescription>}
             </Field>
           </form>
           <ResponsiveDialogFooter>

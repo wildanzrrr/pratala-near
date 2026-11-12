@@ -3,7 +3,7 @@
  * walk the lifecycle. Every surface that renders them shows a "Sample" label;
  * fixtures are never mixed with chain data — the flag switches the source wholesale.
  */
-import type { Attestation, Config, LotView, Stats } from "@/lib/near/types";
+import type { Attestation, Config, LotView, ShareView, Stats } from "@/lib/near/types";
 
 const day = 86_400_000;
 const t0 = Date.UTC(2026, 9, 20, 2, 0, 0);
@@ -44,8 +44,10 @@ const base = {
   actual_kg: null,
   grade: null,
   settled_at_ms: null,
-  funder: null,
   funded_at_ms: null,
+  sold_kg: 0,
+  share_count: 0,
+  holder_pool: "0",
 };
 
 export const FIXTURE_LOTS: LotView[] = [
@@ -64,8 +66,8 @@ export const FIXTURE_LOTS: LotView[] = [
     attestations: [field("sample-field-agent.testnet", t0 + 2 * day), coop("sample-coop.testnet", t0 + 4 * day)],
     escrow: "0",
     created_at_ms: t0,
-    holder: "sample-farmer.testnet",
     funding_total: "450000000",
+    remaining_kg: 1000,
   },
   {
     ...base,
@@ -81,12 +83,13 @@ export const FIXTURE_LOTS: LotView[] = [
     status: "Funded",
     fee_bps: 200,
     attestations: [field("sample-field-agent.testnet", t0 + 3 * day), coop("sample-coop.testnet", t0 + 6 * day)],
-    escrow: "1260000000",
-    funder: "sample-buyer.testnet",
+    escrow: "1008000000",
     funded_at_ms: t0 + 9 * day,
     created_at_ms: t0 + day,
-    holder: "sample-buyer.testnet",
     funding_total: "1260000000",
+    sold_kg: 480,
+    remaining_kg: 120,
+    share_count: 2,
   },
   {
     ...base,
@@ -118,16 +121,27 @@ export const FIXTURE_LOTS: LotView[] = [
       },
     ],
     escrow: "0",
-    funder: "sample-buyer.testnet",
     funded_at_ms: t0 - 30 * day,
     actual_kg: 900,
     grade: "A",
     settled_at_ms: t0 + 12 * day,
     claims: { farmer: "396900000", holder: "45000000", treasury: "8100000" },
     created_at_ms: t0 - 45 * day,
-    holder: "sample-buyer.testnet",
     funding_total: "450000000",
+    sold_kg: 1000,
+    remaining_kg: 0,
+    share_count: 2,
+    holder_pool: "45000000",
   },
+];
+
+const FIXTURE_SHARES: ShareView[] = [
+  // lot-2: two buyers split the sold 480 kg; funding still open.
+  { share_id: "lot-2:1", lot_id: "lot-2", kg: 300, owner: "sample-buyer.testnet", claimed: false, entitlement: "0" },
+  { share_id: "lot-2:2", lot_id: "lot-2", kg: 180, owner: "sample-investor.testnet", claimed: false, entitlement: "0" },
+  // lot-3: sold out and settled; the 45.00 pool splits 31.50 / 13.50.
+  { share_id: "lot-3:1", lot_id: "lot-3", kg: 700, owner: "sample-buyer.testnet", claimed: false, entitlement: "31500000" },
+  { share_id: "lot-3:2", lot_id: "lot-3", kg: 300, owner: "sample-investor.testnet", claimed: false, entitlement: "13500000" },
 ];
 
 export const FIXTURE_CONFIG: Config = {
@@ -153,7 +167,7 @@ export const fixtures = {
   lots: async () => FIXTURE_LOTS,
   byStatus: async (status: string) => FIXTURE_LOTS.filter((l) => l.status === status),
   byFarmer: async (id: string) => FIXTURE_LOTS.filter((l) => l.farmer_id === id),
-  forHolder: async (id: string) => FIXTURE_LOTS.filter((l) => l.holder === id),
+  sharesForOwner: async (id: string) => FIXTURE_SHARES.filter((s) => s.owner === id),
   config: async () => FIXTURE_CONFIG,
   stats: async () => FIXTURE_STATS,
 };

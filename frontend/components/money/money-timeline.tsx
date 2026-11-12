@@ -4,7 +4,7 @@ import { ArrowDownRight, Coins, LockSimple, Scales } from "@phosphor-icons/react
 
 import { ProofLink } from "@/components/common/explorer-link";
 import { Money } from "@/components/money/money";
-import { formatDateTime, settlementPreview, shortAccount } from "@/lib/near/format";
+import { formatDateTime, settlementPreview } from "@/lib/near/format";
 import { cn } from "@/lib/utils";
 import { useLotHistory } from "@/hooks/queries/use-lot-history";
 import { useLocale } from "@/providers/locale-provider";
@@ -43,9 +43,9 @@ export function MoneyTimeline({ lot }: { lot: LotView }) {
     settled && lot.actual_kg !== null
       ? settlementPreview({
           actualKg: lot.actual_kg,
-          projectedKg: lot.projected_kg,
+          soldKg: lot.sold_kg,
           pricePerKg: lot.price_per_kg,
-          escrow: lot.funding_total,
+          escrow: lot.escrow,
           feeBps: lot.fee_bps,
         })
       : null;
@@ -71,8 +71,8 @@ export function MoneyTimeline({ lot }: { lot: LotView }) {
       key: "funding",
       icon: Coins,
       title: t("money.funding"),
-      detail: lot.funder ? t("money.fundedBy", { account: shortAccount(lot.funder) }) : t("money.notYet"),
-      amount: funded ? lot.funding_total : undefined,
+      detail: lot.share_count > 0 ? t("money.buyersCount", { count: String(lot.share_count) }) : t("money.notYet"),
+      amount: funded && lot.escrow !== "0" ? lot.escrow : undefined,
       at: lot.funded_at_ms,
       hash: hashFor(events, "lot_funded"),
       done: funded,
@@ -98,7 +98,7 @@ export function MoneyTimeline({ lot }: { lot: LotView }) {
   if (settled) {
     rows.push(claimRow("farmer", split?.farmer ?? null), claimRow("holder", split?.holder ?? null), claimRow("treasury", split?.treasury ?? null));
   } else if (refunded) {
-    rows.push(claimRow("holder", lot.funding_total));
+    rows.push(claimRow("holder", lot.escrow !== "0" ? lot.escrow : null));
   }
 
   return (

@@ -55,19 +55,33 @@ export interface LotView {
   price_per_kg: string;
   status: Status;
   attestations: Attestation[];
+  sold_kg: number;
+  remaining_kg: number;
+  share_count: number;
   escrow: string;
-  funder: string | null;
   funded_at_ms: number | null;
   actual_kg: number | null;
   grade: string | null;
   settled_at_ms: number | null;
-  /** fee rate frozen at funding (0 before funding) */
+  /** fee rate frozen at the first sale (0 before) */
   fee_bps: number;
   claims: Claims;
   claim_lock: boolean;
   created_at_ms: number;
-  holder: string;
   funding_total: string;
+  /** refund pool snapshotted at settlement ("0" before); shares claim floor(pool × kg / sold_kg) */
+  holder_pool: string;
+}
+
+/** One kg-denominated share NFT ("lot-N:M") — contract `get_share`. */
+export interface ShareView {
+  share_id: string;
+  lot_id: string;
+  kg: number;
+  owner: string;
+  claimed: boolean;
+  /** U128 refund entitlement after settle/refund; "0" before */
+  entitlement: string;
 }
 
 export interface Config {

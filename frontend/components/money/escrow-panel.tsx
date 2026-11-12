@@ -2,7 +2,6 @@
 
 import { LockSimple } from "@phosphor-icons/react";
 
-import { AccountLink } from "@/components/common/explorer-link";
 import { MoneyBlock } from "@/components/money/money";
 import { formatDate } from "@/lib/near/format";
 import { useLocale } from "@/providers/locale-provider";
@@ -23,13 +22,10 @@ export function EscrowPanel({ lot }: { lot: LotView }) {
         <MoneyBlock base={lot.escrow} size="lg" />
       </div>
       <p className="text-sm text-ink-2">{t("money.escrowBody")}</p>
-      {lot.funder ? (
-        <p className="text-sm text-muted-foreground">
-          {t("money.fundedBy", { account: "" })}
-          <AccountLink accountId={lot.funder} />
-          {lot.funded_at_ms ? ` ${t("money.fundedAt", { date: formatDate(lot.funded_at_ms, locale) })}` : null}
-        </p>
-      ) : null}
+      <p className="text-sm text-muted-foreground">
+        {t("money.buyersCount", { count: String(lot.share_count) })}
+        {lot.funded_at_ms ? ` ${t("money.fundedAt", { date: formatDate(lot.funded_at_ms, locale) })}` : ""}
+      </p>
     </div>
   );
 }

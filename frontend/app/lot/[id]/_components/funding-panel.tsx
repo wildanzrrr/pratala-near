@@ -12,7 +12,7 @@ import { ClaimButton } from "@/components/money/claim-button";
 import { EscrowPanel } from "@/components/money/escrow-panel";
 import { Money, MoneyBlock } from "@/components/money/money";
 import { FarmerActions } from "@/app/lot/[id]/_components/farmer-actions";
-import { formatUsdc } from "@/lib/near/format";
+import { formatKg, formatUsdc } from "@/lib/near/format";
 import { useSession } from "@/hooks/use-session";
 import { useLocale } from "@/providers/locale-provider";
 
@@ -24,8 +24,8 @@ export function FundingPanel({ lot }: { lot: LotView }) {
   const session = useSession();
   const me = session.accountId;
   const isFarmer = me === lot.farmer_id;
-  const isHolder = me === lot.holder;
   const isTreasury = Boolean(me && (session.isAdmin || session.config?.treasury === me));
+  const open = lot.status === "Listed";
 
   return (
     <div className="flex flex-col gap-4">
@@ -37,7 +37,18 @@ export function FundingPanel({ lot }: { lot: LotView }) {
             <span className="text-xs text-muted-foreground">{t("lot.total")}</span>
             <MoneyBlock base={lot.funding_total} size="lg" />
           </div>
-          {lot.status === "Listed" && !isFarmer ? (
+          {lot.projected_kg > 0 && (lot.sold_kg > 0 || !open) ? (
+            <div className="flex flex-col gap-1.5" aria-label={t("lot.soldProgress")}>
+              <div className="h-2 overflow-hidden rounded-full bg-rule" role="progressbar" aria-valuemin={0} aria-valuemax={lot.projected_kg} aria-valuenow={lot.sold_kg}>
+                <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, Math.round((lot.sold_kg / lot.projected_kg) * 100))}%` }} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t("lot.soldProgress", { sold: formatKg(lot.sold_kg, locale), total: formatKg(lot.projected_kg, locale) })}
+                {lot.share_count > 0 ? ` · ${t("lot.buyers", { count: String(lot.share_count) })}` : ""}
+              </p>
+            </div>
+          ) : null}
+          {open && !isFarmer && lot.remaining_kg > 0 ? (
             <Button asChild size="lg" className="w-full">
               <Link href={`/checkout/${encodeURIComponent(lot.lot_id)}`}>
                 {t("lot.fund")}
@@ -64,16 +75,14 @@ export function FundingPanel({ lot }: { lot: LotView }) {
           <ClaimLine label={t("money.farmerClaim")} amount={lot.claims.farmer} />
           <ClaimLine label={t("money.holderClaim")} amount={lot.claims.holder} />
           <ClaimLine label={t("money.treasuryClaim")} amount={lot.claims.treasury} />
-          {(isFarmer && lot.claims.farmer !== "0") || (isHolder && lot.claims.holder !== "0") || (isTreasury && lot.claims.treasury !== "0") ? (
-            <Separator />
-          ) : null}
+          {(isFarmer && lot.claims.farmer !== "0") || (isTreasury && lot.claims.treasury !== "0") ? <Separator /> : null}
           {isFarmer && lot.claims.farmer !== "0" ? <ClaimButton lotId={lot.lot_id} kind="Farmer" amount={lot.claims.farmer} /> : null}
-          {isHolder && lot.claims.holder !== "0" ? <ClaimButton lotId={lot.lot_id} kind="Holder" amount={lot.claims.holder} /> : null}
           {isTreasury && lot.claims.treasury !== "0" ? <ClaimButton lotId={lot.lot_id} kind="Treasury" amount={lot.claims.treasury} /> : null}
+          {lot.claims.holder !== "0" ? <p className="text-xs text-muted-foreground">{t("lot.shareClaimsNote")}</p> : null}
         </div>
       ) : null}
 
-      {isHolder && !isFarmer && ["Funded", "Settled", "Refunded"].includes(lot.status) ? (
+      {isFarmer && ["Funded", "Settled", "Refunded"].includes(lot.status) ? (
         <div className="flex flex-col gap-2">
           <TransferNftButton lot={lot} />
           {lot.claim_lock ? <p className="text-xs text-muted-foreground">{t("lot.lockedNote")}</p> : null}
