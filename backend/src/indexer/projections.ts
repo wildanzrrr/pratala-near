@@ -17,7 +17,8 @@ export interface ProjectionContext {
   lotsContract: string;
   farmerId: string | null;
   crop: string | null;
-  treasury: string;
+  /** Configured treasury; null when the contract is unreachable — fee rows are skipped. */
+  treasury: string | null;
   /** Chain snapshot of the lot right after the event (null when unreachable). */
   lot: LotView | null;
   /** The lot's share NFTs in mint order (mirror). */

@@ -14,7 +14,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/
 import { Money, Rupiah } from "@/components/money/money";
 import { TxStatusLine } from "@/components/money/tx-status-line";
 import { openConnectSheet } from "@/components/wallet/connect-store";
-import { env } from "@/lib/env";
+import { env, isTestnet } from "@/lib/env";
 import { formatKg, formatNumber, formatUsdc, toBig } from "@/lib/near/format";
 import { cn } from "@/lib/utils";
 import { usePusdcBalance } from "@/hooks/queries/use-pusdc-balance";
@@ -88,13 +88,15 @@ export function PusdcTab({ lot }: { lot: LotView }) {
           <div className="flex flex-col gap-2">
             <p className="text-sm text-ink-2">{t("checkout.notRegistered")}</p>
             <div className="flex flex-wrap gap-2">
-              <Button
-                disabled={faucet.isPending}
-                onClick={() => faucet.mutate({ storageDeposit: deposit.data ?? "1250000000000000000000" })}
-              >
-                {faucet.isPending ? <Spinner data-icon="inline-start" /> : <Coins data-icon="inline-start" />}
-                {t("faucet.getCta")}
-              </Button>
+              {isTestnet ? (
+                <Button
+                  disabled={faucet.isPending}
+                  onClick={() => faucet.mutate({ storageDeposit: deposit.data ?? "1250000000000000000000" })}
+                >
+                  {faucet.isPending ? <Spinner data-icon="inline-start" /> : <Coins data-icon="inline-start" />}
+                  {t("faucet.getCta")}
+                </Button>
+              ) : null}
               <Button
                 variant="outline"
                 disabled={activate.isPending}
@@ -122,15 +124,17 @@ export function PusdcTab({ lot }: { lot: LotView }) {
             {short > 0n ? (
               <div className="flex flex-col gap-2 rounded-md bg-warning p-3 text-sm text-warning-foreground">
                 <span>{t("checkout.short", { amount: formatUsdc(short, locale) })}</span>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" disabled={faucet.isPending} onClick={() => faucet.mutate({ storageDeposit: deposit.data ?? "1250000000000000000000" })}>
-                    {faucet.isPending ? <Spinner data-icon="inline-start" /> : <Coins data-icon="inline-start" />}
-                    {t("faucet.getCta")}
-                  </Button>
-                  <Button asChild size="sm" variant="outline">
-                    <Link href="/faucet">{t("checkout.getTest")}</Link>
-                  </Button>
-                </div>
+                {isTestnet ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" disabled={faucet.isPending} onClick={() => faucet.mutate({ storageDeposit: deposit.data ?? "1250000000000000000000" })}>
+                      {faucet.isPending ? <Spinner data-icon="inline-start" /> : <Coins data-icon="inline-start" />}
+                      {t("faucet.getCta")}
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/faucet">{t("checkout.getTest")}</Link>
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>

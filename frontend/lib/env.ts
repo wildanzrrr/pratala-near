@@ -111,3 +111,6 @@ export const env: PublicEnv = parsed.success
     };
 
 assertNoTestnetMix(env);
+
+/** True when running against NEAR testnet (demo faucet, demo copy). */
+export const isTestnet = env.network === "testnet";

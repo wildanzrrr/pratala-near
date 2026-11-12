@@ -211,7 +211,7 @@ export class IndexerService implements OnApplicationBootstrap, OnModuleDestroy {
       lotsContract: this.rpc.lotsContract,
       farmerId: lot?.farmer_id ?? null,
       crop: lot?.crop ?? null,
-      treasury: cfg?.treasury ?? 'treasury',
+      treasury: cfg?.treasury ?? null,
       lot,
       shares: shareRows.map((s) => ({ shareId: s.shareId, holder: s.holder, kg: s.kg })),
       roles: await this.roleLists(),

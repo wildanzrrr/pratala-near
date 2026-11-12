@@ -1,4 +1,5 @@
 import { site } from "@/lib/seo";
+import { isTestnet } from "@/lib/env";
 import { getLotIdsForSitemap } from "@/lib/server/lots";
 
 import type { MetadataRoute } from "next";
@@ -16,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page("/market", 0.9, "hourly"),
     page("/activity", 0.6, "hourly"),
     page("/exports", 0.4, "daily"),
-    page("/faucet", 0.3, "weekly"),
+    ...(isTestnet ? [page("/faucet", 0.3, "weekly")] : []),
     ...lotIds.map((id) => page(`/lot/${encodeURIComponent(id)}`, 0.8, "hourly")),
   ];
 }

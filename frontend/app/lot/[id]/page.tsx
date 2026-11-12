@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import { LotDetail } from "@/app/lot/[id]/_components/lot-detail";
 import { LotDetailSkeleton } from "@/app/lot/[id]/_components/lot-detail-skeleton";
-import { env } from "@/lib/env";
+import { env, isTestnet } from "@/lib/env";
 import { serverT } from "@/lib/i18n";
 import { formatKg, formatMonth, formatUsdc, usdcToDecimal } from "@/lib/near/format";
 import { getLotForSeo } from "@/lib/server/lots";
@@ -51,7 +51,7 @@ async function LotJsonLd({ params }: { params: PageProps<"/lot/[id]">["params"] 
             priceCurrency: "USD",
             availability: lot.status === "Listed" ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
             seller: { "@type": "Person", name: lot.farmer_id },
-            description: `Settled in pUSDC (testnet stablecoin) on NEAR ${env.network}.`,
+            description: isTestnet ? `Settled in pUSDC (testnet stablecoin) on NEAR ${env.network}.` : "Settled in USDC on NEAR mainnet.",
           },
         }
       : {}),
