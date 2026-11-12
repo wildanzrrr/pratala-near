@@ -1,0 +1,33 @@
+{
+  "network": "mainnet",
+  "rpc": "https://rpc.fastnear.com",
+  "explorer": "https://nearblocks.io",
+  "accounts": {
+    "root": "pratala.near",
+    "lots": "lots.pratala.near",
+    "treasury": "treasury.pratala.near",
+    "sponsor": "sponsor.pratala.near",
+    "farmer": "farmer.pratala.near",
+    "buyer": "buyer.pratala.near",
+    "agent": "agent.pratala.near",
+    "coop": "coop.pratala.near",
+    "warehouse": "warehouse.pratala.near"
+  },
+  "contracts": {
+    "usdc": {
+      "account_id": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1"
+    }
+  },
+  "lots": {},
+  "txs": {
+    "mainnet.accounts.lots": "Gjwwm12bXiUSsqaduuG9cQPW6ZrnsydARYps5V2hpPdF",
+    "mainnet.accounts.treasury": "JqtNWNxgoqLWsbAA8ZovKfxLxzbdND9zq5hkP1Xrosm",
+    "mainnet.accounts.sponsor": "6P5DBSCo2eebd9rLQqzjzedkPNZu48oeQGp9CTszLTtc",
+    "mainnet.accounts.farmer": "BpazadtDde6XLHTSewsUFtKpkWDvxSKvfomrE7qfGiAv",
+    "mainnet.accounts.buyer": "2YmvsUDuHH8o1AnQAAM4SNoaRnpLFV3BCwVmQephM2em",
+    "mainnet.accounts.agent": "ErdzeGSUp5e2x8LEEa2AWTXbUNk3iEQkYyFgDvBuiWJA",
+    "mainnet.accounts.coop": "78xCrKiMncNZWVKVBbKPVq9f5uhSNWaN4WxSKy7VWKE6",
+    "mainnet.accounts.warehouse": "6h1kVpHoagEJuWxLyGwif2kUvA4cDyF5L4AV9ZfNwFDJ"
+  },
+  "updated_at": "2026-11-12T15:32:50Z"
+}

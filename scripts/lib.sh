@@ -180,10 +180,21 @@ sign_with() {
 key_adopt_generated() {
   local account="$1" src dst
   src="$HOME/.near-credentials/$NEAR_NETWORK/$account.json"
+  # near-cli-rs ≥0.31 also stores keys per account in a directory: <account>/ed25519_<pub>.json
+  if [[ ! -f "$src" ]]; then
+    local alt
+    alt="$(find "$HOME/.near-credentials/$NEAR_NETWORK/$account" -maxdepth 1 -name '*.json' -print -quit 2>/dev/null || true)"
+    [[ -n "$alt" ]] && src="$alt"
+  fi
+  [[ -f "$src" ]] || die "near-cli-rs did not write a credential for the new key of $account"
   dst="$(key_file "$account")"
-  [[ -f "$src" ]] || die "near-cli-rs did not write $src for the new key of $account"
   mkdir -p "$KEYS_DIR" && chmod 700 "$KEYS_DIR"
-  ( umask 177; cat "$src" > "$dst" ) && rm -f "$src"
+  # near-cli-rs saves its internal record (implicit_account_id, master_seed_phrase,
+  # seed_phrase_hd_path) — keep ONLY the credential fields. The master seed phrase is
+  # deliberately never copied into KEYS_DIR (same rule as key_migrate_from_keychain).
+  ( umask 177; jq --arg a "$account" '{account_id:$a, public_key, private_key}' "$src" > "$dst" )
+  rm -f "$HOME/.near-credentials/$NEAR_NETWORK/$account.json"
+  rm -rf "$HOME/.near-credentials/$NEAR_NETWORK/$account"
   chmod 600 "$dst"
   rmdir "$HOME/.near-credentials/$NEAR_NETWORK" "$HOME/.near-credentials" 2>/dev/null || true
   ok "key saved → ${dst#"$ROOT_DIR"/} (gitignored)"
