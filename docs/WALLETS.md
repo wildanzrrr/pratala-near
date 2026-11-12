@@ -8,7 +8,7 @@ The hero action in the connect sheet. A farmer signs in with **email, Google, Ap
 
 **How a login maps to an account.** The Auth0 identity (`sub`) deterministically derives an **MPC key** on `v1.signer-prod.testnet` (`derived_public_key`, path `jwt#https://login.testnet.fast-auth.com/#<sub>`); nobody — including this app — ever holds the key. On first login the user **chooses their account name** in onboarding (2–32 chars, live availability check against the chain; the email's local part is pre-filled as a suggestion) and becomes `<name>.sponsor.pratala.testnet`. The backend records identity → account, so `POST /fastauth/resolve-account` resolves the same account on every later login and device. Nobody — including this app — ever holds the key: signing happens on the MPC network after the fast-auth contract's on-chain guard verifies the Auth0 JWT.
 
-**Who pays for what.** NEAR charges gas to the transaction signer, and `register_lot` needs a 0.1 NEAR attached deposit, so a brand-new account cannot transact on its own. Pratala sponsors it:
+**Who pays for what.** NEAR charges gas to the transaction signer, and `register_lot` needs a 0.6 NEAR attached deposit (storage + the share-mint reserve), so a brand-new account cannot transact on its own. Pratala sponsors it:
 
 - **Account creation + gas seed** — the backend's sponsor wallet (`sponsor.pratala.testnet`, key in gitignored `config/keys/sponsor.pratala.testnet.json`) sends one `CreateAccount + AddKey(full access, the MPC key) + Transfer(0.5 NEAR)` batch, once per login and once per account ever (`SponsoredAccount` table). That seed covers the registration deposit and gas for the whole demo.
 - **MPC signature calls** — each signed action needs a `sign` call on `fast-auth.testnet` (the guard verifies the JWT on-chain, the MPC network signs). The backend relays that call, so the platform pays its gas too (`POST /api/fastauth/sign-tx`).
@@ -73,7 +73,7 @@ At sign-in the wallet is asked once to add a **limited access key** for the lots
 
 | Action | Contract | Deposit | Who signs |
 | --- | --- | --- | --- |
-| `register_lot` | lots | 0.1 NEAR (storage) | **wallet** |
+| `register_lot` | lots | 0.6 NEAR (storage + share reserve) | **wallet** |
 | fund a lot = `ft_transfer_call` | pUSDC | 1 yocto | **wallet** |
 | `nft_transfer` | lots | 1 yocto | **wallet** |
 | faucet (`storage_deposit` + `faucet`) | pUSDC | storage | **wallet** |

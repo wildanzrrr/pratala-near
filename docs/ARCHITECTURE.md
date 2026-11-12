@@ -52,15 +52,16 @@ flowchart LR
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Registered: register_lot (farmer, 0.1 NEAR storage) · NFT minted to farmer
+  [*] --> Registered: register_lot (farmer, 0.6 NEAR storage + share reserve) · certificate NFT minted to farmer
   Registered --> FieldVerified: attest_field (FieldAgent)
   FieldVerified --> CoopVerified: attest_coop (Coop, ≠ field signer)
   CoopVerified --> Listed: list_lot (farmer, price_per_kg)
   Listed --> CoopVerified: delist_lot (farmer)
   Listed --> Listed: update_price (farmer)
-  Listed --> Funded: pUSDC ft_transfer_call → ft_on_transfer · NFT farmer → buyer
+  Listed --> Listed: buy kg → ft_on_transfer · share NFT minted to buyer
+  Listed --> Funded: sold out (auto) or close_funding (farmer/owner)
   Funded --> Settled: weigh_in (Warehouse) · claims computed
-  Funded --> Refunded: declare_failure (Coop or owner) · claims.holder = escrow
+  Funded --> Refunded: declare_failure (Coop or owner) · holder pool = escrow
   Registered --> Cancelled: cancel_lot
   FieldVerified --> Cancelled: cancel_lot
   CoopVerified --> Cancelled: cancel_lot
@@ -69,9 +70,9 @@ stateDiagram-v2
   Cancelled --> [*]
 ```
 
-Settlement at weigh-in: `delivered = min(actual_kg, projected_kg)`, `gross = delivered × price_per_kg`, `fee = gross × fee_bps / 10000`. The claims are `farmer = gross − fee`, `treasury = fee` and `holder = escrow − gross`. Reference lot (`lot-1` in the seed): 1,000 kg × 0.45 pUSDC = 450 escrow; 900 kg delivered at 200 bps → farmer 396.90, treasury 8.10, holder 45.00.
+Buyers purchase **by the kilogram** while the lot is Listed: each `ft_transfer_call` mints a share NFT (`"{lot_id}:{n}"`) for the kg bought and adds `kg × price_per_kg` to the escrow. Settlement at weigh-in: `delivered = min(actual_kg, sold_kg)`, `gross = delivered × price_per_kg`, `fee = gross × fee_bps / 10000`. The claims are `farmer = gross − fee`, `treasury = fee + dust` and `holder = Σ floor(pool × kgᵢ / sold_kg)` with `pool = escrow − gross`. Reference lot (`lot-1` in the seed): 1,000 kg at 0.45 pUSDC sold as 700 + 300 kg = 450 escrow; 900 kg delivered at 200 bps → farmer 396.90, treasury 8.10, pool 45.00 → the 700 kg share claims 31.50, the 300 kg share 13.50.
 
-The lot stores claims and pays them only when someone claims them. The holder claim is paid to whoever owns the NFT **when `claim_refund` is called**. Transferring the NFT before that moves the refund right to the new owner.
+The lot stores claims and pays them only when someone claims them. Each share's refund is paid to whoever owns that share NFT **when `claim_refund(share_id)` is called**, exactly once per share. Transferring the share before that moves the refund right to the new owner.
 
 ## 3. Funding: `ft_transfer_call` → `ft_on_transfer`
 

@@ -14,7 +14,7 @@ This is the script for the submission video. It follows the core journeys in [`P
    - Buyer `pratala-buyer1-<sfx>.testnet` (already holds pUSDC from the seed; top up at `/faucet` if needed)
    - Second holder `pratala-investor2-<sfx>.testnet`
 4. Have two photos ready: a rice paddy photo (field visit) and a scale-ticket photo reading **900 kg, grade A** (weigh-in).
-5. The recording creates a fresh lot, which will be **lot-4** after the seed. Use the same numbers as lot-1 (1,000 kg at 0.45 pUSDC/kg), so the payout screen shows the reference split: 396.90 / 8.10 / 45.00.
+5. The recording creates a fresh lot, which will be **lot-4** after the seed. Use the same numbers as lot-1 (1,000 kg at 0.45 pUSDC/kg), so the payout screen shows the reference split: farmer 396.90 / fee 8.10 / refund pool 45.00.
 6. Have `NEAR_AI_API_KEY` set in the backend so the AI check badge appears. If the key is missing, the UI says "AI check unavailable". Say so on camera instead of hiding it.
 7. Screen at 1280×800 for desktop roles. Use device emulation at 390 px for the farmer and the field agent.
 
@@ -27,18 +27,18 @@ This is the script for the submission video. It follows the core journeys in [`P
 | 0:40–1:05 | `/verify` (agent1, 390 px) | Open the new lot-4 task → camera / upload the paddy photo → wait for the AI check badge (pass, crop rice, stage) → add note → **Attest** (no wallet popup: function-call key) | "A field agent visits the plot. The photo goes through an AI check on NEAR AI Cloud, which looks for crop match, growth stage and GPS plausibility. The verdict is advisory and a human still signs. The response's hash is written on-chain with the attestation, and the badge links to NEAR AI's signature verification." |
 | 1:05–1:20 | `/verify` (coop1) | Open lot-4 → compare evidence → **Approve** | "The cooperative reviews it. The contract refuses a co-op signature from the same account as the field agent. Now it's CoopVerified." |
 | 1:20–1:30 | `/farmer` (farmer1) | lot-4 → set price **0.45 pUSDC/kg** → **List** → **Share** (copies the pay link `/lot/lot-4`) | "The farmer lists it at 0.45 pUSDC per kilo and gets a pay link." |
-| 1:30–1:55 | `/lot/lot-4` → `/checkout/lot-4` (buyer1) | Open the pay link → show the trust panel (2 attestations + AI badge) → **Fund 450 pUSDC** → approve the `ft_transfer_call` in the wallet → receipt `/receipt/<tx>` → **View proof** opens nearblocks | "A buyer opens the link, checks the evidence and pays 450 pUSDC. One `ft_transfer_call`: the stablecoin goes into escrow in the lot contract, and the NFT moves from the farmer to the buyer in the same transaction." Briefly show tab B: "Pay from any chain shows a live NEAR Intents quote. Intents is mainnet-only, so on testnet this is a dry quote, labelled as one." |
-| 1:55–2:15 | `/verify` (warehouse1) | lot-4 → upload the scale-ticket photo → AI prefills **900 kg, grade A** → settlement preview: farmer **396.90**, platform **8.10**, buyer refund **45.00** → **Weigh in** | "At the warehouse the scale reads 900 kilos, not 1,000. The contract settles on the delivered weight. Farmer: 396.90. Platform fee, 2%: 8.10. The 45.00 for the missing 100 kilos goes back to whoever holds the NFT." |
-| 2:15–2:30 | `/farmer` (farmer1) → `/portfolio` (buyer1) → `/exports` | Farmer: **Withdraw 396.90 pUSDC** → paid, explorer link. Buyer: shows **Claim refund 45.00**. Then `/exports` → **Download CSV** → open in a spreadsheet | "The farmer withdraws 396.90 straight away. The buyer sees a 45.00 refund to claim. The bookkeeper gets a CSV in which every row links to its transaction." |
-| 2:30–2:50 | `/portfolio` (buyer1) → `/portfolio` (investor2) | Buyer: lot-4 → **Transfer NFT** → `pratala-investor2-<sfx>.testnet` → approve (1 yocto). Switch to investor2: the lot shows **Claim refund 45.00** → claim → paid. Back on buyer1: refund gone. `/lot/lot-4` history shows the owner and money timeline | "The NFT *is* the claim. The buyer sells it to someone else, and the 45.00 refund moves with it. The new holder claims it and the old one no longer can. The contract also blocks transfers while a payout is in flight." |
+| 1:30–1:55 | `/lot/lot-4` → `/checkout/lot-4` (buyer1) | Open the pay link → show the trust panel (2 attestations + AI badge) → **choose 700 kg** (cost 315 pUSDC follows the kg) → **Pay** → approve the `ft_transfer_call` in the wallet → receipt `/receipt/<tx>` → **View proof** opens nearblocks; portfolio shows the share NFT "700 kg of Rice · lot-4" | "A buyer opens the link, checks the evidence and buys part of the harvest — 700 of the 1,000 kilos, 315 USDC. One `ft_transfer_call`: the stablecoin goes into escrow and a share NFT for those kilos is minted to the buyer in the same transaction. Anyone can take a slice; the lot stays open until the last kilo sells or the farmer closes it." Briefly show tab B: "Pay from any chain shows a live NEAR Intents quote. Intents is mainnet-only, so on testnet this is a dry quote, labelled as one." |
+| 1:55–2:15 | `/verify` (warehouse1) | lot-4 → upload the scale-ticket photo → AI prefills **900 kg, grade A** → settlement preview: farmer **396.90**, platform **8.10**, refund pool **45.00** → **Weigh in** | "At the warehouse the scale reads 900 kilos, not 1,000. The contract settles on the delivered weight. Farmer: 396.90. Platform fee, 2%: 8.10. The 45.00 for the missing 100 kilos is split across the shares, pro-rata by weight." |
+| 2:15–2:30 | `/farmer` (farmer1) → `/portfolio` (buyer1) → `/exports` | Farmer: **Withdraw 396.90 pUSDC** → paid, explorer link. Buyer: shows the share refund for 700 kg (**31.50** of the 45.00 pool). Then `/exports` → **Download CSV** → open in a spreadsheet | "The farmer withdraws 396.90 straight away. The buyer claims their slice of the refund — 31.50 for 700 of the missing 100 kilos. The bookkeeper gets a CSV in which every row links to its transaction." |
+| 2:30–2:50 | `/portfolio` (buyer1) → `/portfolio` (investor2) | Buyer: the 700 kg share NFT → **Transfer share** → `pratala-investor2-<sfx>.testnet` → approve (1 yocto). Switch to investor2: the share shows its refund → claim → paid. Back on buyer1: gone. `/lot/lot-4` history shows the holders and money timeline | "The share NFT *is* the claim. The buyer sells it to someone else, and the refund right moves with it. The new holder claims it and the old one no longer can. The contract also blocks share transfers while a payout is in flight." |
 | 2:50–3:00 | Terminal + README | `scripts/05-verify-demo.sh` → `all checks passed` | "Everything here is on NEAR testnet and reproducible from the README. One script checks the same numbers on lot-1. Pratala, built at NEAR HACKATHON." |
 
 Fallbacks if a live step fails on camera: show lot-1 (already Settled) and lot-2 (Listed: fund it as buyer1 instead of lot-4). Show lot-3 (FieldVerified: approve it as coop1). All three exist from the seed.
 
 ## 2. What NEAR does (one sentence each, for the voice-over or the post)
 
-- The harvest lot is a **NEP-171 NFT** whose current owner holds the refund right.
-- The escrow uses the **NEP-141 `ft_transfer_call` → `ft_on_transfer`** pattern: funds and the NFT move in one transaction, and invalid payments are refunded automatically.
+- The harvest lot is a **NEP-171 certificate NFT** (stays with the farmer); every kg purchase mints the buyer a **share NFT** whose current owner holds that slice's refund right.
+- The escrow uses the **NEP-141 `ft_transfer_call` → `ft_on_transfer`** pattern: funds and the share NFT mint happen in one transaction, and invalid payments are refunded automatically.
 - **NEAR Auth (email SSO)** mints a non-custodial **MPC** account per login — no seed phrase — with account creation and gas sponsored by the platform's relayer wallet.
 - **Function-call access keys** let field agents and farmers sign routine actions without any confirmation window. **NEAR Connect** still brings HOT Wallet (MPC), Meteor and others for users who already have accounts.
 - **NEAR AI Cloud** runs the evidence check, and its response hash is anchored on-chain. **NEAR Intents** 1Click quotes cross-chain checkout (mainnet, dry).
@@ -49,7 +49,7 @@ Main post (≤ 280 characters):
 
 > Rice farmers in Indonesia sell to middlemen who set the price.
 >
-> Pratala: buyers pre-fund a verified harvest on NEAR. At weigh-in the farmer withdraws 396.90 pUSDC; any shortfall is refunded to whoever holds the lot NFT.
+> Pratala: buyers pre-fund a verified harvest on NEAR, by the kilogram. At weigh-in the farmer withdraws 396.90 pUSDC; any shortfall is refunded pro-rata to whoever holds the share NFTs.
 >
 > Built at NEAR HACKATHON @NEARProtocol #NEARHackathon
 
@@ -57,7 +57,7 @@ Attach: the 3:00 video.
 
 Reply thread:
 
-1. "How it works: field agent, co-op and warehouse each sign an attestation. The lot is an NFT that holds stablecoin escrow (NEP-171 + NEP-141 `ft_transfer_call`). Sell the NFT and the refund right moves with it."
+1. "How it works: field agent, co-op and warehouse each sign an attestation. The harvest is sold by the kilogram; every purchase mints a share NFT that holds stablecoin escrow (NEP-171 + NEP-141 `ft_transfer_call`). Sell a share NFT and its refund right moves with it."
 2. "Field agents sign with function-call keys (no wallet popups). Photos get an advisory AI check on NEAR AI Cloud, and its hash is stored on-chain. Cross-chain checkout quotes come from NEAR Intents."
 3. "Try it on testnet: <live URL> · code + 5-minute walkthrough: <repo URL>"
 4. "Next: pilot with one cooperative in Karawang. Question for builders: how would you replace our allowlisted verifiers with something less trusted, without making it harder for farmers? @NearLegion @NearBuilders"

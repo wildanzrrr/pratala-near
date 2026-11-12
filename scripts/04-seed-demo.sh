@@ -5,12 +5,13 @@
 #
 # 1. roles: agent1 FieldAgent, coop1 Coop, warehouse1 Warehouse (add_role by root)
 # 2. pUSDC storage_deposit for every actor, root and the lots contract (paid by root)
-# 3. buyer1 takes 1,000 pUSDC from the pUSDC faucet
-# 4. lot-1 full lifecycle: register (rice IR64, Karawang, 1,000 kg) → attest_field → attest_coop →
-#    list @ 0.45 pUSDC/kg → buyer1 funds 450 pUSDC (ft_transfer_call) → weigh_in 900 kg grade A →
-#    claim_payout (farmer 396.90) → claim_fee (treasury 8.10) → buyer1 nft_transfer → investor2 →
-#    claim_refund (investor2 45.00)
-# 5. lot-2 left at Listed (judges can fund it), lot-3 left at FieldVerified (co-op can attest live)
+# 3. buyer1 and investor2 each take 1,000 pUSDC from the pUSDC faucet
+# 4. lot-1 full fractional lifecycle: register (rice IR64, Karawang, 1,000 kg; 0.6 NEAR deposit) →
+#    attest_field → attest_coop → list @ 0.45 pUSDC/kg → buyer1 buys 700 kg (share NFT lot-?:1) →
+#    investor2 buys the last 300 kg (lot-?:2, sell-out → Funded) → weigh_in 900 kg grade A →
+#    claim_payout (farmer 396.90) → claim_fee (treasury 8.10) → buyer1 sells share :1 to investor2 →
+#    claim_refund per share (investor2 31.50 on :1, buyer1 13.50 on :2)
+# 5. lot-2 left at Listed (judges can buy kg), lot-3 left at FieldVerified (co-op can attest live)
 #
 # Every step checks on-chain state first, so re-running continues where it stopped.
 # Every tx hash is written to deploy/testnet.json under .txs."seed.*".
@@ -42,7 +43,7 @@ BUYER_FAUCET="${BUYER_FAUCET:-1000000000}"   # 1,000 pUSDC
 HARVEST_MONTH="$(month_plus 2)"
 
 step "Pratala demo seed"
-expect "lot-1 Settled (396.90 / 8.10 / 45.00 paid out), lot-2 Listed, lot-3 FieldVerified"
+expect "lot-1 Settled (farmer 396.90, fee 8.10, shares 31.50 + 13.50), lot-2 Listed, lot-3 FieldVerified"
 
 near_view_json "$LOTS" get_config >/dev/null || die "$LOTS has no harvest-lot contract — run scripts/03-deploy-contracts.sh"
 near_view_json "$PUSDC" ft_metadata >/dev/null || die "$PUSDC has no pusdc contract — run scripts/03-deploy-contracts.sh"
@@ -50,8 +51,8 @@ near_view_json "$PUSDC" ft_metadata >/dev/null || die "$PUSDC has no pusdc contr
 log ""
 log "Plan (network: $NEAR_NETWORK, ~30 transactions, all signed with keys from ${KEYS_DIR#"$ROOT_DIR"/}):"
 log "  roles → $AGENT FieldAgent, $COOP Coop, $WAREHOUSE Warehouse"
-log "  pUSDC storage for 6 actors + $ROOT + $LOTS; faucet 1,000 pUSDC → $BUYER"
-log "  lot-1 → Settled, lot-2 → Listed, lot-3 → FieldVerified (harvest month $HARVEST_MONTH)"
+log "  pUSDC storage for 6 actors + $ROOT + $LOTS; faucet 1,000 pUSDC → $BUYER and $INVESTOR"
+log "  lot-1 → Settled (two buyers: 700 + 300 kg), lot-2 → Listed, lot-3 → FieldVerified"
 confirm "This sends testnet transactions from root, the demo actors and the contracts' owner."
 
 # ----------------------------------------------------------------- helpers ---
@@ -127,7 +128,7 @@ register_lot() {
   args="$(jq -cn --arg c "$crop" --arg v "$variety" --arg r "$region" --argjson kg "$kg" --arg m "$HARVEST_MONTH" \
     --arg p "$(fixture_hash "$key/plot-boundary")" --arg g "$(fixture_hash "$key/plot-gps")" --argjson a "$area" \
     '{crop:$c, variety:$v, region:$r, projected_kg:$kg, harvest_month:$m, plot_hash:$p, gps_hash:$g, area_m2:$a, media_uri:null}')"
-  near_call "$FARMER" "$LOTS" register_lot "$args" '50 Tgas' '0.1 NEAR' "seed.$key.register" >&2
+  near_call "$FARMER" "$LOTS" register_lot "$args" '50 Tgas' '0.6 NEAR' "seed.$key.register" >&2
   id="$(grep -Eo 'lot-[0-9]+' "$LAST_CALL_OUT" | tail -n 1 || true)"
   if [[ -z "$id" ]]; then # fall back to the farmer's newest lot
     id="$(near_view "$LOTS" get_lots_by_farmer "$(jq -cn --arg a "$FARMER" '{account_id:$a}')" \
@@ -173,16 +174,40 @@ attest_field lot1 "$L1"
 attest_coop lot1 "$L1"
 list_lot lot1 "$L1" 450000
 
+# buy_kg <signer-key> <account> <lot> <kg> <tx-key> — one ft_transfer_call; msg carries the kg
+buy_kg() {
+  local who_key="$1" who="$2" id="$3" kg="$4" key="$5" cost resp share
+  cost=$(( kg * 450000 ))
+  info "$who buys $kg kg of $id for $(fmt_pusdc "$cost") pUSDC (share NFT minted)"
+  near_call "$who" "$PUSDC" ft_transfer_call "$(jq -cn --arg r "$LOTS" --arg a "$cost" --arg l "$id" --argjson k "$kg" \
+    '{receiver_id:$r, amount:$a, msg:({action:"fund", lot_id:$l, kg:$k} | tojson)}')" \
+    '100 Tgas' '1 yoctoNEAR' "$key"
+}
+
 if (( $(status_rank "$(lot_field "$L1" .status)") < 5 )); then
-  total="$(near_view "$LOTS" quote_funding "$(jq -cn --arg l "$L1" '{lot_id:$l}')" | jq -r .)"
-  [[ "$total" == "450000000" ]] || die "$L1 quote_funding = $total, expected 450000000 (1,000 kg × 0.45 pUSDC)"
-  info "$BUYER funds $L1 with $(fmt_pusdc "$total") pUSDC via pUSDC.ft_transfer_call"
-  near_call "$BUYER" "$PUSDC" ft_transfer_call "$(jq -cn --arg r "$LOTS" --arg a "$total" --arg l "$L1" \
-    '{receiver_id:$r, amount:$a, msg:({action:"fund", lot_id:$l} | tojson)}')" \
-    '100 Tgas' '1 yoctoNEAR' "seed.lot1.fund"
+  remaining="$(near_view "$LOTS" quote_funding "$(jq -cn --arg l "$L1" '{lot_id:$l}')" | jq -r .)"
+  [[ "$remaining" == "450000000" ]] || die "$L1 quote_funding = $remaining, expected 450000000 (nothing sold yet)"
+  # Purchase 1: buyer1 takes 700 kg → share NFT "$L1:1", lot stays Listed.
+  buy_kg buyer1 "$BUYER" "$L1" 700 "seed.lot1.buy700"
+  [[ "$(lot_field "$L1" .sold_kg)" == "700" ]] || die "$L1 sold_kg = $(lot_field "$L1" .sold_kg), expected 700"
+  expect_status "$L1" Listed
+  share1="$L1:1"
+  [[ "$(near_view "$LOTS" nft_token "$(jq -cn --arg t "$share1" '{token_id:$t}')" | jq -r .owner_id)" == "$BUYER" ]] \
+    || die "share NFT $share1 is not owned by $BUYER"
+  ok "$L1 700/1000 kg sold; $share1 → $BUYER; escrow $(fmt_pusdc "$(lot_field "$L1" .escrow)") pUSDC"
+  # Purchase 2: investor2 takes the last 300 kg → share NFT "$L1:2", sell-out closes funding.
+  buy_kg investor2 "$INVESTOR" "$L1" 300 "seed.lot1.buy300"
   expect_status "$L1" Funded
-  [[ "$(lot_field "$L1" .holder)" == "$BUYER" ]] || die "$L1 NFT did not move to $BUYER on funding"
-  ok "$L1 NFT owner → $BUYER, escrow $(fmt_pusdc "$(lot_field "$L1" .escrow)") pUSDC"
+  [[ "$(lot_field "$L1" .sold_kg)" == "1000" && "$(lot_field "$L1" .remaining_kg)" == "0" ]] \
+    || die "$L1 sold_kg/remaining_kg = $(lot_field "$L1" .sold_kg)/$(lot_field "$L1" .remaining_kg), expected 1000/0"
+  [[ "$(lot_field "$L1" .share_count)" == "2" ]] || die "$L1 share_count = $(lot_field "$L1" .share_count), expected 2"
+  share2="$L1:2"
+  [[ "$(near_view "$LOTS" nft_token "$(jq -cn --arg t "$share2" '{token_id:$t}')" | jq -r .owner_id)" == "$INVESTOR" ]] \
+    || die "share NFT $share2 is not owned by $INVESTOR"
+  # The lot certificate stays with the farmer in the fractional model.
+  [[ "$(near_view "$LOTS" nft_token "$(jq -cn --arg t "$L1" '{token_id:$t}')" | jq -r .owner_id)" == "$FARMER" ]] \
+    || die "$L1 certificate NFT is not with $FARMER"
+  ok "$L1 sold out → Funded; $share2 → $INVESTOR; certificate stays with $FARMER"
 else
   ok "$L1 already funded"
 fi
@@ -196,8 +221,13 @@ if (( $(status_rank "$(lot_field "$L1" .status)") < 6 )); then
   claims="$(lot_field "$L1" '.claims | tojson')"
   info "claims after weigh-in: $claims"
   [[ "$(jq -r .farmer <<<"$claims")" == "396900000" && "$(jq -r .treasury <<<"$claims")" == "8100000" \
-     && "$(jq -r .holder <<<"$claims")" == "45000000" ]] || die "settlement claims differ from 396.90 / 8.10 / 45.00: $claims"
-  ok "settlement: farmer 396.90, treasury 8.10, holder 45.00"
+     && "$(jq -r .holder <<<"$claims")" == "45000000" && "$(lot_field "$L1" .holder_pool)" == "45000000" ]] \
+    || die "settlement differs from 396.90 / 8.10 / pool 45.00: $claims holder_pool=$(lot_field "$L1" .holder_pool)"
+  ent1="$(near_view "$LOTS" get_share "$(jq -cn --arg s "$L1:1" '{share_id:$s}')" | jq -r .entitlement)"
+  ent2="$(near_view "$LOTS" get_share "$(jq -cn --arg s "$L1:2" '{share_id:$s}')" | jq -r .entitlement)"
+  [[ "$ent1" == "31500000" && "$ent2" == "13500000" ]] \
+    || die "share entitlements ${ent1}/${ent2}, expected 31.50/13.50 (700/300 kg of the 45.00 pool)"
+  ok "settlement: farmer 396.90, treasury 8.10, pool 45.00 → shares 31.50 + 13.50"
 else
   ok "$L1 already settled"
 fi
@@ -211,19 +241,35 @@ claim() { # claim <signer> <method> <claims-field> <tx-key>
     || die "$method did not pay out (claim restored — is the receiver registered on pUSDC?)"
   ok "$L1 $field claim paid: $(fmt_pusdc "$before") pUSDC → $signer"
 }
+claim_share() { # claim_share <signer> <share-id> <tx-key> — claim_refund pays the share's entitlement once
+  local signer="$1" share="$2" key="$3" before owner
+  before="$(near_view "$LOTS" get_share "$(jq -cn --arg s "$share" '{share_id:$s}')" | jq -r .entitlement)"
+  near_view "$LOTS" get_share "$(jq -cn --arg s "$share" '{share_id:$s}')" | jq -e '.claimed == false' >/dev/null \
+    || { ok "$share refund already claimed"; return 0; }
+  owner="$(near_view "$LOTS" nft_token "$(jq -cn --arg t "$share" '{token_id:$t}')" | jq -r .owner_id)"
+  near_call "$signer" "$LOTS" claim_refund "$(jq -cn --arg s "$share" '{share_id:$s}')" '60 Tgas' '0 NEAR' "$key"
+  near_view "$LOTS" get_share "$(jq -cn --arg s "$share" '{share_id:$s}')" | jq -e '.claimed == true' >/dev/null \
+    || die "claim_refund($share) did not pay out (claim restored — is $owner registered on pUSDC?)"
+  ok "$share refund paid: $(fmt_pusdc "$before") pUSDC → $signer"
+}
 claim "$FARMER" claim_payout farmer seed.lot1.claim_payout
 claim "$ROOT" claim_fee treasury seed.lot1.claim_fee
 
-if [[ "$(lot_field "$L1" .holder)" != "$INVESTOR" ]]; then
-  near_call "$BUYER" "$LOTS" nft_transfer "$(jq -cn --arg r "$INVESTOR" --arg t "$L1" \
-    '{receiver_id:$r, token_id:$t, memo:"secondary sale: refund right moves with the NFT"}')" \
-    '30 Tgas' '1 yoctoNEAR' "seed.lot1.nft_transfer"
-  [[ "$(lot_field "$L1" .holder)" == "$INVESTOR" ]] || die "$L1 NFT did not move to $INVESTOR"
-  ok "$L1 NFT owner → $INVESTOR"
+# Secondary sale: buyer1 sells the 700 kg share to investor2 — the refund right moves
+# with the share NFT, not with the lot certificate.
+share1="$L1:1"
+if [[ "$(near_view "$LOTS" nft_token "$(jq -cn --arg t "$share1" '{token_id:$t}')" | jq -r .owner_id)" == "$BUYER" ]]; then
+  near_call "$BUYER" "$LOTS" nft_transfer "$(jq -cn --arg r "$INVESTOR" --arg t "$share1" \
+    '{receiver_id:$r, token_id:$t, memo:"secondary sale: refund right moves with the share NFT"}')" \
+    '30 Tgas' '1 yoctoNEAR' "seed.lot1.share_transfer"
+  [[ "$(near_view "$LOTS" nft_token "$(jq -cn --arg t "$share1" '{token_id:$t}')" | jq -r .owner_id)" == "$INVESTOR" ]] \
+    || die "$share1 did not move to $INVESTOR"
+  ok "$share1 (700 kg) → $INVESTOR; the refund claim follows the share NFT"
 else
-  ok "$L1 NFT already held by $INVESTOR"
+  ok "$share1 already held by $INVESTOR"
 fi
-claim "$INVESTOR" claim_refund holder seed.lot1.claim_refund
+claim_share "$INVESTOR" "$L1:1" seed.lot1.claim_refund1   # 31.50 for the 700 kg share
+claim_share "$BUYER" "$L1:2" seed.lot1.claim_refund2      # 13.50 for the 300 kg share
 state_set_str '.lots.lot1.target' Settled
 
 # --------------------------------------------------------------- lot-2, -3 ---
@@ -241,4 +287,4 @@ state_set_str '.lots.lot3.target' FieldVerified
 step "Seed transactions"
 jq -r '.txs | to_entries[] | select(.key | startswith("seed.")) | "\(.key)\t\(.value)"' "$DEPLOY_FILE" \
   | while IFS=$'\t' read -r k h; do log "  $(printf '%-28s' "$k") $(explorer_tx "$h")"; done
-ok "seed complete: $L1 Settled, $L2 Listed, $L3 FieldVerified → next: scripts/05-verify-demo.sh"
+ok "seed complete: $L1 Settled (396.90 + 8.10 + 31.50 + 13.50 paid), $L2 Listed, $L3 FieldVerified → next: scripts/05-verify-demo.sh"

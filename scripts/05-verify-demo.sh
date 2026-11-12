@@ -5,11 +5,12 @@
 #
 # Prints: lots config + stats, lot-1..3 state, pUSDC balances (farmer1, investor2, treasury/root,
 # lots contract, buyer1), explorer links. Asserts:
-#   - lot-1 status Settled, 1,000 kg projected, 900 kg delivered at 0.45 pUSDC/kg, 450 pUSDC escrow
-#   - settlement math: farmer 396.90, treasury 8.10, holder refund 45.00 (from the on-chain lot fields)
-#   - every lot-1 claim paid ("0" remaining) and the payout_claimed events in the claim txs carry
-#     those exact amounts with ok=true (archival RPC; falls back to balances if the tx is unavailable)
-#   - NFT lot-1 is owned by investor2 (nft_token and lot.holder)
+#   - lot-1 status Settled, 1,000 kg projected AND sold (two shares: 700 + 300 kg), 900 kg delivered
+#     at 0.45 pUSDC/kg, 450 pUSDC escrow
+#   - settlement math: farmer 396.90, treasury 8.10, holder pool 45.00 split 31.50 (700 kg share) +
+#     13.50 (300 kg share); lot certificate stays with the farmer, share NFTs with their holders
+#   - every lot-1 claim paid ("0" remaining, both shares claimed) and the payout_claimed events in
+#     the claim txs carry those exact amounts with ok=true (archival RPC; falls back to balances)
 #
 # Exit 0 = all ✓; exit 1 = a mismatch or the contracts are not reachable; exit 2 = not deployed yet.
 # Ids come from deploy/testnet.json (override with DEPLOY_FILE, or LOTS_CONTRACT_ID / PUSDC_CONTRACT_ID).
@@ -22,7 +23,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 require_cmd jq curl
 
 step "Pratala demo verification (read-only, $NEAR_NETWORK)"
-expect "every line ✓ and 'all checks passed'; lot-1 Settled 396.90 / 8.10 / 45.00, NFT owner investor2"
+expect "every line ✓ and 'all checks passed'; lot-1 Settled 396.90 / 8.10 + shares 31.50 / 13.50"
 
 if [[ ! -f "$DEPLOY_FILE" ]]; then
   err "no ${DEPLOY_FILE#"$ROOT_DIR"/} — nothing deployed yet. Run scripts/02-create-accounts.sh, 03-deploy-contracts.sh, 04-seed-demo.sh first."
@@ -67,7 +68,7 @@ lot_id_for() { local v; v="$(state_get ".lots.\"$1\".lot_id")"; printf '%s' "${v
 L1="$(lot_id_for lot1)"; L2="$(lot_id_for lot2)"; L3="$(lot_id_for lot3)"
 for id in "$L1" "$L2" "$L3"; do
   if j="$(near_view_json "$LOTS" get_lot "$(jq -cn --arg l "$id" '{lot_id:$l}')")"; then
-    log "  $(jq -r '"\(.lot_id)  \(.status)  \(.crop)/\(.variety // "-")  \(.region)  \(.projected_kg) kg  price \(.price_per_kg)/kg  escrow \(.escrow)  holder \(.holder)  claims \(.claims|tojson)  attestations \(.attestations|length)"' <<<"$j")"
+    log "  $(jq -r '"\(.lot_id)  \(.status)  \(.crop)/\(.variety // "-")  \(.region)  \(.projected_kg) kg  price \(.price_per_kg)/kg  sold \(.sold_kg) kg in \(.share_count) share(s)  escrow \(.escrow)  claims \(.claims|tojson)  attestations \(.attestations|length)"' <<<"$j")"
   else
     log "  $id  (not found)"
   fi
@@ -80,6 +81,8 @@ else
   step "lot-1 assertions"
   check_eq "$L1 status" "$(jq -r .status <<<"$LOT1")" Settled
   check_eq "$L1 projected_kg" "$(jq -r .projected_kg <<<"$LOT1")" 1000
+  check_eq "$L1 sold_kg (700 + 300)" "$(jq -r .sold_kg <<<"$LOT1")" 1000
+  check_eq "$L1 share_count" "$(jq -r .share_count <<<"$LOT1")" 2
   check_eq "$L1 actual_kg" "$(jq -r .actual_kg <<<"$LOT1")" 900
   check_eq "$L1 grade" "$(jq -r .grade <<<"$LOT1")" A
   check_eq "$L1 price_per_kg" "$(jq -r .price_per_kg <<<"$LOT1")" 450000
@@ -87,21 +90,31 @@ else
   check_eq "$L1 attestations (field, coop, weigh-in)" "$(jq -r '[.attestations[].kind] | join(",")' <<<"$LOT1")" "FieldVisit,CoopReview,WarehouseWeighIn"
 
   # Settlement math recomputed from on-chain fields (all values fit in 64-bit).
-  projected="$(jq -r .projected_kg <<<"$LOT1")"; actual="$(jq -r '.actual_kg // 0' <<<"$LOT1")"
-  price="$(jq -r .price_per_kg <<<"$LOT1")"; total="$(jq -r .funding_total <<<"$LOT1")"
-  if [[ "$projected$actual$price$total$FEE_BPS" =~ ^[0-9]+$ ]]; then
-    delivered=$(( actual < projected ? actual : projected ))
+  sold="$(jq -r .sold_kg <<<"$LOT1")"; actual="$(jq -r '.actual_kg // 0' <<<"$LOT1")"
+  price="$(jq -r .price_per_kg <<<"$LOT1")"; escrow="$(jq -r .escrow <<<"$LOT1")"; holder_pool="$(jq -r .holder_pool <<<"$LOT1")"
+  if [[ "$sold$actual$price$holder_pool$FEE_BPS" =~ ^[0-9]+$ ]]; then
+    delivered=$(( actual < sold ? actual : sold ))
     gross=$(( delivered * price )); fee=$(( gross * FEE_BPS / 10000 ))
     check_eq "farmer payout (gross − fee)" "$(fmt_pusdc $((gross - fee)))" 396.90
     check_eq "treasury fee (${FEE_BPS} bps)" "$(fmt_pusdc "$fee")" 8.10
-    check_eq "holder refund (escrow − gross)" "$(fmt_pusdc $((total - gross)))" 45.00
+    check_eq "holder pool (sold×price − gross)" "$(fmt_pusdc $(( sold * price - gross )))" 45.00
   else
     fail "lot-1 numeric fields missing; cannot recompute settlement"
   fi
   check_eq "remaining claims" "$(jq -c '.claims' <<<"$LOT1")" '{"farmer":"0","holder":"0","treasury":"0"}'
-  check_eq "$L1 holder (lot view)" "$(jq -r .holder <<<"$LOT1")" "$INVESTOR"
-  nft_owner="$(near_view "$LOTS" nft_token "$(jq -cn --arg t "$L1" '{token_id:$t}')" | jq -r '.owner_id // "none"' || echo error)"
-  check_eq "$L1 NFT owner (nft_token)" "$nft_owner" "$INVESTOR"
+
+  # Share NFTs: the 700 kg share moved to investor2 in the seed's secondary sale; buyer1 keeps the 300 kg.
+  share_json() { near_view "$LOTS" get_share "$(jq -cn --arg s "$1" '{share_id:$s}')" 2>/dev/null || echo '{}'; }
+  SH1="$(share_json "$L1:1")"; SH2="$(share_json "$L1:2")"
+  check_eq "share $L1:1 kg" "$(jq -r .kg <<<"$SH1")" 700
+  check_eq "share $L1:1 owner" "$(jq -r .owner <<<"$SH1")" "$INVESTOR"
+  check_eq "share $L1:1 claimed" "$(jq -r .claimed <<<"$SH1")" true
+  check_eq "share $L1:2 kg" "$(jq -r .kg <<<"$SH2")" 300
+  check_eq "share $L1:2 owner" "$(jq -r .owner <<<"$SH2")" "$BUYER"
+  check_eq "share $L1:2 claimed" "$(jq -r .claimed <<<"$SH2")" true
+  nft_owner() { near_view "$LOTS" nft_token "$(jq -cn --arg t "$1" '{token_id:$t}')" | jq -r '.owner_id // "none"' || echo error; }
+  check_eq "$L1 certificate owner (stays with farmer)" "$(nft_owner "$L1")" "$FARMER"
+  check_eq "$L1:1 share owner (nft_token)" "$(nft_owner "$L1:1")" "$INVESTOR"
 
   step "payout events (from the claim transactions)"
   # payout_event <tx-key> <signer> <kind> <amount> <to> → 0 found, 1 mismatch, 2 tx unavailable
@@ -136,7 +149,8 @@ else
   }
   check_payout "farmer received 396.90" seed.lot1.claim_payout "$FARMER" Farmer 396900000 "$FARMER" "$FARMER"
   check_payout "treasury received 8.10" seed.lot1.claim_fee "$ROOT" Treasury 8100000 "$TREASURY" "$TREASURY"
-  check_payout "investor2 refund 45.00" seed.lot1.claim_refund "$INVESTOR" Holder 45000000 "$INVESTOR" "$INVESTOR"
+  check_payout "investor2 refund 31.50 (700 kg share)" seed.lot1.claim_refund1 "$INVESTOR" Holder 31500000 "$INVESTOR" "$INVESTOR"
+  check_payout "buyer1 refund 13.50 (300 kg share)" seed.lot1.claim_refund2 "$BUYER" Holder 13500000 "$BUYER" "$BUYER"
 fi
 
 step "pUSDC balances"

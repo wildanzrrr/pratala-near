@@ -6,7 +6,7 @@
 
 **Deadline:** public repo + X demo post + submission by **2026-11-14 23:59 UTC** (today 2026-11-07 → 7 days). Judging Nov 16–18: Claude Code + Codex screen reproducibility first, then human judges.
 
-**Product (owner's brief):** Indonesian agriculture marketplace linking farmers, seed/fertilizer suppliers and buyers/investors without middlemen (the local harvest traders who set the price). On-chain core: a *harvest projection* (e.g. 1,000 kg rice, month M) is a token; an investor pre-funds it into escrow; a 3-layer verification (field agent → cooperative / farmer group → warehouse weigh-in) is the oracle; weigh-in settles escrow to the farmer and refunds under-delivery to the token holder. Web3 must stay invisible to farmers.
+**Product (owner's brief):** Indonesian agriculture marketplace linking farmers, seed/fertilizer suppliers and buyers/investors without middlemen (the local harvest traders who set the price). On-chain core: a *harvest projection* (e.g. 1,000 kg rice, month M) is a token; an investor pre-funds it into escrow; a 3-layer verification (field agent → cooperative / farmer group → warehouse weigh-in) is the oracle; weigh-in settles escrow to the farmer and refunds under-delivery pro-rata to the kg-share NFT holders. Web3 must stay invisible to farmers.
 
 **Prototype to port (~800 LOC):** `server.mjs` 1Click proxy (tokens/quote/deposit-submit/status, BigInt `decimalToBaseUnits`), landing copy, 3-step verification concept, green/lime/paper palette. No contracts, wallet, or DB exist.
 
@@ -138,7 +138,7 @@ Start from near-examples/NFT pattern (hand-written `impl NonFungibleTokenCore` d
 | `attest_coop(lot_id, evidence_hash, evidence_uri?, note?)` `#[payable]` | Coop (≠ field attester) | FieldVerified → CoopVerified |
 | `list_lot(lot_id, price_per_kg)` / `update_price` / `delist_lot` | farmer (= owner) | CoopVerified ↔ Listed |
 | `cancel_lot(lot_id)` | farmer or owner | pre-Listed → Cancelled |
-| `ft_on_transfer(sender_id, amount, msg) -> PromiseOrValue<U128>` | **predecessor == usdc_contract** | Listed → Funded; msg `{"action":"fund","lot_id":"lot-1"}`; total = projected_kg×price; require amount ≥ total; escrow = total; return excess; NFT farmer→sender via `internal_transfer` (verify event emission in 5.30.1 source); invalid → panic (full refund) |
+| `ft_on_transfer(sender_id, amount, msg) -> PromiseOrValue<U128>` | **predecessor == usdc_contract** | Buy kg of a Listed lot; msg `{"action":"fund","lot_id":"lot-1","kg":300}`; cost = kg×price; require amount ≥ cost and kg ≤ remaining; escrow += cost, sold_kg += kg; mint share NFT `"{lot_id}:{n}"` to the buyer (contract-paid storage, mint event emitted by our code — verified in 5.30.1 source); sell-out → Funded; return excess; invalid → panic (full refund). Shipped 2026-11-12 (fractional redesign, `lots-v2` deploy) |
 | `weigh_in(lot_id, actual_kg, grade, evidence_hash, evidence_uri?, ai_check_hash?)` `#[payable]` | Warehouse | Funded → Settled; computes claims |
 | `declare_failure(lot_id, reason, evidence_hash)` | Coop or owner | Funded → Refunded; `claims.holder = escrow` |
 | `claim_payout` / `claim_refund` / `claim_fee (lot_id) -> Promise` | farmer / **current nft owner** / owner-or-treasury | require `!claim_lock`, claim>0; lock; zero claim; `ext_ft.ft_transfer` (1 yocto, 15 Tgas) `.then(on_claim_resolved)` 10 Tgas |

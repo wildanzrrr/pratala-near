@@ -67,7 +67,9 @@ pick_root() {
 ROOT="$(pick_root)"
 SUFFIX="$(state_get '.actor_suffix')"
 SUFFIX="${SUFFIX:-${ACTOR_SUFFIX:-$(rand_hex4)}}"
-LOTS="lots.$ROOT"
+# LOTS_ID overrides the lots-contract sub-account (e.g. lots-v2.$ROOT for the fractional
+# redeploy); the id is recorded in deploy/testnet.json, which every later script follows.
+LOTS="${LOTS_ID:-lots.$ROOT}"
 PUSDC="pusdc.$ROOT"
 
 actor_id() {

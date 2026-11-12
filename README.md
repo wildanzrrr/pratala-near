@@ -5,7 +5,7 @@
 
 Pratala lets an Indonesian farmer turn a verified harvest projection into a NEAR NFT that holds stablecoin escrow. A buyer funds it with pUSDC on testnet (in production: from any chain through NEAR Intents). Three independent attestations — field agent, cooperative, warehouse weigh-in — act as the oracle. The weigh-in settles the escrow: the farmer is paid for what was delivered, the platform takes its fee, and any under-delivery is refunded to **whoever holds the NFT at that moment**.
 
-Worked example used everywhere in this repo: 1,000 kg rice at 0.45 pUSDC/kg = 450 pUSDC escrow. Weigh-in 900 kg, fee 2% → farmer 396.90, treasury 8.10, NFT holder refund 45.00.
+Worked example used everywhere in this repo: 1,000 kg rice at 0.45 pUSDC/kg is sold by the kilogram — buyer1 takes 700 kg (315 pUSDC), investor2 the last 300 kg (135 pUSDC), each receiving a share NFT. Weigh-in 900 kg, fee 2% → farmer 396.90, treasury 8.10, and the 45.00 shortfall refund splits pro-rata across the shares: 31.50 to the 700 kg share, 13.50 to the 300 kg share.
 
 ## Repository
 
@@ -58,7 +58,7 @@ Until the contracts are deployed, pages show "Contracts not deployed yet". Set `
 scripts/02-create-accounts.sh   # pratala.testnet + lots./pusdc. sub-accounts + demo actors
 scripts/03-deploy-contracts.sh  # build, deploy, init; writes deploy/testnet.json
 scripts/04-seed-demo.sh         # lot-1 full lifecycle, lot-2 Listed, lot-3 FieldVerified
-scripts/05-verify-demo.sh       # read-only; asserts 396.90 / 8.10 / 45.00 and NFT holder
+scripts/05-verify-demo.sh       # read-only; asserts 396.90 / 8.10 + share refunds 31.50 / 13.50
 ```
 
 ## Disclosure

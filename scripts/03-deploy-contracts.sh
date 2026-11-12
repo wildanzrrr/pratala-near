@@ -73,7 +73,14 @@ log "  storage pool on $LOTS ≥ ${LOTS_STORAGE_POOL_NEAR} NEAR free (top-up fro
 confirm "This deploys contract code to testnet and may transfer testnet NEAR from $ROOT."
 
 record_contract() { # record_contract <key> <id> <wasm> <init-json>
-  local key="$1" id="$2" wasm="$3" init="$4" rel
+  local key="$1" id="$2" wasm="$3" init="$4" rel prev
+  # Deploying to a different account supersedes the record; keep the old one (e.g. the
+  # pre-fractional lots contract) under <key>_v1 so its history stays in the hand-off log.
+  prev="$(state_get ".contracts.\"$key\".account_id")"
+  if [[ -n "$prev" && "$prev" != "$id" && -z "$(state_get ".contracts.\"${key}_v1\"")" ]]; then
+    state_set ".contracts.\"${key}_v1\"" "$(state_get ".contracts.\"$key\"")"
+    info "previous $key contract $prev recorded as contracts.${key}_v1"
+  fi
   rel="${wasm#"$ROOT_DIR"/}"
   state_set ".contracts.\"$key\"" "$(jq -cn --arg id "$id" --arg w "$rel" --argjson b "$(file_size "$wasm")" \
     --arg h "$(sha256_file "$wasm")" --argjson i "$init" --arg tx "$(state_get ".txs.\"deploy.$key\"")" \
