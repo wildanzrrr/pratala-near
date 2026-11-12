@@ -58,6 +58,7 @@ interface LotView {
   fee_bps: number;                  // fee rate frozen at the first sale (0 before)
   claims: Claims; claim_lock: boolean; created_at_ms: number;
   funding_total: string;            // projected_kg * price_per_kg (whole harvest)
+  holder_pool: string;              // U128 refund pool snapshotted at settlement; "0" before
 }
 interface ShareView {
   share_id: string;                 // "lot-1:1" — the share NFT token_id

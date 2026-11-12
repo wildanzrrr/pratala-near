@@ -183,6 +183,7 @@ impl Contract {
             claims: lot.claims,
             claim_lock: lot.claim_lock,
             created_at_ms: lot.created_at_ms,
+            holder_pool: U128(lot.holder_pool),
         }
     }
 }

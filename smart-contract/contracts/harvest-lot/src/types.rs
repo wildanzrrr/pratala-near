@@ -194,6 +194,9 @@ pub struct LotView {
     pub claim_lock: bool,
     pub created_at_ms: u64,
     pub funding_total: U128,
+    /// Refund pool snapshotted at settlement; each share claims `floor(pool × kg / sold_kg)`.
+    /// `"0"` until the lot is Settled/Refunded.
+    pub holder_pool: U128,
 }
 
 #[near(serializers = [json])]
