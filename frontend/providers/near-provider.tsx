@@ -19,9 +19,11 @@
  */
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NearConnector } from "@hot-labs/near-connect";
+import { useQueryClient } from "@tanstack/react-query";
 import { createAccessKeyPlugin } from "function-call-key-plugin";
 
 import { env } from "@/lib/env";
+import { apiKeys } from "@/hooks/queries/use-api-health";
 import {
   beginSsoLogin,
   getSsoIdentity,
@@ -116,6 +118,7 @@ interface SsoSession {
 }
 
 export function NearProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const connectorRef = useRef<NearConnector | null>(null);
   const readyRef = useRef<Promise<void> | null>(null);
   const [wallet, setWallet] = useState<NearWalletBase | null>(null);
@@ -180,10 +183,13 @@ export function NearProvider({ children }: { children: ReactNode }) {
           setSso({ accountId: identity.accountId, mpcPublicKey: identity.publicKey });
           setSignedAccountId(identity.accountId);
           // Re-confirm the backend session (idempotent); a failure only
-          // costs uploads/inbox, not chain features.
-          void verifySsoSession(identity.accountId, identity.publicKey).catch(
-            (error: unknown) => console.warn("[pratala] sso session re-confirm failed", error),
-          );
+          // costs uploads/inbox, not chain features. Refresh `me` on success —
+          // it may have fetched before this cookie landed.
+          void verifySsoSession(identity.accountId, identity.publicKey)
+            .then(() => queryClient.invalidateQueries({ queryKey: apiKeys.me }))
+            .catch(
+              (error: unknown) => console.warn("[pratala] sso session re-confirm failed", error),
+            );
           markSsoActive();
         } else {
           // First visit: no account until a name is chosen in onboarding.
@@ -231,7 +237,7 @@ export function NearProvider({ children }: { children: ReactNode }) {
       connector.removeAllListeners("wallet:signOut");
       connector.removeAllListeners("selector:walletsChanged");
     };
-  }, []);
+  }, [queryClient]);
 
   const connect = useCallback(async (walletId?: string) => {
     const connector = connectorRef.current;
