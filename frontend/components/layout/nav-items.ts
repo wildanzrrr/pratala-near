@@ -23,7 +23,7 @@ export interface NavItem {
 
 const ITEMS = {
   market: { href: "/market", label: "nav.market", icon: Storefront },
-  how: { href: "/#cara-kerja", label: "nav.howItWorks", icon: Notebook },
+  how: { href: "/#how-it-works", label: "nav.howItWorks", icon: Notebook },
   activity: { href: "/activity", label: "nav.activity", icon: Pulse },
   farmer: { href: "/farmer", label: "nav.farmer", icon: Plant },
   verify: { href: "/verify", label: "nav.verify", icon: SealCheck },

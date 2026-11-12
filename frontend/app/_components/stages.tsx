@@ -15,7 +15,7 @@ const STAGES: Array<{ n: string; title: MessageKey; body: MessageKey; who: Messa
 /** F4 · step sequence — the macrostructure's spine. A real five-step lifecycle, numbered because it is ordinal. */
 export function Stages() {
   return (
-    <section id="cara-kerja" aria-labelledby="stages-title" className="page-max page-x scroll-mt-28 py-16 md:py-24">
+    <section id="how-it-works" aria-labelledby="stages-title" className="page-max page-x scroll-mt-28 py-16 md:py-24">
       <div className="flex max-w-2xl flex-col gap-3">
         <h2 id="stages-title" className="text-h2">
           <T k="landing.stagesTitle" />
