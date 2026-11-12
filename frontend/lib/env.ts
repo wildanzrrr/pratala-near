@@ -17,7 +17,7 @@ const schema = z.object({
   demoIdrRate: z.coerce.number().positive(),
   siteUrl: z.url(),
   demoFixtures: z.boolean(),
-  fastauthClientId: z.string().min(10),
+  fastauthClientId: z.string(),
   fastauthContractId: z.string().min(2),
   fastauthMpcContractId: z.string().min(2),
   fastauthDomain: z.string().min(4),
@@ -51,6 +51,40 @@ const raw = {
 
 const parsed = schema.safeParse(raw);
 
+/**
+ * Mainnet must never run on testnet values. On mainnet, a missing var would
+ * otherwise fall back to its testnet default and silently mix networks (e.g. a
+ * mainnet app talking to a testnet contract). Fail loudly instead.
+ */
+function assertNoTestnetMix(e: PublicEnv): void {
+  const vars: Record<string, string> = {
+    rpcUrl: e.rpcUrl,
+    lotsContractId: e.lotsContractId,
+    pusdcContractId: e.pusdcContractId,
+    explorerBase: e.explorerBase,
+    authRecipient: e.authRecipient,
+    fastauthContractId: e.fastauthContractId,
+    fastauthMpcContractId: e.fastauthMpcContractId,
+    fastauthDomain: e.fastauthDomain,
+    fastauthApiAudience: e.fastauthApiAudience,
+    ssoAccountRoot: e.ssoAccountRoot,
+  };
+  const offenders = Object.entries(vars)
+    .filter(([, v]) => v.includes("testnet"))
+    .map(([k]) => `NEXT_PUBLIC_* ${k}`);
+  if (offenders.length > 0) {
+    throw new Error(
+      `[pratala] network=mainnet but testnet values in use: ${offenders.join(", ")} — set every NEXT_PUBLIC_* var explicitly in frontend/.env.local`,
+    );
+  }
+}
+
+if (!parsed.success && raw.network === "mainnet") {
+  throw new Error(
+    `[pratala] invalid public env on mainnet: ${JSON.stringify(z.treeifyError(parsed.error))} — fix frontend/.env.local`,
+  );
+}
+
 if (!parsed.success) {
   console.warn("[pratala] invalid public env, using defaults where possible", z.treeifyError(parsed.error));
 }
@@ -75,3 +109,5 @@ export const env: PublicEnv = parsed.success
       fastauthApiAudience: raw.fastauthApiAudience,
       ssoAccountRoot: raw.ssoAccountRoot,
     };
+
+assertNoTestnetMix(env);
