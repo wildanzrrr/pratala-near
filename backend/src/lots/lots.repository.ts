@@ -15,12 +15,14 @@ export class LotsRepository {
   async upsert(view: LotView): Promise<void> {
     const data = {
       farmerId: view.farmer_id,
-      holder: view.holder,
       crop: view.crop,
       variety: view.variety,
       region: view.region,
       status: view.status,
       projectedKg: view.projected_kg,
+      soldKg: view.sold_kg ?? 0,
+      remainingKg: view.remaining_kg ?? view.projected_kg,
+      shareCount: view.share_count ?? 0,
       harvestMonth: view.harvest_month,
       plotHash: view.plot_hash,
       gpsHash: view.gps_hash,
@@ -28,7 +30,6 @@ export class LotsRepository {
       pricePerKg: view.price_per_kg,
       fundingTotal: view.funding_total,
       escrow: view.escrow,
-      funder: view.funder,
       fundedAtMs: big(view.funded_at_ms),
       actualKg: view.actual_kg,
       grade: view.grade,

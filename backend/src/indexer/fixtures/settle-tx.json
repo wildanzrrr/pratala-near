@@ -1,6 +1,8 @@
 {
   "final_execution_status": "FINAL",
-  "status": { "SuccessValue": "" },
+  "status": {
+    "SuccessValue": ""
+  },
   "transaction": {
     "hash": "4mVZ2hQk8hGvN3xEq9pW7cT1sYb6aR5dK2jL8nM3pQ7u",
     "signer_id": "warehouse.pratala.testnet",
@@ -25,9 +27,13 @@
     "block_hash": "BlkE5555555555555555555555555555555555555555",
     "outcome": {
       "logs": [],
-      "receipt_ids": ["RcptWeigh5555555555555555555555555555555555"],
+      "receipt_ids": [
+        "RcptWeigh5555555555555555555555555555555555"
+      ],
       "executor_id": "warehouse.pratala.testnet",
-      "status": { "SuccessReceiptId": "RcptWeigh5555555555555555555555555555555555" }
+      "status": {
+        "SuccessReceiptId": "RcptWeigh5555555555555555555555555555555555"
+      }
     }
   },
   "receipts_outcome": [
@@ -38,12 +44,14 @@
         "logs": [
           "Weigh-in recorded for lot-1",
           "EVENT_JSON:{\"standard\":\"pratala\",\"version\":\"1.0.0\",\"event\":\"lot_attested\",\"data\":[{\"lot_id\":\"lot-1\",\"kind\":\"WarehouseWeighIn\",\"signer\":\"warehouse.pratala.testnet\",\"evidence_hash\":\"9f2c3a0d7e5b4c1a8f6e2d3c4b5a69788776655443322110ffeeddccbbaa9988\",\"ai_check_hash\":null}]}",
-          "EVENT_JSON:{\"standard\":\"pratala\",\"version\":\"1.0.0\",\"event\":\"lot_settled\",\"data\":[{\"lot_id\":\"lot-1\",\"actual_kg\":900,\"grade\":\"A\",\"farmer_claim\":\"396900000\",\"holder_claim\":\"45000000\",\"fee\":\"8100000\"}]}",
+          "EVENT_JSON:{\"standard\":\"pratala\",\"version\":\"1.0.0\",\"event\":\"lot_settled\",\"data\":[{\"lot_id\":\"lot-1\",\"actual_kg\":900,\"grade\":\"A\",\"sold_kg\":1000,\"farmer_claim\":\"396900000\",\"holder_pool\":\"45000000\",\"fee\":\"8100000\"}]}",
           "EVENT_JSON:not json at all"
         ],
         "receipt_ids": [],
         "executor_id": "lots.pratala.testnet",
-        "status": { "SuccessValue": "" }
+        "status": {
+          "SuccessValue": ""
+        }
       }
     },
     {
@@ -55,7 +63,18 @@
         ],
         "receipt_ids": [],
         "executor_id": "lots.pratala.testnet",
-        "status": { "Failure": { "ActionError": { "index": 0, "kind": { "FunctionCallError": { "ExecutionError": "Smart contract panicked" } } } } }
+        "status": {
+          "Failure": {
+            "ActionError": {
+              "index": 0,
+              "kind": {
+                "FunctionCallError": {
+                  "ExecutionError": "Smart contract panicked"
+                }
+              }
+            }
+          }
+        }
       }
     }
   ]

@@ -179,12 +179,14 @@ model AiCheck {
 model Lot {
   lotId        String   @id
   farmerId     String
-  holder       String
   crop         String
   variety      String?
   region       String
   status       String
   projectedKg  Int
+  soldKg       Int      @default(0)
+  remainingKg  Int      @default(0)
+  shareCount   Int      @default(0)
   harvestMonth String
   plotHash     String
   gpsHash      String
@@ -192,7 +194,6 @@ model Lot {
   pricePerKg   String
   fundingTotal String
   escrow       String
-  funder       String?
   fundedAtMs   BigInt?
   actualKg     Int?
   grade        String?
@@ -206,6 +207,25 @@ model Lot {
 
   @@index([status])
   @@index([farmerId])
+}
+
+/// One kg-denominated share NFT ("lot-N:M") minted by a purchase; mirrors chain state
+/// from pratala/nep171 events. `holder` follows nft_transfer events; `claimed` flips when
+/// the share's refund entitlement was paid out.
+model LotShare {
+  id        String    @id @default(uuid())
+  shareId   String    @unique
+  lotId     String
+  buyerId   String
+  holder    String
+  kg        Int
+  claimed   Boolean   @default(false)
+  claimedAt DateTime?
+  txHash    String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([lotId])
   @@index([holder])
 }
 

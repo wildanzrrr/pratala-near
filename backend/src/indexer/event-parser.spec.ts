@@ -20,9 +20,13 @@ const ctx: ProjectionContext = {
   txHash: 'TX',
   lotsContract: 'lots.pratala.testnet',
   farmerId: 'farmer.pratala.testnet',
-  holder: 'buyer.pratala.testnet',
   crop: 'Rice',
   treasury: 'pratala.testnet',
+  lot: null,
+  shares: [
+    { shareId: 'lot-1:1', holder: 'buyer.pratala.testnet', kg: 700 },
+    { shareId: 'lot-1:2', holder: 'investor2.pratala.testnet', kg: 300 },
+  ],
   roles: { FieldAgent: ['agent.pratala.testnet'], Coop: ['coop.pratala.testnet'], Warehouse: ['warehouse.pratala.testnet'] },
 };
 
@@ -39,13 +43,13 @@ describe('parseEventLog', () => {
   });
 });
 
-describe('parseTxEvents (funding tx via pUSDC ft_transfer_call)', () => {
+describe('parseTxEvents (kg purchase via pUSDC ft_transfer_call)', () => {
   const events = parseTxEvents(fixture('fund-tx.json'), opts);
 
   it('extracts every trusted EVENT_JSON log across receipts in order', () => {
     expect(events.map((e) => `${e.standard}:${e.event}`)).toEqual([
       'nep141:ft_transfer',
-      'nep171:nft_transfer',
+      'nep171:nft_mint',
       'pratala:lot_funded',
       'nep141:ft_transfer',
     ]);
@@ -56,30 +60,31 @@ describe('parseTxEvents (funding tx via pUSDC ft_transfer_call)', () => {
       executorId: 'lots.pratala.testnet',
       blockHash: 'BlkC3333333333333333333333333333333333333333',
       index: 0,
-      data: { funder: 'buyer.pratala.testnet', amount: '450000000', refund: '10000000' },
+      data: { buyer: 'buyer.pratala.testnet', kg: 300, amount: '135000000', refund: '10000000', sold_kg: 300, share_id: 'lot-1:1' },
     });
-    expect(events[1].lotId).toBe('lot-1'); // nep171 token_ids[0]
+    // Share NFT ids ("lot-1:1") attribute to their lot.
+    expect(events[1].lotId).toBe('lot-1');
   });
 
   it('drops pratala events emitted by an untrusted contract (spoofing)', () => {
     expect(events.some((e) => e.executorId === 'attacker.testnet')).toBe(false);
   });
 
-  it('derives a FUNDING payment PAID into escrow', () => {
+  it('derives a FUNDING payment PAID into escrow, deduped per share', () => {
     const payments = events.flatMap((e) => paymentsFor(e, ctx));
     expect(payments).toEqual([
       expect.objectContaining({
-        dedupeKey: 'funding:lot-1:TX',
+        dedupeKey: 'funding:lot-1:lot-1:1',
         type: 'FUNDING',
         fromAccount: 'buyer.pratala.testnet',
         toAccount: 'lots.pratala.testnet',
-        amountBase: '450000000',
+        amountBase: '135000000',
         status: 'PAID',
-        note: 'Escrow deposit; 10.00 pUSDC excess returned to funder',
+        note: 'Bought 300 kg (share lot-1:1); 10.00 pUSDC excess returned',
       }),
     ]);
     const inbox = events.flatMap((e) => notificationsFor(e, ctx)).map((n) => n.accountId);
-    expect(inbox).toEqual(['farmer.pratala.testnet', 'buyer.pratala.testnet', 'warehouse.pratala.testnet']);
+    expect(inbox).toEqual(['farmer.pratala.testnet', 'buyer.pratala.testnet']);
   });
 });
 
@@ -90,17 +95,21 @@ describe('parseTxEvents (weigh-in settlement)', () => {
     expect(events.map((e) => e.event)).toEqual(['lot_attested', 'lot_settled']);
   });
 
-  it('derives PAYOUT / FEE / REFUND claims PENDING with the README numbers', () => {
+  it('derives PAYOUT / FEE plus one REFUND per share with the README numbers', () => {
     const settled = events.find((e) => e.event === 'lot_settled')!;
     const rows = paymentsFor(settled, ctx).map((p) => [p.type, p.toAccount, p.amountBase, p.status]);
     expect(rows).toEqual([
       ['PAYOUT', 'farmer.pratala.testnet', '396900000', 'PENDING'],
       ['FEE', 'pratala.testnet', '8100000', 'PENDING'],
-      ['REFUND', 'buyer.pratala.testnet', '45000000', 'PENDING'],
+      ['REFUND', 'buyer.pratala.testnet', '31500000', 'PENDING'],
+      ['REFUND', 'investor2.pratala.testnet', '13500000', 'PENDING'],
     ]);
+    const notified = notificationsFor(settled, ctx).map((n) => [n.accountId, n.text.title]);
+    expect(notified).toContainEqual(['buyer.pratala.testnet', 'Refund available']);
+    expect(notified).toContainEqual(['investor2.pratala.testnet', 'Refund available']);
   });
 
-  it('maps payout_claimed ok/!ok onto the same ledger row', () => {
+  it('maps payout_claimed ok/!ok onto the same per-share ledger row', () => {
     const claim = (ok: boolean) =>
       paymentsFor(
         {
@@ -108,7 +117,7 @@ describe('parseTxEvents (weigh-in settlement)', () => {
           version: '1.0.0',
           event: 'payout_claimed',
           index: 0,
-          data: { lot_id: 'lot-1', kind: 'Holder', to: 'collector.testnet', amount: '45000000', ok },
+          data: { lot_id: 'lot-1', kind: 'Holder', to: 'collector.testnet', amount: '31500000', ok, share_id: 'lot-1:1' },
           receiptId: 'R',
           executorId: 'lots.pratala.testnet',
           blockHash: 'B',
@@ -116,8 +125,8 @@ describe('parseTxEvents (weigh-in settlement)', () => {
         },
         ctx,
       )[0];
-    expect(claim(true)).toMatchObject({ dedupeKey: 'claim:lot-1:holder', type: 'REFUND', status: 'PAID', toAccount: 'collector.testnet' });
-    expect(claim(false)).toMatchObject({ dedupeKey: 'claim:lot-1:holder', status: 'FAILED' });
+    expect(claim(true)).toMatchObject({ dedupeKey: 'claim:lot-1:holder:lot-1:1', type: 'REFUND', status: 'PAID', toAccount: 'collector.testnet', note: 'Claimed share lot-1:1' });
+    expect(claim(false)).toMatchObject({ dedupeKey: 'claim:lot-1:holder:lot-1:1', status: 'FAILED' });
   });
 
   it('gives each same-named event in a receipt its own index', () => {

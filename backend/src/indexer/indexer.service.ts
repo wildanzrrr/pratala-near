@@ -25,6 +25,8 @@ import {
 const RECONCILE = 'lots-reconcile';
 const PAGE = 50;
 const ROLE_TTL_MS = 60_000;
+/** Share NFT ids minted by purchases: "lot-N:M". */
+const SHARE_ID_RE = /^lot-\d{1,12}:\d{1,10}$/;
 
 export interface LotEventView {
   id: string;
@@ -181,16 +183,37 @@ export class IndexerService implements OnApplicationBootstrap, OnModuleDestroy {
   }
 
   private async project(ev: ParsedEvent, row: LotEvent): Promise<void> {
+    // Share NFT ownership follows nep171 transfers emitted by the lots contract.
+    if (
+      ev.standard === 'nep171' &&
+      ev.event === 'nft_transfer' &&
+      typeof ev.data.new_owner_id === 'string' &&
+      Array.isArray(ev.data.token_ids)
+    ) {
+      for (const tokenId of ev.data.token_ids) {
+        if (typeof tokenId === 'string' && SHARE_ID_RE.test(tokenId)) {
+          await this.prisma.lotShare.updateMany({
+            where: { shareId: tokenId },
+            data: { holder: ev.data.new_owner_id },
+          });
+        }
+      }
+    }
     if (ev.standard !== 'pratala' || !ev.lotId) return;
     const lot = await this.lotSnapshot(ev.lotId);
     const cfg = await this.roles.config();
+    const shareRows = await this.prisma.lotShare.findMany({
+      where: { lotId: ev.lotId },
+      orderBy: { createdAt: 'asc' },
+    });
     const ctx: ProjectionContext = {
       txHash: row.txHash,
       lotsContract: this.rpc.lotsContract,
       farmerId: lot?.farmer_id ?? null,
-      holder: lot?.holder ?? null,
       crop: lot?.crop ?? null,
       treasury: cfg?.treasury ?? 'treasury',
+      lot,
+      shares: shareRows.map((s) => ({ shareId: s.shareId, holder: s.holder, kg: s.kg })),
       roles: await this.roleLists(),
     };
 
@@ -220,6 +243,37 @@ export class IndexerService implements OnApplicationBootstrap, OnModuleDestroy {
         lotId: ev.lotId,
         text: n.text,
         data: { ...ev.data, txHash: row.txHash, explorerUrl: this.config.explorerTxUrl(row.txHash) },
+      });
+    }
+
+    // Mirror the kg share minted by this purchase, and mark claimed refunds.
+    if (
+      ev.event === 'lot_funded' &&
+      typeof ev.data.share_id === 'string' &&
+      typeof ev.data.buyer === 'string'
+    ) {
+      await this.prisma.lotShare.upsert({
+        where: { shareId: ev.data.share_id },
+        create: {
+          shareId: ev.data.share_id,
+          lotId: ev.lotId,
+          buyerId: ev.data.buyer,
+          holder: ev.data.buyer,
+          kg: typeof ev.data.kg === 'number' ? ev.data.kg : 0,
+          txHash: row.txHash,
+        },
+        update: { holder: ev.data.buyer },
+      });
+    }
+    if (
+      ev.event === 'payout_claimed' &&
+      ev.data.kind === 'Holder' &&
+      ev.data.ok === true &&
+      typeof ev.data.share_id === 'string'
+    ) {
+      await this.prisma.lotShare.updateMany({
+        where: { shareId: ev.data.share_id },
+        data: { claimed: true, claimedAt: row.blockTimestamp },
       });
     }
   }

@@ -66,8 +66,8 @@ export const envSchema = z.object({
   SPONSOR_PRIVATE_KEY_FILE: backendRelativeFile,
   SPONSOR_SEED_NEAR: z
     .string()
-    .regex(/^\d+(\.\d{1,6})?$/, 'Must be a NEAR amount like 0.5')
-    .default('0.5'),
+    .regex(/^\d+(\.\d{1,6})?$/, 'Must be a NEAR amount like 1')
+    .default('1'),
 });
 
 export type Env = z.infer<typeof envSchema>;

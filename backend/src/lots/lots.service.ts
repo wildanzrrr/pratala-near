@@ -15,7 +15,6 @@ function matches(lot: LotView, q: LotsQuery): boolean {
   if (q.status && lot.status !== q.status) return false;
   if (q.crop && !ci(lot.crop, q.crop)) return false;
   if (q.region && !ci(lot.region, q.region)) return false;
-  if (q.holder && lot.holder !== q.holder) return false;
   if (q.farmer && lot.farmer_id !== q.farmer) return false;
   if (q.q && ![lot.lot_id, lot.crop, lot.variety, lot.region, lot.farmer_id].some((f) => ci(f, q.q!))) return false;
   return true;
@@ -43,7 +42,6 @@ export class LotsService {
       ...(q.status ? { status: q.status } : {}),
       ...(q.crop ? { crop: { contains: q.crop, ...ci } } : {}),
       ...(q.region ? { region: { contains: q.region, ...ci } } : {}),
-      ...(q.holder ? { holder: q.holder } : {}),
       ...(q.farmer ? { farmerId: q.farmer } : {}),
       ...(q.q
         ? {
@@ -121,7 +119,8 @@ export class LotsService {
       name: `Pratala ${view.lot_id}: ${kg} kg ${view.crop}${view.variety ? ` (${view.variety})` : ''}`,
       description:
         `Harvest projection of ${kg} kg ${view.crop} from ${view.region}, harvest ${view.harvest_month}. ` +
-        'Holding this NFT entitles the holder to the lot escrow refund claim after settlement. ' +
+        'The harvest is sold by the kilogram: every purchase mints the buyer a share NFT for the kg bought, ' +
+        'and after settlement each share NFT claims its pro-rata refund of the escrow. ' +
         'Verified by field agent, cooperative and warehouse attestations on NEAR.',
       image: photo?.uri ?? null,
       external_url: `${this.config.get('FRONTEND_ORIGIN').split(',')[0]}/lot/${view.lot_id}`,
@@ -130,6 +129,8 @@ export class LotsService {
         { trait_type: 'Variety', value: view.variety ?? 'n/a' },
         { trait_type: 'Region', value: view.region },
         { trait_type: 'Projected kg', value: view.projected_kg },
+        { trait_type: 'Sold kg', value: view.sold_kg },
+        { trait_type: 'Share holders', value: view.share_count },
         { trait_type: 'Harvest month', value: view.harvest_month },
         { trait_type: 'Status', value: view.status },
         { trait_type: 'Price per kg (pUSDC)', value: formatUnits(view.price_per_kg) },

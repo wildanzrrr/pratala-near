@@ -151,7 +151,7 @@ Faucet UI = one transaction to pUSDC with two actions: `storage_deposit {}` (if 
 | `GET /evidence/:sha256` | — | file stream |
 | `POST /ai/check` | `{ evidenceId, kind: "FIELD_VISIT"|"COOP_REVIEW"|"WEIGH_IN"|"PLOT", expectedCrop?, plotLat?, plotLng? }` | `AiCheck` below |
 | `GET /ai/check/:id` | — | `AiCheck` |
-| `GET /lots` | `?status&crop&region&q&holder&farmer` | `LotView[]` (mirror) |
+| `GET /lots` | `?status&crop&region&q&farmer` | `LotView[]` (mirror) |
 | `GET /lots/:lotId` · `/lots/:lotId/history` · `/lots/:lotId/metadata.json` | — | `LotView & { evidence[], aiChecks[] }` · `LotEvent[]` · NEP-177 reference JSON |
 | `POST /tx` | `{ txHash, signerId, context?: { lotId?, orderId? } }` | `{ ok, events: LotEvent[] }` |
 | `GET /payments` · `GET /payments/export.csv` | `?account&lotId&from&to` | `Payment[]` · CSV |

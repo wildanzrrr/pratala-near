@@ -28,7 +28,8 @@ function receiptFailed(ro: TxReceiptOutcome): boolean {
 function lotIdOf(standard: string, data: Record<string, unknown>): string | null {
   if (typeof data.lot_id === 'string') return data.lot_id;
   if (standard === 'nep171' && Array.isArray(data.token_ids) && typeof data.token_ids[0] === 'string') {
-    return data.token_ids[0];
+    // Share NFT ids are "{lot_id}:{n}"; attribute the event to the lot.
+    return data.token_ids[0].split(':')[0];
   }
   return null;
 }
