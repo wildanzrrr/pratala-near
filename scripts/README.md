@@ -17,8 +17,8 @@ Scripts 02, 03 and 04 ask `Proceed? [y/N]` before they send anything. Set `YES=1
 
 - Roles: `agent1` FieldAgent, `coop1` Coop, `warehouse1` Warehouse.
 - pUSDC `storage_deposit` for all six actors, root and the lots contract. `buyer1` takes 1,000 pUSDC from the faucet.
-- **lot-1** goes through the whole lifecycle: rice IR64, Karawang, 1,000 kg, harvest two months ahead. Steps: field visit, co-op review, listed at 0.45 pUSDC/kg, `buyer1` funds 450 pUSDC with `ft_transfer_call`, weigh-in at 900 kg grade A. Payouts: farmer claims 396.90, treasury claims 8.10. Then `buyer1` transfers the NFT to `investor2`, who claims the 45.00 refund.
-- **lot-2** is left at Listed: rice Ciherang, Subang, 800 kg, 360 pUSDC. A judge with faucet pUSDC can fund it.
+- **lot-1** goes through the whole fractional lifecycle: rice IR64, Karawang, 1,000 kg, harvest two months ahead. Steps: field visit, co-op review, listed at 0.45 pUSDC/kg, `buyer1` buys 700 kg and `investor2` the last 300 kg (each `ft_transfer_call` mints a share NFT; sell-out closes funding), weigh-in at 900 kg grade A. Payouts: farmer claims 396.90, treasury claims 8.10. Then `buyer1` sells the 700 kg share NFT to `investor2`; the share refunds are claimed per NFT: 31.50 (investor2) and 13.50 (buyer1).
+- **lot-2** is left at Listed: rice Ciherang, Subang, 800 kg at 0.45 pUSDC/kg. A judge with faucet pUSDC can buy any number of kg.
 - **lot-3** is left at FieldVerified: corn Bisi 18, South Lampung, 1,500 kg. The co-op attests it live in the demo.
 - Evidence and plot hashes are `sha256("pratala-demo/<lot-key>/<fixture>")`, so they are the same on every run.
 
