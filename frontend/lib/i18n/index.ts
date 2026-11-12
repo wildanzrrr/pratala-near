@@ -1,9 +1,10 @@
 import { en } from "@/lib/i18n/en";
+import { id } from "@/lib/i18n/id";
+import { DEFAULT_LOCALE } from "@/lib/i18n/types";
 
-import type { Dictionary, MessageKey, Vars } from "@/lib/i18n/types";
+import type { Dictionary, Locale, MessageKey, Vars } from "@/lib/i18n/types";
 
-/** The one product dictionary (English). */
-export const dictionary: Dictionary = en;
+export const dictionaries: Record<Locale, Dictionary> = { en, id };
 
 /** "{n} lots" + { n: 3 } → "3 lots". Unknown placeholders stay visible so gaps are obvious. */
 export function format(template: string, vars?: Vars): string {
@@ -18,6 +19,7 @@ export function lookup(dict: Dictionary, key: MessageKey, vars?: Vars): string {
 }
 
 /** Server-side translator for metadata, OG images and static shells. */
-export function serverT() {
-  return (key: MessageKey, vars?: Vars) => lookup(dictionary, key, vars);
+export function serverT(locale: Locale = DEFAULT_LOCALE) {
+  const dict = dictionaries[locale] ?? dictionaries.en;
+  return (key: MessageKey, vars?: Vars) => lookup(dict, key, vars);
 }

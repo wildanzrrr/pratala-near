@@ -10,7 +10,7 @@ import type { Locale } from "@/lib/i18n/types";
 export const PUSDC_DECIMALS = 6;
 const SCALE = 10n ** BigInt(PUSDC_DECIMALS);
 
-const INTL_LOCALE: Record<Locale, string> = { en: "en-US" };
+const INTL_LOCALE: Record<Locale, string> = { en: "en-US", id: "id-ID" };
 const intlLocale = (locale: Locale) => INTL_LOCALE[locale];
 
 export function toBig(value: string | bigint | number | null | undefined): bigint {

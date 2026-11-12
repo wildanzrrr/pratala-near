@@ -1,8 +1,11 @@
-import { dictionary, lookup } from "@/lib/i18n";
+"use client";
+
+import { useLocale } from "@/providers/locale-provider";
 
 import type { MessageKey, Vars } from "@/lib/i18n/types";
 
-/** Text leaf from the dictionary. English is static, so this renders on the server too — no client boundary. */
+/** Text leaf from the active dictionary — a client leaf so it follows the language switcher. */
 export function T({ k, vars }: { k: MessageKey; vars?: Vars }) {
-  return <>{lookup(dictionary, k, vars)}</>;
+  const { t } = useLocale();
+  return <>{t(k, vars)}</>;
 }

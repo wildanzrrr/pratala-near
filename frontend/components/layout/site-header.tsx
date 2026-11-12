@@ -10,6 +10,7 @@ import { X } from "@phosphor-icons/react";
 import { navFor } from "@/components/layout/nav-items";
 import type { NavItem } from "@/components/layout/nav-items";
 import { Wordmark } from "@/components/layout/wordmark";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { AccountMenu } from "@/components/wallet/account-menu";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
@@ -122,6 +123,7 @@ export function SiteHeader() {
             </Suspense>
           </nav>
           <div className="ml-auto flex items-center gap-2">
+            <LanguageSwitcher />
             <AccountMenu />
           </div>
         </div>
