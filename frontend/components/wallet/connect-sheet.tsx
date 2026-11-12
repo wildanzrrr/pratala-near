@@ -24,6 +24,7 @@ import { WalletRejectedError, classifyTxError } from "@/lib/near/errors";
 import { loadLocalProfile } from "@/lib/profile";
 import { cn } from "@/lib/utils";
 import { useNear } from "@/providers/near-provider";
+import { env } from "@/lib/env";
 import { useT } from "@/providers/locale-provider";
 
 import type { WalletOption } from "@/providers/near-provider";
@@ -112,6 +113,7 @@ export function ConnectSheet() {
         </ResponsiveDialogHeader>
 
         <div className="flex flex-col gap-5 py-2">
+          {env.fastauthClientId ? (
           <section aria-labelledby="wallets-email" className="flex flex-col gap-2">
             <h3 id="wallets-email" className="sr-only">{t("wallet.emailTitle")}</h3>
             <button
@@ -137,6 +139,7 @@ export function ConnectSheet() {
               </span>
             </button>
           </section>
+          ) : null}
 
           {error ? (
             <Alert variant="destructive">
