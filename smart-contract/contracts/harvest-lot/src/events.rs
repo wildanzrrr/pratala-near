@@ -43,13 +43,28 @@ pub struct LotRef {
     pub lot_id: TokenId,
 }
 
+/// One kg purchase: the buyer paid `amount` for `kg` and holds `share_id` afterwards.
+/// `sold_kg` is the cumulative total after this purchase.
 #[near(serializers = [json])]
 #[derive(Clone, Debug)]
 pub struct LotFunded {
     pub lot_id: TokenId,
-    pub funder: AccountId,
+    pub buyer: AccountId,
+    pub kg: u64,
     pub amount: U128,
     pub refund: U128,
+    pub sold_kg: u64,
+    pub share_id: TokenId,
+}
+
+/// Funding closed: every projected kg sold, or an early `close_funding` with partial escrow.
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct LotFundingClosed {
+    pub lot_id: TokenId,
+    pub sold_kg: u64,
+    pub projected_kg: u64,
+    pub closed_by: AccountId,
 }
 
 #[near(serializers = [json])]
@@ -58,8 +73,11 @@ pub struct LotSettled {
     pub lot_id: TokenId,
     pub actual_kg: u64,
     pub grade: String,
+    pub sold_kg: u64,
     pub farmer_claim: U128,
-    pub holder_claim: U128,
+    /// Refund pool split across share NFTs pro-rata by kg (dust went to `fee`).
+    pub holder_pool: U128,
+    /// Treasury claim: the fee plus the rounding dust.
     pub fee: U128,
 }
 
@@ -68,13 +86,16 @@ pub struct LotSettled {
 pub struct LotRefunded {
     pub lot_id: TokenId,
     pub reason: String,
-    pub holder_claim: U128,
+    /// Refund pool split across share NFTs pro-rata by kg.
+    pub holder_pool: U128,
 }
 
 #[near(serializers = [json])]
 #[derive(Clone, Debug)]
 pub struct PayoutClaimed {
     pub lot_id: TokenId,
+    /// The share NFT behind a Holder claim; `null` for farmer/treasury claims.
+    pub share_id: Option<TokenId>,
     pub kind: ClaimKind,
     pub to: AccountId,
     pub amount: U128,
@@ -103,6 +124,8 @@ pub enum PratalaEvent {
     LotCancelled(Vec<LotRef>),
     #[event_version("1.0.0")]
     LotFunded(Vec<LotFunded>),
+    #[event_version("1.0.0")]
+    LotFundingClosed(Vec<LotFundingClosed>),
     #[event_version("1.0.0")]
     LotSettled(Vec<LotSettled>),
     #[event_version("1.0.0")]

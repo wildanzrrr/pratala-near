@@ -7,7 +7,9 @@ pub const ERR_NOT_FIELD_AGENT: &str = "harvest-lot: caller is not a FieldAgent";
 pub const ERR_NOT_COOP: &str = "harvest-lot: caller is not a Coop";
 pub const ERR_NOT_COOP_OR_OWNER: &str = "harvest-lot: caller is not a Coop or the owner";
 pub const ERR_NOT_WAREHOUSE: &str = "harvest-lot: caller is not a Warehouse";
-pub const ERR_NOT_HOLDER: &str = "harvest-lot: only the current NFT holder can claim the refund";
+pub const ERR_NOT_SHARE_OWNER: &str = "harvest-lot: only the share NFT owner can claim its refund";
+pub const ERR_SHARE_CLAIMED: &str = "harvest-lot: this share's refund was already claimed";
+pub const ERR_SHARE_NOT_FOUND: &str = "harvest-lot: share not found";
 pub const ERR_NOT_FEE_CLAIMER: &str =
     "harvest-lot: only the owner or the treasury can claim the fee";
 pub const ERR_SELF_ATTEST: &str = "harvest-lot: the farmer cannot attest their own lot";
@@ -31,9 +33,16 @@ pub const ERR_OVERFLOW: &str = "harvest-lot: arithmetic overflow";
 pub const ERR_STORAGE_DEPOSIT: &str = "harvest-lot: attached deposit does not cover storage";
 
 pub const ERR_WRONG_TOKEN: &str = "harvest-lot: only the configured pUSDC contract can fund lots";
-pub const ERR_BAD_MSG: &str = "harvest-lot: msg must be {\"action\":\"fund\",\"lot_id\":\"...\"}";
-pub const ERR_UNDERFUNDED: &str = "harvest-lot: amount is below the funding total";
+pub const ERR_BAD_MSG: &str =
+    "harvest-lot: msg must be {\"action\":\"fund\",\"lot_id\":\"...\",\"kg\":1}";
+pub const ERR_UNDERFUNDED: &str = "harvest-lot: amount is below the cost of the requested kg";
 pub const ERR_FUNDER_IS_FARMER: &str = "harvest-lot: the farmer cannot fund their own lot";
+pub const ERR_OVER_REMAINING: &str = "harvest-lot: kg exceeds the remaining unsold kg of this lot";
+pub const ERR_MAX_SHARES: &str =
+    "harvest-lot: share limit reached for this lot; the farmer must close funding";
+pub const ERR_NOTHING_SOLD: &str = "harvest-lot: close_funding needs at least one kg sold";
+pub const ERR_HAS_SALES: &str =
+    "harvest-lot: lot already sold kg; it can no longer be repriced, delisted or cancelled";
 
 pub const ERR_CLAIM_LOCKED: &str = "harvest-lot: a payout for this lot is in flight";
 pub const ERR_NOTHING_TO_CLAIM: &str = "harvest-lot: nothing to claim";

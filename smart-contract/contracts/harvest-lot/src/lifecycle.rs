@@ -11,15 +11,16 @@ use near_sdk::json_types::U128;
 use near_sdk::{AccountId, NearToken, Promise, env, near, require};
 
 use crate::errors::*;
-use crate::escrow::compute_settlement;
+use crate::escrow::{compute_settlement, holder_split};
 use crate::events::*;
-use crate::types::{Attestation, AttestationKind, Claims, Lot, Role, Status};
+use crate::types::{Attestation, AttestationKind, ClaimKind, Claims, Lot, Role, Status};
 use crate::validate;
 use crate::{Contract, ContractExt, MAX_ATTESTATIONS};
 
-/// Storage kept back at registration to pay for the attestations, funding record and
-/// settlement fields the lot accumulates later (≈ 0.04 NEAR at 10^19 yocto/byte).
-pub const LOT_STORAGE_RESERVE_BYTES: u64 = 4_000;
+/// Storage kept back at registration to pay for the attestations, settlement fields and up to
+/// `MAX_SHARES_PER_LOT` share NFTs the lot accumulates later (≈ 0.48 NEAR at 10^19 yocto/byte;
+/// the registration deposit is 0.6 NEAR with the excess refunded).
+pub const LOT_STORAGE_RESERVE_BYTES: u64 = 48_000;
 
 #[near]
 impl Contract {
@@ -87,10 +88,13 @@ impl Contract {
             price_per_kg: 0,
             status: Status::Registered,
             attestations: Vec::new(),
+            sold_kg: 0,
+            shares: Vec::new(),
+            next_share_no: 1,
             escrow: 0,
-            funder: None,
             funded_at_ms: None,
             fee_bps: 0,
+            holder_pool: 0,
             actual_kg: None,
             grade: None,
             settled_at_ms: None,
@@ -203,19 +207,48 @@ impl Contract {
         self.set_price(lot_id, price_per_kg, Status::Listed);
     }
 
-    /// Listed → CoopVerified; the price resets to 0.
+    /// Listed → CoopVerified; the price resets to 0. Impossible once any kg is sold: the
+    /// committed escrow may only leave the contract through settlement.
     pub fn delist_lot(&mut self, lot_id: TokenId) {
         let mut lot = self.lot(&lot_id);
         self.assert_farmer(&lot);
         require!(lot.status == Status::Listed, ERR_BAD_STATUS);
+        require!(lot.sold_kg == 0, ERR_HAS_SALES);
         lot.status = Status::CoopVerified;
         lot.price_per_kg = 0;
         self.save_lot(lot);
         PratalaEvent::LotDelisted(vec![LotRef { lot_id }]).emit();
     }
 
+    /// Closes funding early with partial escrow: Listed → Funded once at least one kg is sold.
+    /// The farmer calls it when the harvest is ready and unsold kg will stay unsold; selling
+    /// out closes the lot automatically in `ft_on_transfer`. Not blocked by pause so buyers
+    /// always have a path to settlement.
+    pub fn close_funding(&mut self, lot_id: TokenId) {
+        let mut lot = self.lot(&lot_id);
+        let caller = env::predecessor_account_id();
+        require!(
+            caller == lot.farmer_id || caller == self.owner_id,
+            ERR_NOT_FARMER_OR_OWNER
+        );
+        require!(lot.status == Status::Listed, ERR_BAD_STATUS);
+        require!(lot.sold_kg > 0, ERR_NOTHING_SOLD);
+        let sold_kg = lot.sold_kg;
+        let projected_kg = lot.projected_kg;
+        lot.status = Status::Funded;
+        self.save_lot(lot);
+        self.counters.funded_lots += 1;
+        PratalaEvent::LotFundingClosed(vec![LotFundingClosed {
+            lot_id,
+            sold_kg,
+            projected_kg,
+            closed_by: caller,
+        }])
+        .emit();
+    }
+
     /// Registered / FieldVerified / CoopVerified → Cancelled. The NFT stays with the farmer and
-    /// can no longer move.
+    /// can no longer move. Impossible once any kg is sold: committed escrow cannot be cancelled.
     pub fn cancel_lot(&mut self, lot_id: TokenId) {
         let mut lot = self.lot(&lot_id);
         let caller = env::predecessor_account_id();
@@ -230,13 +263,15 @@ impl Contract {
             ),
             ERR_BAD_STATUS
         );
+        require!(lot.sold_kg == 0, ERR_HAS_SALES);
         lot.status = Status::Cancelled;
         self.save_lot(lot);
         PratalaEvent::LotCancelled(vec![LotRef { lot_id }]).emit();
     }
 
-    /// Warehouse weigh-in: Funded → Settled. Splits the escrow into claims (see
-    /// `escrow::compute_settlement`).
+    /// Warehouse weigh-in: Funded → Settled. Splits the escrow into the farmer claim, the
+    /// treasury claim (fee + dust) and one refund entitlement per share NFT
+    /// (see `escrow::compute_settlement`).
     pub fn weigh_in(
         &mut self,
         lot_id: TokenId,
@@ -269,17 +304,19 @@ impl Contract {
             },
         );
 
+        let sold_kg = lot.sold_kg;
         let s = compute_settlement(
-            lot.projected_kg,
+            sold_kg,
             actual_kg,
             lot.price_per_kg,
             lot.escrow,
             lot.fee_bps,
+            &lot.shares,
         );
-        lot.claims.set(crate::types::ClaimKind::Farmer, s.farmer);
-        lot.claims
-            .set(crate::types::ClaimKind::Treasury, s.treasury);
-        lot.claims.set(crate::types::ClaimKind::Holder, s.holder);
+        lot.holder_pool = s.holder_pool;
+        lot.claims.set(ClaimKind::Farmer, s.farmer);
+        lot.claims.set(ClaimKind::Treasury, s.treasury);
+        lot.claims.set(ClaimKind::Holder, s.holder);
         lot.actual_kg = Some(actual_kg);
         lot.grade = Some(grade.clone());
         lot.settled_at_ms = Some(env::block_timestamp_ms());
@@ -296,15 +333,17 @@ impl Contract {
             lot_id,
             actual_kg,
             grade,
+            sold_kg,
             farmer_claim: U128(s.farmer),
-            holder_claim: U128(s.holder),
+            holder_pool: U128(s.holder_pool),
             fee: U128(s.treasury),
         }])
         .emit();
     }
 
     /// Coop or owner declares crop failure: Funded → Refunded; the whole escrow becomes the
-    /// holder's claim. Not blocked by pause so investors can always be made whole.
+    /// share refund pool, split pro-rata by kg (dust to the treasury). Not blocked by pause so
+    /// investors can always be made whole.
     pub fn declare_failure(&mut self, lot_id: TokenId, reason: String, evidence_hash: String) {
         let signer = env::predecessor_account_id();
         require!(
@@ -324,19 +363,22 @@ impl Contract {
             Some(reason.clone()),
         );
         push_attestation(&mut lot, attestation);
+        let (holder, dust) = holder_split(lot.escrow, lot.sold_kg, &lot.shares);
+        lot.holder_pool = lot.escrow;
         lot.claims = Claims {
-            holder: U128(lot.escrow),
+            holder: U128(holder),
+            treasury: U128(dust),
             ..Claims::default()
         };
         lot.settled_at_ms = Some(env::block_timestamp_ms());
         lot.status = Status::Refunded;
-        let holder_claim = U128(lot.escrow);
+        let holder_pool = U128(lot.escrow);
         self.save_lot(lot);
 
         PratalaEvent::LotRefunded(vec![LotRefunded {
             lot_id,
             reason,
-            holder_claim,
+            holder_pool,
         }])
         .emit();
     }
@@ -348,6 +390,8 @@ impl Contract {
         let mut lot = self.lot(&lot_id);
         self.assert_farmer(&lot);
         require!(lot.status == from, ERR_BAD_STATUS);
+        // Shares already sold at the old price cannot be repriced.
+        require!(lot.sold_kg == 0, ERR_HAS_SALES);
         require!(price_per_kg.0 > 0, ERR_ZERO_PRICE);
         let total = validate::funding_total(lot.projected_kg, price_per_kg.0);
         lot.price_per_kg = price_per_kg.0;

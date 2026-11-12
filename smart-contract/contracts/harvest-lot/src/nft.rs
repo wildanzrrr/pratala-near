@@ -19,14 +19,24 @@ use near_sdk::json_types::U128;
 use near_sdk::{AccountId, Promise, PromiseOrValue, env, near, require};
 
 use crate::errors::{ERR_LOT_NOT_FOUND, ERR_NOT_TRANSFERABLE_LOCKED, ERR_NOT_TRANSFERABLE_STATUS};
+use crate::storage::share_lot_id;
 use crate::types::Status;
 use crate::{Contract, ContractExt};
 
 impl Contract {
-    /// The NFT may move only when it carries a funded position (Funded / Settled / Refunded)
-    /// and no payout is in flight. Before funding it stays with the farmer, because
-    /// `ft_on_transfer` delivers it from the farmer to the buyer.
+    /// A lot NFT may move only when the lot carries a funded position (Funded / Settled /
+    /// Refunded) and no payout is in flight; before funding it stays with the farmer. A share
+    /// NFT (`"{lot_id}:{no}"`) carries escrow-backed claims from the moment it is minted, so it
+    /// moves freely except while a payout for its lot is in flight.
     pub(crate) fn assert_transferable(&self, token_id: &TokenId) {
+        if let Some(lot_id) = share_lot_id(token_id) {
+            let lot = self
+                .lots
+                .get(&lot_id)
+                .unwrap_or_else(|| env::panic_str(ERR_LOT_NOT_FOUND));
+            require!(!lot.claim_lock, ERR_NOT_TRANSFERABLE_LOCKED);
+            return;
+        }
         let lot = self
             .lots
             .get(token_id)

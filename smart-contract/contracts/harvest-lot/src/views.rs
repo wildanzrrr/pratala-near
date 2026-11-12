@@ -5,7 +5,9 @@ use near_sdk::json_types::U128;
 use near_sdk::{AccountId, env, near};
 
 use crate::errors::ERR_LOT_NOT_FOUND;
-use crate::types::{Attestation, Claims, Config, Lot, LotView, Role, Stats, Status};
+use crate::escrow::share_entitlement;
+use crate::storage::share_lot_id;
+use crate::types::{Attestation, Claims, Config, Lot, LotView, Role, ShareView, Stats, Status};
 use crate::validate;
 use crate::{Contract, ContractExt};
 
@@ -52,24 +54,6 @@ impl Contract {
             .collect()
     }
 
-    /// Lots whose NFT `account_id` currently owns (NEP-181 enumeration index).
-    pub fn get_lots_for_holder(&self, account_id: AccountId) -> Vec<LotView> {
-        let Some(token_ids) = self
-            .tokens
-            .tokens_per_owner
-            .as_ref()
-            .and_then(|by_owner| by_owner.get(&account_id))
-        else {
-            return Vec::new();
-        };
-        token_ids
-            .iter()
-            .take(MAX_LIMIT as usize)
-            .filter_map(|token_id| self.lots.get(&token_id))
-            .map(|lot| self.view(lot))
-            .collect()
-    }
-
     pub fn get_attestations(&self, lot_id: TokenId) -> Vec<Attestation> {
         self.lot(&lot_id).attestations
     }
@@ -78,13 +62,57 @@ impl Contract {
         self.lot(&lot_id).claims
     }
 
-    /// `projected_kg × price_per_kg`: the exact amount to send with `ft_transfer_call`.
+    /// Cost of buying every remaining kg of a lot: `(projected_kg − sold_kg) × price_per_kg`.
     pub fn quote_funding(&self, lot_id: TokenId) -> U128 {
         let lot = self
             .lots
             .get(&lot_id)
             .unwrap_or_else(|| env::panic_str(ERR_LOT_NOT_FOUND));
-        U128(validate::funding_total(lot.projected_kg, lot.price_per_kg))
+        U128(validate::funding_total(
+            lot.remaining_kg(),
+            lot.price_per_kg,
+        ))
+    }
+
+    /// Cost of buying exactly `kg` of a lot (`kg ≤ remaining` is enforced at funding time).
+    pub fn quote_purchase(&self, lot_id: TokenId, kg: u64) -> U128 {
+        let lot = self
+            .lots
+            .get(&lot_id)
+            .unwrap_or_else(|| env::panic_str(ERR_LOT_NOT_FOUND));
+        U128(validate::funding_total(kg, lot.price_per_kg))
+    }
+
+    /// One share NFT: kg, current owner, claim state and refund entitlement (0 until the lot
+    /// is Settled/Refunded).
+    pub fn get_share(&self, share_id: TokenId) -> Option<ShareView> {
+        let lot_id = share_lot_id(&share_id)?;
+        let lot = self.lots.get(&lot_id)?;
+        let share = lot.share(&share_id)?;
+        Some(ShareView {
+            share_id: share.share_id.clone(),
+            lot_id: lot.lot_id.clone(),
+            kg: share.kg,
+            owner: self.share_owner(&share_id),
+            claimed: share.claimed,
+            entitlement: U128(share_entitlement(lot.holder_pool, share.kg, lot.sold_kg)),
+        })
+    }
+
+    /// Every share NFT of a lot, in mint order (≤ `MAX_SHARES_PER_LOT`).
+    pub fn get_shares(&self, lot_id: TokenId) -> Vec<ShareView> {
+        let lot = self.lot(&lot_id);
+        lot.shares
+            .iter()
+            .map(|share| ShareView {
+                share_id: share.share_id.clone(),
+                lot_id: lot.lot_id.clone(),
+                kg: share.kg,
+                owner: self.share_owner(&share.share_id),
+                claimed: share.claimed,
+                entitlement: U128(share_entitlement(lot.holder_pool, share.kg, lot.sold_kg)),
+            })
+            .collect()
     }
 
     /// `["Admin"]` for the owner, plus every stored role.
@@ -129,8 +157,10 @@ impl Contract {
     pub(crate) fn view(&self, lot: &Lot) -> LotView {
         let lot = lot.clone();
         LotView {
-            holder: self.holder_of(&lot.lot_id),
             funding_total: U128(validate::funding_total(lot.projected_kg, lot.price_per_kg)),
+            sold_kg: lot.sold_kg,
+            remaining_kg: lot.remaining_kg(),
+            share_count: lot.shares.len() as u64,
             lot_id: lot.lot_id,
             farmer_id: lot.farmer_id,
             crop: lot.crop,
@@ -145,7 +175,6 @@ impl Contract {
             status: lot.status,
             attestations: lot.attestations,
             escrow: U128(lot.escrow),
-            funder: lot.funder,
             funded_at_ms: lot.funded_at_ms,
             fee_bps: lot.fee_bps,
             actual_kg: lot.actual_kg,

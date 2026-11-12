@@ -34,3 +34,11 @@ impl Contract {
         self.lots.insert(lot.lot_id.clone(), lot);
     }
 }
+
+/// Share NFT ids are `"{lot_id}:{no}"` and lot ids never contain `:`, so the prefix before the
+/// first `:` is the lot. Returns `None` for plain lot ids (no separator).
+pub(crate) fn share_lot_id(share_id: &TokenId) -> Option<TokenId> {
+    share_id
+        .split_once(':')
+        .map(|(lot_id, _)| lot_id.to_string())
+}

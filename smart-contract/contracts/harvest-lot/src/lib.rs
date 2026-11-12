@@ -1,11 +1,15 @@
-//! Pratala harvest lot: one NEP-171 NFT per verified harvest projection, holding NEP-141 escrow.
+//! Pratala harvest lot: one NEP-171 certificate NFT per verified harvest projection, holding
+//! NEP-141 escrow that anyone can buy **by the kilogram**.
 //!
-//! Flow: a farmer registers a lot (NFT minted to the farmer) → a FieldAgent and a different
-//! Coop attest it → the farmer lists it at a price per kg → a buyer funds it with pUSDC via
-//! `ft_transfer_call` (NFT moves farmer → buyer) → a Warehouse weigh-in settles the escrow
-//! into farmer / treasury / holder claims, or a Coop declares crop failure and the whole
-//! escrow becomes the holder's claim. Claims are pulled; the holder claim always pays the
-//! account that owns the NFT at claim time.
+//! Flow: a farmer registers a lot (certificate NFT minted to the farmer) → a FieldAgent and a
+//! different Coop attest it → the farmer lists it at a price per kg → buyers fund it partially
+//! or fully with pUSDC via `ft_transfer_call` (`{"action":"fund","lot_id":…,"kg":K}`), each
+//! receiving a share NFT for the kg bought → selling out, or the farmer's `close_funding`
+//! with partial escrow, moves the lot to Funded → a Warehouse weigh-in settles the escrow into
+//! the farmer claim, the treasury claim (fee + dust) and one pro-rata refund entitlement per
+//! share NFT; a Coop may instead declare crop failure and the whole escrow becomes the share
+//! refund pool. Claims are pulled; a share refund pays whoever owns that share NFT at claim
+//! time, exactly once per share.
 //!
 //! See `docs/CONTRACTS.md` and `docs/NFT-CONTROL.md` at the repository root.
 
@@ -40,6 +44,10 @@ pub use crate::types::*;
 pub const MAX_FEE_BPS: u16 = 1_000;
 /// Hard cap on attestations per lot; the state machine itself allows at most three.
 pub const MAX_ATTESTATIONS: usize = 8;
+/// Hard cap on share NFTs per lot: bounds the contract-paid share storage (covered by the
+/// registration reserve) and the settlement-time split over the shares. Once reached, buyers
+/// wait until the farmer closes funding.
+pub const MAX_SHARES_PER_LOT: usize = 64;
 
 #[near(contract_state)]
 #[derive(PanicOnDefault)]

@@ -16,7 +16,7 @@ async fn roles_and_admin_are_enforced() -> anyhow::Result<()> {
             "register_lot",
             json!({"crop": "Corn", "region": "Lombok", "projected_kg": 500,
                    "harvest_month": "2027-06", "plot_hash": HASH, "gps_hash": HASH}),
-            near_api::NearToken::from_millinear(100),
+            REGISTER_DEPOSIT,
             50,
         )
         .await?;
@@ -151,7 +151,7 @@ async fn roles_and_admin_are_enforced() -> anyhow::Result<()> {
     // Pause blocks funding (full refund) but the config reflects it.
     w.call_ok(&w.owner, &w.lots, "set_paused", json!({"paused": true}))
         .await?;
-    let res = w.fund(&w.buyer, &lot_id, 500 * PUSDC).await?;
+    let res = w.fund(&w.buyer, &lot_id, 500).await?;
     assert_failed_with(&res, "contract is paused");
     assert_eq!(w.ft_balance(&w.buyer).await?, BUYER_FUNDS);
     let config: Value = w.view(&w.lots, "get_config", json!({})).await?;

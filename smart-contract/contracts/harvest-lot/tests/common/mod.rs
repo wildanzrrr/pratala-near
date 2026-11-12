@@ -28,6 +28,8 @@ pub const HASH2: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456
 
 pub const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
 pub const NO_DEPOSIT: NearToken = NearToken::from_yoctonear(0);
+/// register_lot storage deposit — 0.6 NEAR, excess refunded by the contract.
+pub const REGISTER_DEPOSIT: NearToken = NearToken::from_millinear(600);
 
 fn build(manifest: &str) -> Vec<u8> {
     let artifact = cargo_near_build::build_with_cli(BuildOpts {
@@ -316,7 +318,7 @@ impl World {
                     "plot_hash": HASH, "gps_hash": HASH, "area_m2": 5000,
                     "media_uri": "https://example.org/lot.jpg",
                 }),
-                NearToken::from_millinear(100),
+                REGISTER_DEPOSIT,
                 50,
             )
             .await?;
@@ -351,18 +353,29 @@ impl World {
         Ok(lot_id)
     }
 
-    /// `ft_transfer_call` on pUSDC with the funding msg. The outer tx succeeds even when
-    /// `ft_on_transfer` panics (the FT refunds), so callers assert on balances and state.
+    /// `ft_transfer_call` on pUSDC buying `kg` (defaults to the exact cost). The outer tx
+    /// succeeds even when `ft_on_transfer` panics (the FT refunds), so callers assert on
+    /// balances and state.
     pub async fn fund(
         &self,
         from: &AccountId,
         lot_id: &str,
+        kg: u64,
+    ) -> anyhow::Result<ExecutionFinalResult> {
+        self.fund_kg(from, lot_id, kg, kg as u128 * PRICE).await
+    }
+
+    pub async fn fund_kg(
+        &self,
+        from: &AccountId,
+        lot_id: &str,
+        kg: u64,
         amount: u128,
     ) -> anyhow::Result<ExecutionFinalResult> {
         self.fund_msg(
             from,
             amount,
-            &format!(r#"{{"action":"fund","lot_id":"{lot_id}"}}"#),
+            &format!(r#"{{"action":"fund","lot_id":"{lot_id}","kg":{kg}}}"#),
         )
         .await
     }
@@ -384,9 +397,36 @@ impl World {
         .await
     }
 
+    /// Registers + funds investor2, then sells the whole lot in two purchases
+    /// (700 kg to buyer, 300 kg to investor2) → sold out → Funded.
+    pub async fn funded_split(&self) -> anyhow::Result<String> {
+        let lot_id = self.listed_lot().await?;
+        self.register_ft(&self.investor2).await?;
+        self.call_ok(
+            &self.owner,
+            &self.pusdc,
+            "mint",
+            json!({"account_id": self.investor2, "amount": BUYER_FUNDS.to_string()}),
+        )
+        .await?;
+        let res = self.fund(&self.buyer, &lot_id, 700).await?;
+        anyhow::ensure!(
+            res.is_success(),
+            "first purchase failed: {:?}",
+            res.failures()
+        );
+        let res = self.fund(&self.investor2, &lot_id, 300).await?;
+        anyhow::ensure!(
+            res.is_success(),
+            "second purchase failed: {:?}",
+            res.failures()
+        );
+        Ok(lot_id)
+    }
+
     pub async fn funded_lot(&self) -> anyhow::Result<String> {
         let lot_id = self.listed_lot().await?;
-        let res = self.fund(&self.buyer, &lot_id, TOTAL).await?;
+        let res = self.fund(&self.buyer, &lot_id, KG).await?;
         anyhow::ensure!(res.is_success(), "funding failed: {:?}", res.failures());
         Ok(lot_id)
     }
@@ -403,7 +443,7 @@ impl World {
         Ok(())
     }
 
-    /// Claims via `method`; returns the callback's bool (`true` = paid).
+    /// Claims a lot-scoped payout (`claim_payout` / `claim_fee`); returns the callback's bool.
     pub async fn claim(&self, who: &AccountId, method: &str, lot_id: &str) -> anyhow::Result<bool> {
         let res = self
             .call(
@@ -417,6 +457,28 @@ impl World {
             .await?;
         anyhow::ensure!(res.is_success(), "{method} failed: {:?}", res.failures());
         Ok(res.json()?)
+    }
+
+    /// Claims a share NFT's refund; returns the callback's bool (`true` = paid).
+    pub async fn claim_share(
+        &self,
+        who: &AccountId,
+        share_id: &str,
+    ) -> anyhow::Result<ExecutionFinalResult> {
+        self.call(
+            who,
+            &self.lots,
+            "claim_refund",
+            json!({"share_id": share_id}),
+            NO_DEPOSIT,
+            60,
+        )
+        .await
+    }
+
+    pub async fn share(&self, share_id: &str) -> anyhow::Result<Value> {
+        self.view(&self.lots, "get_share", json!({"share_id": share_id}))
+            .await
     }
 
     pub async fn claims(&self, lot_id: &str) -> anyhow::Result<(u128, u128, u128)> {
