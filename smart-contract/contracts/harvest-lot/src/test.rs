@@ -175,6 +175,55 @@ fn settlement_dust_goes_to_treasury() {
 }
 
 #[test]
+fn settlement_with_max_shares_sums_to_escrow() {
+    // 100 kg at 3 base/kg sold in MAX_SHARES_PER_LOT purchases (31×3 kg + 1×7 kg);
+    // 77 kg delivered → gross 231, fee 4, farmer 227, pool 69 → 31×2 + 4 = 66, dust 3.
+    let mut t = T::new(200);
+    t.as_with("farmer", NearToken::from_millinear(300).as_yoctonear())
+        .register_lot(
+            "Rice".into(),
+            None,
+            "Subang".into(),
+            100,
+            "2027-03".into(),
+            HASH.into(),
+            HASH.into(),
+            None,
+            None,
+            None,
+        );
+    let id = "lot-1".to_string();
+    t.as_("field")
+        .attest_field(id.clone(), HASH.into(), None, HASH.into(), None, None);
+    t.as_("coop")
+        .attest_coop(id.clone(), HASH2.into(), None, None);
+    t.as_("farmer").list_lot(id.clone(), U128(3));
+    for _ in 0..MAX_SHARES_PER_LOT - 1 {
+        assert_eq!(t.fund_kg(&id, "buyer", 3, 9), 0); // 3 kg × price 3
+    }
+    assert_eq!(t.fund_kg(&id, "investor2", 7, 21), 0); // 32nd purchase sells out
+    let lot = t.lot(&id);
+    assert_eq!(lot.status, Status::Funded);
+    assert_eq!(lot.share_count, MAX_SHARES_PER_LOT as u64);
+    assert_eq!(lot.escrow, U128(300));
+
+    t.as_("wh")
+        .weigh_in(id.clone(), 77, "A".into(), HASH.into(), None, None);
+    let claims = t.c.get_claims(id.clone());
+    assert_eq!(claims.farmer, U128(227));
+    assert_eq!(claims.treasury, U128(7)); // fee 4 + dust 3
+    assert_eq!(claims.holder, U128(66)); // 31 shares × 2 + 1 × 4
+    assert_eq!(227u128 + 7 + 66, 300, "parts must sum to the escrow");
+    let all = t.c.get_shares(id.clone());
+    assert_eq!(all.len(), MAX_SHARES_PER_LOT);
+    assert_eq!(
+        all.iter().map(|s| s.entitlement.0).sum::<u128>(),
+        66,
+        "per-share entitlements sum to claims.holder"
+    );
+}
+
+#[test]
 fn settlement_over_delivery_is_capped() {
     let s = compute_settlement(KG, 1_500, PRICE, TOTAL, 200, &shares(&[KG]));
     assert_eq!(s.delivered_kg, KG);
