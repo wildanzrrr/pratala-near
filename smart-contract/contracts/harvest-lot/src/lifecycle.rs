@@ -18,9 +18,10 @@ use crate::validate;
 use crate::{Contract, ContractExt, MAX_ATTESTATIONS};
 
 /// Storage kept back at registration to pay for the attestations, settlement fields and up to
-/// `MAX_SHARES_PER_LOT` share NFTs the lot accumulates later (≈ 0.48 NEAR at 10^19 yocto/byte;
-/// the registration deposit is 0.6 NEAR with the excess refunded).
-pub const LOT_STORAGE_RESERVE_BYTES: u64 = 48_000;
+/// `MAX_SHARES_PER_LOT` share NFTs the lot accumulates later (≈ 0.20 NEAR at 10^19 yocto/byte;
+/// the registration deposit is 0.3 NEAR with the excess refunded). Sized for realistic share
+/// metadata (~500–600 bytes each); lots that hit the cap wait for `close_funding`.
+pub const LOT_STORAGE_RESERVE_BYTES: u64 = 20_000;
 
 #[near]
 impl Contract {

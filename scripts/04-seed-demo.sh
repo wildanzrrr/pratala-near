@@ -6,7 +6,7 @@
 # 1. roles: agent1 FieldAgent, coop1 Coop, warehouse1 Warehouse (add_role by root)
 # 2. pUSDC storage_deposit for every actor, root and the lots contract (paid by root)
 # 3. buyer1 and investor2 each take 1,000 pUSDC from the pUSDC faucet
-# 4. lot-1 full fractional lifecycle: register (rice IR64, Karawang, 1,000 kg; 0.6 NEAR deposit) →
+# 4. lot-1 full fractional lifecycle: register (rice IR64, Karawang, 1,000 kg; 0.3 NEAR deposit) →
 #    attest_field → attest_coop → list @ 0.45 pUSDC/kg → buyer1 buys 700 kg (share NFT lot-?:1) →
 #    investor2 buys the last 300 kg (lot-?:2, sell-out → Funded) → weigh_in 900 kg grade A →
 #    claim_payout (farmer 396.90) → claim_fee (treasury 8.10) → buyer1 sells share :1 to investor2 →
@@ -128,7 +128,7 @@ register_lot() {
   args="$(jq -cn --arg c "$crop" --arg v "$variety" --arg r "$region" --argjson kg "$kg" --arg m "$HARVEST_MONTH" \
     --arg p "$(fixture_hash "$key/plot-boundary")" --arg g "$(fixture_hash "$key/plot-gps")" --argjson a "$area" \
     '{crop:$c, variety:$v, region:$r, projected_kg:$kg, harvest_month:$m, plot_hash:$p, gps_hash:$g, area_m2:$a, media_uri:null}')"
-  near_call "$FARMER" "$LOTS" register_lot "$args" '50 Tgas' '0.6 NEAR' "seed.$key.register" >&2
+  near_call "$FARMER" "$LOTS" register_lot "$args" '50 Tgas' '0.3 NEAR' "seed.$key.register" >&2
   id="$(grep -Eo 'lot-[0-9]+' "$LAST_CALL_OUT" | tail -n 1 || true)"
   if [[ -z "$id" ]]; then # fall back to the farmer's newest lot
     id="$(near_view "$LOTS" get_lots_by_farmer "$(jq -cn --arg a "$FARMER" '{account_id:$a}')" \

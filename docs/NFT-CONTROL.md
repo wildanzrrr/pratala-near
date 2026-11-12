@@ -63,7 +63,7 @@ Two independent transactions cannot be ordered reliably inside that window in th
 | T14 | Owner raises the fee after the first buyer funded. | `fee_bps` frozen on the lot at the first sale. | unit `fee_is_frozen_at_first_sale` |
 | T15 | Pause traps investor money. | Pause never blocks claims, crop-failure refunds, `close_funding` or NFT transfers. | unit `claims_stay_open_while_paused`, `close_funding_works_while_paused`; `tests/access.rs` |
 | T16 | Same person verifies twice, or a farmer verifies their own lot. | Coop reviewer ≠ field signer; verifiers ≠ farmer. | `tests/access.rs`; unit `coop_cannot_be_field_signer`, `farmer_cannot_self_attest` |
-| T17 | Share spam bloats contract-paid storage. | ≤ `MAX_SHARES_PER_LOT` (64) purchases per lot; share storage pre-paid by the 48 KB registration reserve; at the cap buyers wait for `close_funding`. | unit `funding_rejected_at_share_cap`, `registration_storage_cost_fits_in_0_6_near` |
+| T17 | Share spam bloats contract-paid storage. | ≤ `MAX_SHARES_PER_LOT` (32) purchases per lot; share storage pre-paid by the 20 KB registration reserve; at the cap buyers wait for `close_funding`. | unit `funding_rejected_at_share_cap`, `registration_storage_cost_fits_in_0_3_near` |
 | T18 | Partially-funded lot never settles and buyer money is stuck. | `close_funding` (farmer or owner, not blocked by pause) closes a partial listing; sell-out closes automatically. | unit `close_funding_*`; sandbox `partial_close_settles_the_sold_kg_only` |
 
 ### Residual risks (accepted, documented)

@@ -65,7 +65,7 @@ impl T {
     }
 
     fn register(&mut self) -> String {
-        self.as_with("farmer", NearToken::from_millinear(600).as_yoctonear())
+        self.as_with("farmer", NearToken::from_millinear(300).as_yoctonear())
             .register_lot(
                 "Rice".into(),
                 Some("IR64".into()),
@@ -1053,7 +1053,7 @@ fn get_shares_lists_mint_order() {
 }
 
 #[test]
-fn registration_storage_cost_fits_in_0_6_near() {
+fn registration_storage_cost_fits_in_0_3_near() {
     let mut t = T::new(200);
     let before = near_sdk::env::storage_usage();
     t.register();
@@ -1061,5 +1061,5 @@ fn registration_storage_cost_fits_in_0_6_near() {
     let kept = near_sdk::env::storage_byte_cost()
         .saturating_mul((used + lifecycle::LOT_STORAGE_RESERVE_BYTES) as u128);
     println!("register_lot: {used} bytes measured, {kept} kept");
-    assert!(kept < NearToken::from_millinear(600));
+    assert!(kept < NearToken::from_millinear(300));
 }

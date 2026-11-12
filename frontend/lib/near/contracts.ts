@@ -33,8 +33,8 @@ export const TGAS = 1_000_000_000_000n;
 export const gas = (tgas: number) => (BigInt(tgas) * TGAS).toString();
 
 export const ONE_YOCTO = "1";
-/** register_lot storage deposit — 0.6 NEAR (lot + share-mint reserve), excess refunded. */
-export const REGISTER_LOT_DEPOSIT = "600000000000000000000000";
+/** register_lot storage deposit — 0.3 NEAR (lot + share-mint reserve), excess refunded. */
+export const REGISTER_LOT_DEPOSIT = "300000000000000000000000";
 /** Fallback for pUSDC storage_balance_bounds.min (≈ 0.00125 NEAR). */
 export const STORAGE_DEPOSIT_FALLBACK = "1250000000000000000000";
 /** Default faucet grant: 1,000 pUSDC. Contract cap is 10,000 pUSDC. */

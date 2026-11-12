@@ -52,7 +52,7 @@ flowchart LR
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Registered: register_lot (farmer, 0.6 NEAR storage + share reserve) · certificate NFT minted to farmer
+  [*] --> Registered: register_lot (farmer, 0.3 NEAR storage + share reserve) · certificate NFT minted to farmer
   Registered --> FieldVerified: attest_field (FieldAgent)
   FieldVerified --> CoopVerified: attest_coop (Coop, ≠ field signer)
   CoopVerified --> Listed: list_lot (farmer, price_per_kg)

@@ -461,7 +461,7 @@ export const id: Dictionary = {
     needPhoto: "Tambahkan minimal satu foto lahan.",
     needGps: "Lokasi lahan diperlukan. Izinkan lokasi atau pakai foto dengan GPS.",
     reviewLead: "Periksa sekali lagi. Setelah ditandatangani, data ini tercatat dan tidak bisa diubah.",
-    deposit: "Biaya penyimpanan data 0,1 NEAR (kelebihan dikembalikan).",
+    deposit: "Biaya penyimpanan data 0,3 NEAR (kelebihan dikembalikan). Ini juga membayar di muka NFT bagian yang akan diterima pembeli Anda.",
     sign: "Tanda tangan & daftarkan",
     signing: "Menunggu persetujuan…",
     doneTitle: "{lot} terdaftar",

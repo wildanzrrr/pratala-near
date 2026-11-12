@@ -459,7 +459,7 @@ export const en = {
     needPhoto: "Add at least one plot photo.",
     needGps: "The plot location is required. Allow location or use a photo with GPS.",
     reviewLead: "Check once more. After signing, this record is permanent.",
-    deposit: "Data storage fee 0.6 NEAR (any excess is refunded). It also pre-pays the share NFTs your buyers will receive.",
+    deposit: "Data storage fee 0.3 NEAR (any excess is refunded). It also pre-pays the share NFTs your buyers will receive.",
     sign: "Sign & register",
     signing: "Waiting for approval…",
     doneTitle: "{lot} registered",

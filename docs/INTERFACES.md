@@ -76,7 +76,7 @@ interface Stats { total_lots: number; verified_lots: number; funded_lots: number
 | `new` | `owner_id, usdc_contract, treasury, fee_bps` | init | — | — |
 | `add_role` / `remove_role` | `role, account_id` | owner | 0 / 30 Tgas | — |
 | `set_fee_bps` (≤ 1000) / `set_treasury` / `set_paused` | `fee_bps` / `account_id` / `paused` | owner | 0 | — |
-| `register_lot` | `crop, variety?, region, projected_kg, harvest_month, plot_hash, gps_hash, area_m2?, media_uri?, reference?` | anyone → becomes farmer | **0.6 NEAR** (charges storage + 48,000-byte reserve that also pre-pays share mints, ≈ 0.49 NEAR, excess refunded) / 50 Tgas | → Registered, certificate NFT minted to caller; returns `lot_id` |
+| `register_lot` | `crop, variety?, region, projected_kg, harvest_month, plot_hash, gps_hash, area_m2?, media_uri?, reference?` | anyone → becomes farmer | **0.3 NEAR** (charges storage + 20,000-byte reserve that also pre-pays share mints, ≈ 0.21 NEAR, excess refunded) / 50 Tgas | → Registered, certificate NFT minted to caller; returns `lot_id` |
 | `attest_field` | `lot_id, evidence_hash, evidence_uri?, gps_hash, ai_check_hash?, note?` | FieldAgent | **0** (contract pays storage) / 30 Tgas | Registered → FieldVerified |
 | `attest_coop` | `lot_id, evidence_hash, evidence_uri?, note?` | Coop, ≠ field signer | 0 / 30 Tgas | FieldVerified → CoopVerified |
 | `list_lot` / `update_price` | `lot_id, price_per_kg` | farmer | 0 | CoopVerified → Listed / Listed; both require `sold_kg == 0` |
@@ -98,7 +98,7 @@ Function-call-key friendly (no deposit): `attest_field, attest_coop, weigh_in, d
   "msg": "{\"action\":\"fund\",\"lot_id\":\"lot-1\",\"kg\":300}" }
 ```
 
-`kg` is a positive integer ≤ `remaining_kg`; amount ≥ `kg × price_per_kg` required (excess refunded, invalid msg/state ⇒ full refund). Each purchase mints the buyer a share NFT `"{lot_id}:{n}"` titled `"{kg} kg of {crop} · {lot_id}"` (≤ 64 shares per lot; at the cap buyers wait for `close_funding`). Selling out flips the lot to Funded automatically.
+`kg` is a positive integer ≤ `remaining_kg`; amount ≥ `kg × price_per_kg` required (excess refunded, invalid msg/state ⇒ full refund). Each purchase mints the buyer a share NFT `"{lot_id}:{n}"` titled `"{kg} kg of {crop} · {lot_id}"` (≤ 32 shares per lot; at the cap buyers wait for `close_funding`). Selling out flips the lot to Funded automatically.
 
 **Settlement math** (weigh-in): `delivered = min(actual_kg, sold_kg)`, `gross = delivered × price_per_kg`, `fee = gross × fee_bps / 10000`, `holder_pool = escrow − gross`, each share's entitlement = `floor(holder_pool × kg / sold_kg)`, `claims.holder = Σ entitlements`, `claims.treasury = fee + dust` where `dust = holder_pool − Σ entitlements`. Crop failure: `holder_pool = escrow`, same split. Reference numbers: 1,000 kg sold (700 + 300) × 0.45 = 450 escrow; 900 kg at 200 bps → farmer 396.90, treasury 8.10, pool 45.00 → the 700 kg share claims 31.50, the 300 kg share 13.50.
 

@@ -33,6 +33,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 
 ## [Unreleased]
 
+### Changed
+
+- **`register_lot` deposit halved 0.6 → 0.3 NEAR** (user decision 2026-11-13, mainnet cost): the lot storage reserve drops 48 KB → 20 KB (≈ 0.21 NEAR kept per lot instead of 0.49 — realistic share metadata is ~500–600 bytes, the old reserve was worst-case-padded 13×) and `MAX_SHARES_PER_LOT` 64 → 32 (lots hitting the cap wait for `close_funding`, already built). SSO sponsor seed drops 1 → 0.4 NEAR per email account (flat: onboarding intent is chosen *after* account creation, so per-intent seeding isn't possible; 0.4 covers the farmer deposit + gas for everyone). Frontend `REGISTER_LOT_DEPOSIT` + EN/ID wizard copy updated (the ID copy was still on the pre-fractional 0.1), seed script and INTERFACES/CONTRACTS/NFT-CONTROL/ARCHITECTURE/WALLETS follow. New wasm: 397,226 bytes → 3.972 NEAR code stake. All suites green (69 unit + 10 sandbox, backend 57, frontend lint/typecheck/build). Must ship before the mainnet deploy — constants are baked into the wasm.
+
 ### Added
 
 - **`scripts/07-mainnet-deploy.sh` — mainnet deploy path ready** (not yet run; needs the user's NEAR top-up first). Builds the fractional wasm, hard-verifies the escrow token is native USDC (6 dp — refuses wUSDC), refuses to deploy unless `lots` covers the measured wasm storage stake + margin (dry-run live-verified: "392,589 bytes → 3.926 NEAR; top up lots by ≈ 3.98"), deploys with `new(owner, usdc, treasury, fee_bps)` (REDEPLOY=1 for code-only upgrades), verifies `get_config`, runs the two often-forgotten USDC `storage_deposit`s (lots + treasury, paid by root), records everything in `deploy/mainnet.json`, and prints the backend/frontend env lines incl. the two silent-fallback traps and the lots key-deletion hardening step. `scripts/03` stays testnet-locked for the lots-v2 walkthrough.

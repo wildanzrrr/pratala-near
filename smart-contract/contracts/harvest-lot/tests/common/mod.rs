@@ -28,8 +28,8 @@ pub const HASH2: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456
 
 pub const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
 pub const NO_DEPOSIT: NearToken = NearToken::from_yoctonear(0);
-/// register_lot storage deposit — 0.6 NEAR, excess refunded by the contract.
-pub const REGISTER_DEPOSIT: NearToken = NearToken::from_millinear(600);
+/// register_lot storage deposit — 0.3 NEAR, excess refunded by the contract.
+pub const REGISTER_DEPOSIT: NearToken = NearToken::from_millinear(300);
 
 fn build(manifest: &str) -> Vec<u8> {
     let artifact = cargo_near_build::build_with_cli(BuildOpts {

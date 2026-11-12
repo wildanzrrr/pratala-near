@@ -47,7 +47,7 @@ pub const MAX_ATTESTATIONS: usize = 8;
 /// Hard cap on share NFTs per lot: bounds the contract-paid share storage (covered by the
 /// registration reserve) and the settlement-time split over the shares. Once reached, buyers
 /// wait until the farmer closes funding.
-pub const MAX_SHARES_PER_LOT: usize = 64;
+pub const MAX_SHARES_PER_LOT: usize = 32;
 
 #[near(contract_state)]
 #[derive(PanicOnDefault)]
