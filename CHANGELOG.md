@@ -28,7 +28,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 3. **Developer test account** `prataladev.testnet` (Meteor) has 0 NEAR and no roles. Needs testnet NEAR from a faucet (test pUSDC now only via the contract's `faucet` method from CLI — the web faucet was removed with the mainnet-only UI). Granting a verifier role requires an owner `add_role` call (user approval).
 4. **Testnet accounts need faucet top-ups**: `pratala.testnet` ≈ 0.07 NEAR and `sponsor.pratala.testnet` ≈ 0.43 NEAR (≈ 0 funded SSO accounts left). Top both up from https://testnet.near.org/faucet before the demo; each SSO account costs the sponsor ~0.51 NEAR.
 5. **Hosting**: API host (Railway/Render) not chosen; Vercel frontend not deployed. Cross-site cookie needs `SameSite=None; Secure` when API and web are on different sites.
-6. **GitHub remote**: org/repo name not given yet; nothing pushed. Repo must be public before submission.
+6. **GitHub remote**: `origin` = `github.com/wildanzrrr/pratala-near` (public, anonymous GET 200), `main` pushed and tracking `origin/main` (2026-11-13).
 7. **Submission tasks** (`docs/SUBMISSION.md`): demo video, X post, finalize `docs/DISCLOSURE.md` §5/§8, decide on adding the Privacy track (TEE model confirmed), mainnet payout account, submission payload shown to the user before sending.
 8. **Optional: rotate the `lots`/`pusdc` contract keys.** During the `config/keys` migration a redaction bug briefly echoed both private keys into the terminal log of that one run (fixed in `scripts/lib.sh` in the same commit; the key files themselves were never exposed). Testnet-only and valueless, but a key rotation (add key → delete old) would close it. User decision, low priority.
 
