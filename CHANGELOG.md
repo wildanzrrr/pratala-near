@@ -34,6 +34,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 
 ## [Unreleased]
 
+### Fixed
+
+- **API container no longer crash-loops on boot: the compose stack mounts the secrets.** `docker compose up` built the image with no `volumes:` at all, so `/config` didn't exist inside the container and boot died in `SponsorSignerService` with `ENOENT /config/keys/sponsor.pratala.near.json` (restart loop; the GCS key would have failed the same way — its deprecation warning fires before the file is read). The gitignored `./config` tree (GCS service-account JSON + `config/keys/*.near.json`) is now bind-mounted **read-only at `/config`**: `backend/.env`'s `../config/...` paths resolve to `/config/...` inside the container (WORKDIR is `/app`, and `backendRelativeFile` in `env.ts` resolves against it), so the same `.env` serves the dev machine and Docker unchanged — no per-file mounts or env overrides to keep in sync. Also added json-file log rotation (10 MB × 3) so a crash-looping container can't fill a small VPS disk. Note for Linux deploys: the image runs as uid 1000 (`node`), so `./config` on the host must be readable by that uid (true when owned by the server's first sudo user). Verified: `docker compose up -d --build` → `GET /api/health` `{"ok":true,"db":"ok"}` with mainnet `lots.pratala.near` + native USDC reachable, no sponsor errors in the log.
+
 ### Changed
 
 - **Mainnet hides the demo faucet everywhere.** On mainnet the escrow token is real USDC, so a "Get test pUSDC" button would call a nonexistent `faucet` method on it: `/faucet` now redirects to `/market`, the checkout/claim "Get test pUSDC" buttons hide (the legit **Activate USDC** storage-registration button stays — USDC needs the same 0.00125 NEAR registration), `/faucet` drops out of the sitemap, and the lot-page JSON-LD says "Settled in USDC on NEAR mainnet" instead of testnet-stablecoin copy. Backend: the indexer's treasury fallback `'treasury'` literal became `null` (fee ledger rows are skipped when the contract config is unreachable instead of writing a bogus payee). Frontend lint/typecheck/build + backend typecheck/lint/57 tests green.

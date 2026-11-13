@@ -5,13 +5,16 @@
 # DATABASE_URL comes from backend/.env. Inside the container reach a Postgres
 # on the docker host via host "host.docker.internal" (extra_hosts below makes
 # that name resolve on Linux servers too); on the dev machine use localhost.
-# Evidence photos live in Google Cloud Storage only. Mount the service-account
-# JSON and point GCS_KEY_FILE at it, e.g.:
-#   volumes: [ "./gcp-service-account.json:/app/secrets/gcs.json:ro" ]
-#   environment: GCS_KEY_FILE: /app/secrets/gcs.json
-# The NEAR Auth sponsor key mounts the same way (../config/sponsor-key.json on
-# the host): mount it read-only and set SPONSOR_PRIVATE_KEY_FILE to the
-# container path; without it /api/fastauth/* returns 503 sponsor_unconfigured.
+#
+# Secrets never enter the image. The gitignored ./config tree (GCS
+# service-account JSON + config/keys/*.near.json NEAR keys) is bind-mounted
+# read-only at /config: backend/.env's ../config/... paths resolve to /config/...
+# inside the container (WORKDIR is /app, so ../config == /config), meaning the
+# same .env serves the dev machine and Docker unchanged. Without the mount the
+# app crash-loops with ENOENT /config/keys/sponsor.pratala.near.json. The image
+# runs as uid 1000 (node), so on a Linux host ./config must be readable by that
+# uid — it is when the files belong to the server's admin user (first sudo
+# user is uid 1000); check with `id -u` if reads fail with EACCES.
 
 name: pratala
 
@@ -28,3 +31,10 @@ services:
     ports:
       - '4100:4100'
     restart: unless-stopped
+    volumes:
+      - ./config:/config:ro
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
