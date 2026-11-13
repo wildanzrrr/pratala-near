@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { ArrowRight, EnvelopeSimple, Info, ShieldCheck, Warning } from "@phosphor-icons/react";
+import { ArrowRight, EnvelopeSimple, ShieldCheck, Warning } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 import {
@@ -37,7 +37,9 @@ const RECOMMENDED = [
 /**
  * The one connect surface. Email/Google SSO is the hero — the account, the key
  * and the network costs are all handled for the user (docs/WALLETS.md §1).
- * Existing NEAR wallets stay one tap away in a collapsed section.
+ * Until the NEAR Auth client id is configured the SSO button stays visible but
+ * disabled and labelled temporarily unavailable. Existing NEAR wallets stay one
+ * tap away in a collapsed section.
  */
 export function ConnectSheet() {
   const open = useConnectSheetOpen();
@@ -46,6 +48,7 @@ export function ConnectSheet() {
   const { connect, connectEmail, wallets, walletsReady } = useNear();
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const ssoReady = Boolean(env.fastauthClientId);
 
   const byId = new Map(wallets.map((w) => [w.id, w]));
   const recommendedIds = new Set<string>(RECOMMENDED.map((r) => r.id));
@@ -109,22 +112,22 @@ export function ConnectSheet() {
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{t("wallet.sheetTitle")}</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>{t("wallet.sheetLead")}</ResponsiveDialogDescription>
+          <ResponsiveDialogDescription>{ssoReady ? t("wallet.sheetLead") : t("wallet.sheetLeadWallets")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
         <div className="flex flex-col gap-5 py-2">
-          {env.fastauthClientId ? (
           <section aria-labelledby="wallets-email" className="flex flex-col gap-2">
             <h3 id="wallets-email" className="sr-only">{t("wallet.emailTitle")}</h3>
             <button
               type="button"
-              onClick={chooseEmail}
-              disabled={Boolean(pending)}
+              onClick={ssoReady ? chooseEmail : undefined}
+              disabled={!ssoReady || Boolean(pending)}
               aria-busy={pending === "email"}
+              aria-disabled={!ssoReady || undefined}
               className={cn(
                 "flex w-full items-start gap-3 rounded-md border-2 border-primary bg-accent/70 p-4 text-left",
                 "transition-[border-color,background-color,transform] duration-(--pt-dur-short) ease-(--pt-ease-out)",
-                "hover:bg-accent active:translate-y-px disabled:opacity-60",
+                "hover:bg-accent active:translate-y-px disabled:pointer-events-none disabled:opacity-60",
               )}
             >
               <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
@@ -133,13 +136,16 @@ export function ConnectSheet() {
               <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="flex flex-wrap items-center gap-2">
                   <span className="font-medium">{t("wallet.emailTitle")}</span>
-                  <Badge variant="lime">{t("wallet.emailBadge")}</Badge>
+                  {ssoReady ? (
+                    <Badge variant="lime">{t("wallet.emailBadge")}</Badge>
+                  ) : (
+                    <Badge variant="attention">{t("wallet.emailUnavailable")}</Badge>
+                  )}
                 </span>
-                <span className="text-sm text-muted-foreground">{t("wallet.emailDesc")}</span>
+                <span className="text-sm text-muted-foreground">{ssoReady ? t("wallet.emailDesc") : t("wallet.emailDisabledNote")}</span>
               </span>
             </button>
           </section>
-          ) : null}
 
           {error ? (
             <Alert variant="destructive">
@@ -162,7 +168,6 @@ export function ConnectSheet() {
                 <ul className="flex flex-col gap-2">
                   {RECOMMENDED.map((r) => {
                     const manifest = byId.get(r.id);
-                    const testnetGap = walletsReady && manifest ? !manifest.supportsNetwork : false;
                     return (
                       <li key={r.id}>
                         <WalletRow
@@ -170,7 +175,6 @@ export function ConnectSheet() {
                           name={t(r.name)}
                           description={t(r.desc)}
                           badge={t(r.badge)}
-                          note={testnetGap && r.id === "hot-wallet" ? t("wallet.hotTestnetNote") : null}
                           emphasis
                           pending={pending === r.id}
                           disabled={Boolean(pending) && pending !== r.id}
@@ -251,7 +255,6 @@ function WalletRow(props: {
   name: string;
   description: string;
   badge: string;
-  note: string | null;
   emphasis?: boolean;
   pending: boolean;
   disabled: boolean;
@@ -278,12 +281,6 @@ function WalletRow(props: {
           <Badge variant="lime">{props.badge}</Badge>
         </span>
         <span className="text-sm text-muted-foreground">{props.description}</span>
-        {props.note ? (
-          <span className="flex items-start gap-1.5 text-xs text-attention-foreground">
-            <Info aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-            {props.note}
-          </span>
-        ) : null}
       </span>
       <span className="mt-2 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5">
         {props.pending ? <Spinner aria-label={t("wallet.connecting")} /> : <ArrowRight aria-hidden className="size-4" />}

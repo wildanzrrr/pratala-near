@@ -35,11 +35,8 @@ export const gas = (tgas: number) => (BigInt(tgas) * TGAS).toString();
 export const ONE_YOCTO = "1";
 /** register_lot storage deposit — 0.3 NEAR (lot + share-mint reserve), excess refunded. */
 export const REGISTER_LOT_DEPOSIT = "300000000000000000000000";
-/** Fallback for pUSDC storage_balance_bounds.min (≈ 0.00125 NEAR). */
+/** Fallback for USDC storage_balance_bounds.min (≈ 0.00125 NEAR). */
 export const STORAGE_DEPOSIT_FALLBACK = "1250000000000000000000";
-/** Default faucet grant: 1,000 pUSDC. Contract cap is 10,000 pUSDC. */
-export const FAUCET_AMOUNT = "1000000000";
-export const FAUCET_MAX = "10000000000";
 /** Function-call key allowance for the lots contract: 0.25 NEAR. */
 export const FC_KEY_ALLOWANCE = "250000000000000000000000";
 
@@ -246,18 +243,6 @@ export const tx = {
     receiverId: PUSDC(),
     silent: false,
     actions: [call("storage_deposit", { account_id: accountId, registration_only: true }, 30, deposit)],
-  }),
-
-  /** Faucet UI = one transaction, two actions: storage_deposit (if unregistered) + faucet. */
-  faucet: (opts: { accountId: string; registered: boolean; storageDeposit: string; amount?: string }): TxRequest => ({
-    receiverId: PUSDC(),
-    silent: false,
-    actions: [
-      ...(opts.registered
-        ? []
-        : [call("storage_deposit", { account_id: opts.accountId, registration_only: true }, 30, opts.storageDeposit)]),
-      call("faucet", { amount: opts.amount ?? FAUCET_AMOUNT }, 30),
-    ],
   }),
 };
 

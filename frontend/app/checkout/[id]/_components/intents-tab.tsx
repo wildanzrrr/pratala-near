@@ -27,13 +27,12 @@ const CHAIN_LABEL: Record<string, string> = {
   stellar: "Stellar", xrp: "XRP Ledger", doge: "Dogecoin", zec: "Zcash", ltc: "Litecoin", gnosis: "Gnosis",
 };
 
-/** Mirror of the backend rule: 1Click swaps only on mainnet, so testnet accounts cannot receive. */
-const TESTNET_ACCOUNT = /(?:^|\.)(?:testnet|betanet)$/i;
+/** Mirror of the backend rule: 1Click swaps deliver to mainnet accounts only. */
+const NON_MAINNET_ACCOUNT = /(?:^|\.)(?:testnet|betanet)$/i;
 
 /**
- * "Pay from another chain": a real NEAR Intents 1Click quote (mainnet, dry:true)
- * through the backend proxy. Honest banner: demo contracts are on testnet, so
- * no deposit address is created and nothing moves.
+ * "Pay from another chain": a real NEAR Intents 1Click quote (dry:true) through
+ * the backend proxy. Dry quote only — no deposit address is created and nothing moves.
  */
 export function IntentsTab({ lot }: { lot: LotView }) {
   const { t } = useLocale();
@@ -42,8 +41,8 @@ export function IntentsTab({ lot }: { lot: LotView }) {
   const [chain, setChain] = useState("base");
   const [assetId, setAssetId] = useState("");
   const [amount, setAmount] = useState(usdcToDecimal(lot.funding_total));
-  // Prefilled with the signed-in account (a testnet id) so the mainnet-only
-  // constraint is visible immediately; the buyer swaps in any mainnet name.
+  // Prefilled with the signed-in account so the constraint is visible
+  // immediately; the buyer swaps in any mainnet name.
   const [recipientText, setRecipientText] = useState<string | null>(null);
   const recipient = recipientText ?? signedAccountId ?? "";
   const [refundTo, setRefundTo] = useState("");
@@ -61,7 +60,7 @@ export function IntentsTab({ lot }: { lot: LotView }) {
   const destination = useMemo(() => (tokens.data ?? []).find((tk) => tk.blockchain === "near" && tk.symbol === "USDC"), [tokens.data]);
   const origin = chainTokens.find((tk) => tk.assetId === assetId) ?? chainTokens.find((tk) => tk.symbol === "USDC") ?? chainTokens[0];
 
-  const recipientOk = recipient.trim().length >= 2 && !TESTNET_ACCOUNT.test(recipient.trim());
+  const recipientOk = recipient.trim().length >= 2 && !NON_MAINNET_ACCOUNT.test(recipient.trim());
   const ready = Boolean(
     origin && destination && Number(amount.replace(",", ".")) > 0 && refundTo.trim().length >= 8 && recipientOk,
   );

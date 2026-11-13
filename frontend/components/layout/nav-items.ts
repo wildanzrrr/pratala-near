@@ -8,7 +8,6 @@ import {
   Storefront,
   Wallet,
   Notebook,
-  Coins,
 } from "@phosphor-icons/react";
 
 import type { Icon } from "@phosphor-icons/react";
@@ -31,12 +30,11 @@ const ITEMS = {
   supplier: { href: "/supplier", label: "nav.supplier", icon: Wallet },
   exports: { href: "/exports", label: "nav.exports", icon: ChartLineUp },
   admin: { href: "/admin", label: "nav.admin", icon: Gear },
-  faucet: { href: "/faucet", label: "nav.faucet", icon: Coins },
 } satisfies Record<string, NavItem>;
 
 /** Role-aware navigation. Chain roles beat the self-declared intent. */
 export function navFor(opts: { connected: boolean; intent: Intent | null; verifier: boolean; admin: boolean }): NavItem[] {
-  if (!opts.connected) return [ITEMS.market, ITEMS.how, ITEMS.activity, ITEMS.faucet];
+  if (!opts.connected) return [ITEMS.market, ITEMS.how, ITEMS.activity];
   const items: NavItem[] = [ITEMS.market];
   if (opts.verifier || opts.intent === "verifier") items.push(ITEMS.verify);
   if (opts.intent === "farmer") items.push(ITEMS.farmer);
@@ -48,4 +46,4 @@ export function navFor(opts: { connected: boolean; intent: Intent | null; verifi
 }
 
 /** Secondary destinations that live in the account menu. */
-export const ACCOUNT_LINKS: NavItem[] = [ITEMS.farmer, ITEMS.portfolio, ITEMS.verify, ITEMS.supplier, ITEMS.exports, ITEMS.faucet];
+export const ACCOUNT_LINKS: NavItem[] = [ITEMS.farmer, ITEMS.portfolio, ITEMS.verify, ITEMS.supplier, ITEMS.exports];

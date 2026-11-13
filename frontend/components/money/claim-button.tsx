@@ -8,7 +8,7 @@ import { TxStatusLine } from "@/components/money/tx-status-line";
 import { formatUsdc } from "@/lib/near/format";
 import { useStorageDeposit, useStorageRegistered } from "@/hooks/queries/use-storage-registered";
 import { useClaimMutation } from "@/hooks/mutations/use-claim-mutation";
-import { useStorageDepositMutation } from "@/hooks/mutations/use-faucet-mutation";
+import { useStorageDepositMutation } from "@/hooks/mutations/use-storage-deposit-mutation";
 import { useNear } from "@/providers/near-provider";
 import { useLocale } from "@/providers/locale-provider";
 

@@ -32,7 +32,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `2px solid ${C.rule}`, paddingTop: 28 }}>
           <div style={{ display: "flex", background: C.lime, padding: "8px 18px", borderRadius: 6 }}>{lot ? t(`status.${lot.status}`) : "—"}</div>
-          <div style={{ display: "flex", fontSize: 44 }}>{lot && lot.price_per_kg !== "0" ? `${formatUsdc(lot.funding_total)} pUSDC` : ""}</div>
+          <div style={{ display: "flex", fontSize: 44 }}>{lot && lot.price_per_kg !== "0" ? `${formatUsdc(lot.funding_total)} USDC` : ""}</div>
         </div>
       </div>
     ),

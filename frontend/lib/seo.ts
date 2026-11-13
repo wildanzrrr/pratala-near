@@ -16,7 +16,7 @@ export const site = {
   url: env.siteUrl,
   defaultTitle: "Pratala — Verified harvests, paid directly",
   description:
-    "Pratala connects Indonesian farmers, cooperatives and buyers without middlemen. A harvest projection verified in three layers becomes a NEAR NFT that holds pUSDC in escrow until the harvest is weighed.",
+    "Pratala connects Indonesian farmers, cooperatives and buyers without middlemen. A harvest projection verified in three layers becomes a NEAR NFT that holds USDC in escrow until the harvest is weighed.",
   ogImage: {
     url: "/images/rice-field.jpg",
     width: 2100,

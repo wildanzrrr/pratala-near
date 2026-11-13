@@ -66,7 +66,7 @@ export function FarmerActions({ lot }: { lot: LotView }) {
           }}
         >
           <p className="text-sm text-muted-foreground">{t("lot.listLead")}</p>
-          <AmountInput label={t("lot.listTitle")} value={price} onChange={setPrice} error={priceError} unit="pUSDC/kg" />
+          <AmountInput label={t("lot.listTitle")} value={price} onChange={setPrice} error={priceError} unit="USDC/kg" />
           {total ? <MoneyBlock base={total} /> : null}
           <Button type="submit" size="lg" disabled={!base || active.isPending}>
             {active.isPending ? <Spinner data-icon="inline-start" /> : <Storefront data-icon="inline-start" />}

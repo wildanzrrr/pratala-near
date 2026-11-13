@@ -38,15 +38,15 @@ The app creates **one** `NearConnector` per page load (`network` from `NEXT_PUBL
 
 1. **Recommended for new users** — two large rows, in plain language:
    - **HOT Wallet** (`hot-wallet`) — MPC wallet via Telegram mini-app, mobile app or extension.
-   - **Meteor Wallet** (`meteor-wallet`) — web + extension wallet, quick account creation, supports testnet.
-2. **Other options** — every remaining manifest wallet that declares support for the current network; wallets without testnet support are listed (collapsed) as "not available on testnet yet".
+   - **Meteor Wallet** (`meteor-wallet`) — web + extension wallet, quick account creation.
+2. **Other options** — every remaining manifest wallet that declares support for the current network; wallets without support for it are listed (collapsed) as "not available on this network".
 3. A one-paragraph note on the function-call key (§3) so the first approval is not a surprise.
 
 The sheet never says "seed phrase" or "wallet" in its own copy; it explains the MPC benefit in plain words: *"Pick an account provider below. HOT keeps your key split across several parties, so there is no secret phrase to write down."*
 
 ### Testnet caveat (verified 2026-11-07)
 
-The live NEAR Connect manifest marks **HOT Wallet without `features.testnet`**, so `NearConnector.availableWallets` filters it out on testnet. Pratala still shows HOT first and calls `connector.connect({ walletId: "hot-wallet" })` directly, with an honest note under it: *testnet support in HOT is not official yet — for this demo, Meteor works best.* Meteor, Intear, Nightly, Ledger, Unity and NEAR CLI declare testnet support. On mainnet HOT is fully supported.
+The live NEAR Connect manifest marks **HOT Wallet without `features.testnet`**, so `NearConnector.availableWallets` filters it out on testnet. Pratala still shows HOT first and calls `connector.connect({ walletId: "hot-wallet" })` directly. (The testnet advisory note under the HOT row was removed with the mainnet-only UI, 2026-11-13.) Meteor, Intear, Nightly, Ledger, Unity and NEAR CLI declare testnet support. On mainnet HOT is fully supported.
 
 ## 3. Why MPC keys for farmers
 

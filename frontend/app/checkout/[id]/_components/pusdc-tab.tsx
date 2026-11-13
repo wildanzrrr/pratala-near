@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
@@ -14,12 +13,12 @@ import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/
 import { Money, Rupiah } from "@/components/money/money";
 import { TxStatusLine } from "@/components/money/tx-status-line";
 import { openConnectSheet } from "@/components/wallet/connect-store";
-import { env, isTestnet } from "@/lib/env";
+import { env } from "@/lib/env";
 import { formatKg, formatNumber, formatUsdc, toBig } from "@/lib/near/format";
 import { cn } from "@/lib/utils";
 import { usePusdcBalance } from "@/hooks/queries/use-pusdc-balance";
 import { useStorageDeposit, useStorageRegistered } from "@/hooks/queries/use-storage-registered";
-import { useFaucetMutation, useStorageDepositMutation } from "@/hooks/mutations/use-faucet-mutation";
+import { useStorageDepositMutation } from "@/hooks/mutations/use-storage-deposit-mutation";
 import { useFundLotMutation } from "@/hooks/mutations/use-fund-lot-mutation";
 import { useNear } from "@/providers/near-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -27,7 +26,7 @@ import { useLocale } from "@/providers/locale-provider";
 import type { ReactNode } from "react";
 import type { LotView } from "@/lib/near/types";
 
-/** Live testnet path: sign in → balance & registration → one ft_transfer_call for N kg. */
+/** Live path: sign in → balance & registration → one ft_transfer_call for N kg. */
 export function PusdcTab({ lot }: { lot: LotView }) {
   const { t, locale } = useLocale();
   const router = useRouter();
@@ -35,7 +34,6 @@ export function PusdcTab({ lot }: { lot: LotView }) {
   const balance = usePusdcBalance(signedAccountId);
   const registered = useStorageRegistered(signedAccountId);
   const deposit = useStorageDeposit();
-  const faucet = useFaucetMutation();
   const activate = useStorageDepositMutation();
   const fund = useFundLotMutation((result) => {
     if (result.hash) {
@@ -88,15 +86,6 @@ export function PusdcTab({ lot }: { lot: LotView }) {
           <div className="flex flex-col gap-2">
             <p className="text-sm text-ink-2">{t("checkout.notRegistered")}</p>
             <div className="flex flex-wrap gap-2">
-              {isTestnet ? (
-                <Button
-                  disabled={faucet.isPending}
-                  onClick={() => faucet.mutate({ storageDeposit: deposit.data ?? "1250000000000000000000" })}
-                >
-                  {faucet.isPending ? <Spinner data-icon="inline-start" /> : <Coins data-icon="inline-start" />}
-                  {t("faucet.getCta")}
-                </Button>
-              ) : null}
               <Button
                 variant="outline"
                 disabled={activate.isPending}
@@ -124,17 +113,6 @@ export function PusdcTab({ lot }: { lot: LotView }) {
             {short > 0n ? (
               <div className="flex flex-col gap-2 rounded-md bg-warning p-3 text-sm text-warning-foreground">
                 <span>{t("checkout.short", { amount: formatUsdc(short, locale) })}</span>
-                {isTestnet ? (
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" disabled={faucet.isPending} onClick={() => faucet.mutate({ storageDeposit: deposit.data ?? "1250000000000000000000" })}>
-                      {faucet.isPending ? <Spinner data-icon="inline-start" /> : <Coins data-icon="inline-start" />}
-                      {t("faucet.getCta")}
-                    </Button>
-                    <Button asChild size="sm" variant="outline">
-                      <Link href="/faucet">{t("checkout.getTest")}</Link>
-                    </Button>
-                  </div>
-                ) : null}
               </div>
             ) : null}
           </div>

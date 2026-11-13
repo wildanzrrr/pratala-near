@@ -8,7 +8,7 @@ import { formatIdr, parseUsdc } from "@/lib/near/format";
 import { useLocale } from "@/providers/locale-provider";
 
 /**
- * pUSDC amount field: decimal keyboard, accepts "," or ".", shows ≈ Rp at the
+ * USDC amount field: decimal keyboard, accepts "," or ".", shows ≈ Rp at the
  * demo rate as you type. Value stays a string; parse with parseUsdc().
  */
 export function AmountInput({
@@ -18,7 +18,7 @@ export function AmountInput({
   error,
   description,
   disabled,
-  unit = "pUSDC",
+  unit = "USDC",
 }: {
   label: string;
   value: string;

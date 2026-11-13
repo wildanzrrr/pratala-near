@@ -54,7 +54,7 @@ export const FIXTURE_LOTS: LotView[] = [
   {
     ...base,
     lot_id: "lot-1",
-    farmer_id: "sample-farmer.testnet",
+    farmer_id: "sample-farmer.near",
     crop: "Rice",
     variety: "IR64",
     region: "Karawang, West Java",
@@ -63,7 +63,7 @@ export const FIXTURE_LOTS: LotView[] = [
     area_m2: 2500,
     price_per_kg: "450000",
     status: "Listed",
-    attestations: [field("sample-field-agent.testnet", t0 + 2 * day), coop("sample-coop.testnet", t0 + 4 * day)],
+    attestations: [field("sample-field-agent.near", t0 + 2 * day), coop("sample-coop.near", t0 + 4 * day)],
     escrow: "0",
     created_at_ms: t0,
     funding_total: "450000000",
@@ -72,7 +72,7 @@ export const FIXTURE_LOTS: LotView[] = [
   {
     ...base,
     lot_id: "lot-2",
-    farmer_id: "sample-farmer-2.testnet",
+    farmer_id: "sample-farmer-2.near",
     crop: "Robusta coffee",
     variety: "BP 308",
     region: "Tanggamus, Lampung",
@@ -82,7 +82,7 @@ export const FIXTURE_LOTS: LotView[] = [
     price_per_kg: "2100000",
     status: "Funded",
     fee_bps: 200,
-    attestations: [field("sample-field-agent.testnet", t0 + 3 * day), coop("sample-coop.testnet", t0 + 6 * day)],
+    attestations: [field("sample-field-agent.near", t0 + 3 * day), coop("sample-coop.near", t0 + 6 * day)],
     escrow: "1008000000",
     funded_at_ms: t0 + 9 * day,
     created_at_ms: t0 + day,
@@ -94,7 +94,7 @@ export const FIXTURE_LOTS: LotView[] = [
   {
     ...base,
     lot_id: "lot-3",
-    farmer_id: "sample-farmer.testnet",
+    farmer_id: "sample-farmer.near",
     crop: "Rice",
     variety: "Ciherang",
     region: "Klaten, Central Java",
@@ -105,11 +105,11 @@ export const FIXTURE_LOTS: LotView[] = [
     status: "Settled",
     fee_bps: 200,
     attestations: [
-      field("sample-field-agent.testnet", t0 - 40 * day),
-      coop("sample-coop.testnet", t0 - 38 * day),
+      field("sample-field-agent.near", t0 - 40 * day),
+      coop("sample-coop.near", t0 - 38 * day),
       {
         kind: "WarehouseWeighIn",
-        signer: "sample-warehouse.testnet",
+        signer: "sample-warehouse.near",
         timestamp_ms: t0 + 12 * day,
         evidence_hash: hash("d4"),
         evidence_uri: null,
@@ -137,17 +137,17 @@ export const FIXTURE_LOTS: LotView[] = [
 
 const FIXTURE_SHARES: ShareView[] = [
   // lot-2: two buyers split the sold 480 kg; funding still open.
-  { share_id: "lot-2:1", lot_id: "lot-2", kg: 300, owner: "sample-buyer.testnet", claimed: false, entitlement: "0" },
-  { share_id: "lot-2:2", lot_id: "lot-2", kg: 180, owner: "sample-investor.testnet", claimed: false, entitlement: "0" },
+  { share_id: "lot-2:1", lot_id: "lot-2", kg: 300, owner: "sample-buyer.near", claimed: false, entitlement: "0" },
+  { share_id: "lot-2:2", lot_id: "lot-2", kg: 180, owner: "sample-investor.near", claimed: false, entitlement: "0" },
   // lot-3: sold out and settled; the 45.00 pool splits 31.50 / 13.50.
-  { share_id: "lot-3:1", lot_id: "lot-3", kg: 700, owner: "sample-buyer.testnet", claimed: false, entitlement: "31500000" },
-  { share_id: "lot-3:2", lot_id: "lot-3", kg: 300, owner: "sample-investor.testnet", claimed: false, entitlement: "13500000" },
+  { share_id: "lot-3:1", lot_id: "lot-3", kg: 700, owner: "sample-buyer.near", claimed: false, entitlement: "31500000" },
+  { share_id: "lot-3:2", lot_id: "lot-3", kg: 300, owner: "sample-investor.near", claimed: false, entitlement: "13500000" },
 ];
 
 export const FIXTURE_CONFIG: Config = {
-  owner_id: "sample-pratala.testnet",
-  usdc_contract: "pusdc.pratala.testnet",
-  treasury: "sample-pratala.testnet",
+  owner_id: "sample-pratala.near",
+  usdc_contract: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+  treasury: "sample-pratala.near",
   fee_bps: 200,
   paused: false,
   total_lots: FIXTURE_LOTS.length,

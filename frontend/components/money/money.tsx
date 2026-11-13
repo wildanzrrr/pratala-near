@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useLocale } from "@/providers/locale-provider";
 
 /**
- * pUSDC amount with the ≈ Rp line at the labelled demo rate. Variants are
+ * USDC amount with the ≈ Rp line at the labelled demo rate. Variants are
  * explicit components rather than boolean props.
  */
 export function Money({ base, className, fractionDigits = 2 }: { base: string | bigint | null | undefined; className?: string; fractionDigits?: number }) {
@@ -13,7 +13,7 @@ export function Money({ base, className, fractionDigits = 2 }: { base: string | 
   return (
     <span className={cn("tnum font-mono whitespace-nowrap", className)}>
       {formatUsdc(base, locale, fractionDigits)}
-      <span className="ml-1 font-sans text-[0.75em] text-muted-foreground">pUSDC</span>
+      <span className="ml-1 font-sans text-[0.75em] text-muted-foreground">USDC</span>
     </span>
   );
 }

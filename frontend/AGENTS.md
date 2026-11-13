@@ -86,7 +86,7 @@ Max **800 lines** per `.ts`/`.tsx`. A file at 801 lines is a bug. Split into sub
 
 - The UI is **English only** — no second dictionary, no language toggle. All UI strings (including `alt`, `aria-label`, toasts and zod messages) live in `lib/i18n/en.ts`, which is the source of truth for the `Dictionary` type; read them with `useT()` / `<T k=…/>` in components and `serverT()` on the server. No hard-coded copy in components. Route `metadata` and JSON-LD text may sit in the route file, in English. No non-English copy anywhere, comments included (place names such as Karawang and the brand Pratala excepted).
 - Farmer and verifier screens never show "seed phrase", "gas", "yocto", "wallet" jargon, raw hashes as primary content, or token decimals. Say "Account", "Sign", "View proof".
-- Money: pUSDC with 6 decimals as BigInt (`lib/near/format.ts`), with "≈ Rp" at the **demo rate** (`NEXT_PUBLIC_DEMO_IDR_RATE`), always labelled as a demo rate.
+- Money: USDC with 6 decimals as BigInt (`lib/near/format.ts`), with "≈ Rp" at the **demo rate** (`NEXT_PUBLIC_DEMO_IDR_RATE`), always labelled as a demo rate.
 - No invented metrics, testimonials or partner logos. Stats come from `get_stats` or render "—".
 
 ## 8. SEO
@@ -98,7 +98,7 @@ Max **800 lines** per `.ts`/`.tsx`. A file at 801 lines is a bug. Split into sub
 ## 9. NEAR
 
 - **Wallet:** `providers/near-provider.tsx` builds one `NearConnector` (`@hot-labs/near-connect` 0.12, network from env) and exposes `useNear()` with the same surface as `near-connect-hooks`' `useNearWallet` (`signedAccountId`, `loading`, `connect(walletId?)`, `signOut`, `signAndSendTransaction(s)`, `signMessage`, `wallets`). The connect UI is our own `components/wallet/connect-sheet.tsx`: HOT Wallet (MPC) and Meteor recommended first, the rest of the NEAR Connect manifest below.
-- **Function-call keys:** `function-call-key-plugin` 2.2 is registered with `contractId = NEXT_PUBLIC_LOTS_CONTRACT_ID`, the FC-friendly methods from INTERFACES §3 (`FC_METHODS` in `lib/near/contracts.ts`) and a 0.25 NEAR allowance. Zero-deposit calls to those methods sign locally — no popup. Anything with a deposit (`register_lot` 0.1 NEAR, `ft_transfer_call` 1 yocto, `nft_transfer` 1 yocto, faucet `storage_deposit`) goes to the wallet. Never move a payable method into `FC_METHODS`.
+- **Function-call keys:** `function-call-key-plugin` 2.2 is registered with `contractId = NEXT_PUBLIC_LOTS_CONTRACT_ID`, the FC-friendly methods from INTERFACES §3 (`FC_METHODS` in `lib/near/contracts.ts`) and a 0.25 NEAR allowance. Zero-deposit calls to those methods sign locally — no popup. Anything with a deposit (`register_lot` 0.3 NEAR, `ft_transfer_call` 1 yocto, `nft_transfer` 1 yocto, USDC `storage_deposit`) goes to the wallet. Never move a payable method into `FC_METHODS`.
 - **Contracts lib:** all method names, args, deposits and gas live in `lib/near/contracts.ts`, typed against INTERFACES §3–4. Never call `callFunction` with a literal method name from a component.
 - **Backend session:** NEP-413 challenge → `wallet.signMessage` → `/auth/verify`. Chain features never require it.
 - Never send transactions from scripts, never deploy, never hard-code account ids outside `lib/env.ts`.

@@ -135,7 +135,7 @@ function RoleBlock({ role }: { role: StoredRole }) {
       >
         <Field className="flex-1">
           <FieldLabel htmlFor={`add-${role}`}>{t("admin.accountId")}</FieldLabel>
-          <Input id={`add-${role}`} className="font-mono" autoCapitalize="none" spellCheck={false} placeholder="nama.testnet" value={account} onChange={(e) => setAccount(e.target.value)} />
+          <Input id={`add-${role}`} className="font-mono" autoCapitalize="none" spellCheck={false} placeholder="name.near" value={account} onChange={(e) => setAccount(e.target.value)} />
           {account && !valid ? <FieldDescription className="text-destructive">{t("portfolio.invalidAccount")}</FieldDescription> : null}
         </Field>
         <Button type="submit" disabled={!valid || admin.isPending}>

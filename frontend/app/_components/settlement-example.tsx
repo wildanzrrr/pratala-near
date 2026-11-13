@@ -57,7 +57,7 @@ export function SettlementExample() {
                   }
                 >
                   {row.value}
-                  {row.value.endsWith("kg") ? null : <span className="ml-1.5 text-xs text-muted-foreground">pUSDC</span>}
+                  {row.value.endsWith("kg") ? null : <span className="ml-1.5 text-xs text-muted-foreground">USDC</span>}
                 </td>
               </tr>
             ))}

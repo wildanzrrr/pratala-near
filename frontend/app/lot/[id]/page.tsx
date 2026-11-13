@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import { LotDetail } from "@/app/lot/[id]/_components/lot-detail";
 import { LotDetailSkeleton } from "@/app/lot/[id]/_components/lot-detail-skeleton";
-import { env, isTestnet } from "@/lib/env";
+import { env } from "@/lib/env";
 import { serverT } from "@/lib/i18n";
 import { formatKg, formatMonth, formatUsdc, usdcToDecimal } from "@/lib/near/format";
 import { getLotForSeo } from "@/lib/server/lots";
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps<"/lot/[id]">): Prom
     return createMetadata({ title: `Lot ${lotId}`, path: `/lot/${encodeURIComponent(lotId)}`, noIndex: true });
   }
   const title = t("lot.metaTitle", { crop: [lot.crop, lot.variety].filter(Boolean).join(" "), kg: formatKg(lot.projected_kg), region: lot.region });
-  const price = lot.price_per_kg !== "0" ? ` Total ${formatUsdc(lot.funding_total)} pUSDC.` : "";
+  const price = lot.price_per_kg !== "0" ? ` Total ${formatUsdc(lot.funding_total)} USDC.` : "";
   return createMetadata({
     title,
     description: `${lot.lot_id} · ${t(`status.${lot.status}`)} · ${lot.attestations.length} verification records.${price} View the proof and fund this harvest on Pratala.`,
@@ -51,7 +51,7 @@ async function LotJsonLd({ params }: { params: PageProps<"/lot/[id]">["params"] 
             priceCurrency: "USD",
             availability: lot.status === "Listed" ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
             seller: { "@type": "Person", name: lot.farmer_id },
-            description: isTestnet ? `Settled in pUSDC (testnet stablecoin) on NEAR ${env.network}.` : "Settled in USDC on NEAR mainnet.",
+            description: `Settled in USDC on NEAR ${env.network}.`,
           },
         }
       : {}),
