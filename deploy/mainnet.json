@@ -16,6 +16,19 @@
   "contracts": {
     "usdc": {
       "account_id": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1"
+    },
+    "lots": {
+      "account_id": "lots.pratala.near",
+      "wasm": "smart-contract/target/near/harvest_lot/harvest_lot.wasm",
+      "wasm_bytes": 392588,
+      "wasm_sha256": "d1969cfda70df7655f3ddc1ec3d695d4bd8f927dcede7e65ac52e5e979d5de9d",
+      "init_args": {
+        "owner_id": "pratala.near",
+        "usdc_contract": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+        "treasury": "treasury.pratala.near",
+        "fee_bps": 200
+      },
+      "deploy_tx": "Ai8bdQkQHancF8VW4ALkjm58rEJvokV7ZeXzBt9peh1r"
     }
   },
   "lots": {},
@@ -27,7 +40,10 @@
     "mainnet.accounts.buyer": "2YmvsUDuHH8o1AnQAAM4SNoaRnpLFV3BCwVmQephM2em",
     "mainnet.accounts.agent": "ErdzeGSUp5e2x8LEEa2AWTXbUNk3iEQkYyFgDvBuiWJA",
     "mainnet.accounts.coop": "78xCrKiMncNZWVKVBbKPVq9f5uhSNWaN4WxSKy7VWKE6",
-    "mainnet.accounts.warehouse": "6h1kVpHoagEJuWxLyGwif2kUvA4cDyF5L4AV9ZfNwFDJ"
+    "mainnet.accounts.warehouse": "6h1kVpHoagEJuWxLyGwif2kUvA4cDyF5L4AV9ZfNwFDJ",
+    "deploy.lots": "Ai8bdQkQHancF8VW4ALkjm58rEJvokV7ZeXzBt9peh1r",
+    "mainnet.usdc_storage.lots": "7QSpL9vtDCXuYYUoPBdRL87GHR4eHoPRjUT91xNSv5Fc",
+    "mainnet.usdc_storage.treasury": "CkZBA6P4aC3gas7RaqRL7ou1gYRer6LSGKVtGNr4E11L"
   },
-  "updated_at": "2026-11-12T15:32:50Z"
+  "updated_at": "2026-11-13T01:07:40Z"
 }
