@@ -27,6 +27,18 @@ const schema = z.object({
 
 export type PublicEnv = z.infer<typeof schema>;
 
+/**
+ * NEAR Auth client id. Empty ⇒ email SSO disabled (the connect sheet shows a
+ * "temporarily unavailable" label). Deliberately NO fallback id: a wrong id
+ * fails at login time, far later and far more confusingly than a disabled
+ * button. Hosts sometimes store placeholders like "none" — those are treated
+ * as unset so SSO can never half-enable from a misconfigured host variable.
+ */
+const fastauthClientId = (() => {
+  const v = (process.env.NEXT_PUBLIC_FASTAUTH_CLIENT_ID ?? "").trim();
+  return ["", "none", "null", "undefined", "-"].includes(v.toLowerCase()) ? "" : v;
+})();
+
 const raw = {
   network: process.env.NEXT_PUBLIC_NEAR_NETWORK ?? "testnet",
   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL ?? "https://test.rpc.fastnear.com",
@@ -38,8 +50,8 @@ const raw = {
   demoIdrRate: process.env.NEXT_PUBLIC_DEMO_IDR_RATE ?? "18000",
   siteUrl: (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, ""),
   demoFixtures: process.env.NEXT_PUBLIC_DEMO_FIXTURES === "1",
-  // NEAR Auth email SSO (docs.auth.near.org) — shared testnet deployment by default.
-  fastauthClientId: process.env.NEXT_PUBLIC_FASTAUTH_CLIENT_ID ?? "np8paqIpMWmNbzT4xAvOOapZBjsOpptl",
+  // NEAR Auth email SSO (docs.auth.near.org) — no shared fallback id, see above.
+  fastauthClientId,
   fastauthContractId: process.env.NEXT_PUBLIC_FASTAUTH_CONTRACT_ID ?? "fast-auth.testnet",
   fastauthMpcContractId: process.env.NEXT_PUBLIC_FASTAUTH_MPC_CONTRACT_ID ?? "v1.signer-prod.testnet",
   fastauthDomain: process.env.NEXT_PUBLIC_FASTAUTH_AUTH0_DOMAIN ?? "login.testnet.fast-auth.com",
