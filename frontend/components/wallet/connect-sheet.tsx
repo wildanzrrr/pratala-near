@@ -16,7 +16,6 @@ import {
 } from "@/components/common/responsive-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { setConnectSheetOpen, useConnectSheetOpen } from "@/components/wallet/connect-store";
@@ -38,8 +37,9 @@ const RECOMMENDED = [
  * The one connect surface. Email/Google SSO is the hero — the account, the key
  * and the network costs are all handled for the user (docs/WALLETS.md §1).
  * Until the NEAR Auth client id is configured the SSO button stays visible but
- * disabled and labelled temporarily unavailable. Existing NEAR wallets stay one
- * tap away in a collapsed section.
+ * disabled and labelled temporarily unavailable. The two recommended NEAR
+ * wallets sit right below it; every other wallet stays collapsed behind
+ * "Other options".
  */
 export function ConnectSheet() {
   const open = useConnectSheetOpen();
@@ -155,72 +155,65 @@ export function ConnectSheet() {
             </Alert>
           ) : null}
 
+          <section aria-labelledby="wallets-recommended" className="flex flex-col gap-2">
+            <h3 id="wallets-recommended" className="font-sans text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              {t("wallet.recommended")}
+            </h3>
+            <ul className="flex flex-col gap-2">
+              {RECOMMENDED.map((r) => {
+                const manifest = byId.get(r.id);
+                return (
+                  <li key={r.id}>
+                    <WalletRow
+                      icon={manifest?.icon}
+                      name={t(r.name)}
+                      description={t(r.desc)}
+                      badge={t(r.badge)}
+                      emphasis
+                      pending={pending === r.id}
+                      disabled={Boolean(pending) && pending !== r.id}
+                      loading={!walletsReady}
+                      onSelect={() => choose(r.id)}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
           <details className="group">
             <summary className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
               <ArrowRight aria-hidden className="size-4 shrink-0 transition-transform group-open:rotate-90" />
-              {t("wallet.existingWallets")}
+              {walletsReady ? `${t("wallet.others")} · ${others.length}` : t("wallet.others")}
             </summary>
-            <div className="flex flex-col gap-5 pt-3">
-              <section aria-labelledby="wallets-recommended" className="flex flex-col gap-2">
-                <h3 id="wallets-recommended" className="font-sans text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                  {t("wallet.recommended")}
-                </h3>
-                <ul className="flex flex-col gap-2">
-                  {RECOMMENDED.map((r) => {
-                    const manifest = byId.get(r.id);
-                    return (
-                      <li key={r.id}>
-                        <WalletRow
-                          icon={manifest?.icon}
-                          name={t(r.name)}
-                          description={t(r.desc)}
-                          badge={t(r.badge)}
-                          emphasis
-                          pending={pending === r.id}
-                          disabled={Boolean(pending) && pending !== r.id}
-                          loading={!walletsReady}
-                          onSelect={() => choose(r.id)}
-                        />
-                      </li>
-                    );
-                  })}
+            <div className="pt-3">
+              {!walletsReady ? (
+                <div className="flex flex-col gap-2" aria-label={t("wallet.loadingWallets")}>
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : (
+                <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                  {available.map((w) => (
+                    <li key={w.id}>
+                      <CompactWalletRow
+                        wallet={w}
+                        pending={pending === w.id}
+                        disabled={Boolean(pending) && pending !== w.id}
+                        onSelect={() => choose(w.id)}
+                      />
+                    </li>
+                  ))}
                 </ul>
-              </section>
-
-              <Separator />
-
-              <section aria-labelledby="wallets-others" className="flex flex-col gap-2">
-                <h3 id="wallets-others" className="font-sans text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                  {t("wallet.others")}
-                </h3>
-                {!walletsReady ? (
-                  <div className="flex flex-col gap-2" aria-label={t("wallet.loadingWallets")}>
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                ) : (
-                  <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                    {available.map((w) => (
-                      <li key={w.id}>
-                        <CompactWalletRow
-                          wallet={w}
-                          pending={pending === w.id}
-                          disabled={Boolean(pending) && pending !== w.id}
-                          onSelect={() => choose(w.id)}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {walletsReady && unavailable.length > 0 ? (
-                  <details className="group text-sm">
-                    <summary className="cursor-pointer py-2 text-muted-foreground transition-colors hover:text-foreground">
-                      {t("wallet.mainnetOnly")} · {unavailable.length}
-                    </summary>
-                    <p className="pb-2 text-muted-foreground">{unavailable.map((w) => w.name).join(" · ")}</p>
-                  </details>
-                ) : null}
-              </section>
+              )}
+              {walletsReady && unavailable.length > 0 ? (
+                <details className="group text-sm">
+                  <summary className="cursor-pointer py-2 text-muted-foreground transition-colors hover:text-foreground">
+                    {t("wallet.mainnetOnly")} · {unavailable.length}
+                  </summary>
+                  <p className="pb-2 text-muted-foreground">{unavailable.map((w) => w.name).join(" · ")}</p>
+                </details>
+              ) : null}
             </div>
           </details>
 

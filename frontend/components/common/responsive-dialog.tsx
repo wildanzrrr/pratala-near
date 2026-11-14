@@ -70,7 +70,7 @@ export function ResponsiveDialogContent({ children, className }: { children: Rea
     </DialogContent>
   ) : (
     <DrawerContent className={cn("max-h-[92dvh]", className)} onInteractOutside={keepOpenForWalletPopup}>
-      <div className="overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">{children}</div>
     </DrawerContent>
   );
 }

@@ -91,6 +91,7 @@
   --pt-z-base: 1;
   --pt-z-raised: 10;
   --pt-z-sticky: 200;
+  --pt-z-modal: 300;
   --pt-z-toast: 500;
 }
 

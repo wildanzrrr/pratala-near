@@ -4,7 +4,7 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+7 (developer machine). Hackathon deadline: **2026-11-14 23:59 UTC** (aim to submit by 18:00 UTC).
 
-## Current status — 2026-11-13 16:14
+## Current status — 2026-11-14 (session: connect-sheet UX)
 
 | Area | State | Verified by |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 | Testnet deploy | **Live, pre-fractional.** `lots.pratala.testnet` (whole-lot model), `pusdc.pratala.testnet`, owner/treasury `pratala.testnet`, demo actors `pratala-*-69f5.testnet`, SSO gas sponsor `sponsor.pratala.testnet`. **The fractional code is NOT on testnet yet** — a fresh `lots-v2.pratala.testnet` deploy + reseed is ready to run (needs the user's OK; scripts 02/03/04/05 updated for it). The app (backend mirror + frontend) already speaks the fractional ABI, so the demo needs the v2 deploy before the walkthrough | `scripts/05-verify-demo.sh` passed on the old contract (396.90 / 8.10 / 45.00); fractional verify asserts 396.90 / 8.10 + 31.50 / 13.50 |
 | Demo lots | **Full lifecycle completed live 2026-11-10 (SSO farmer): register → field check (with AI evidence) → co-op review → funding (360 pUSDC) → weigh-in → Settled.** lot-1 Settled, claims paid · lot-2 Settled, claims pending (farmer 352.80, treasury 7.20, holder 0 — full delivery) · lot-3 FieldVerified · lot-4 Registered | user walkthrough in-browser; `GET /api/lots/lot-2` 2026-11-10 |
 | Backend (`backend/`) | NestJS 12 + Prisma 7.10.1 + Postgres 16; all modules from `docs/INTERFACES.md` §5 | `pnpm test` 35/35, `pnpm test:e2e` 20/20, `docker compose up` healthy |
-| Frontend (`frontend/`) | Next.js 16.4, 17 routes, bilingual EN/ID UI with a header switcher (English default), Hallmark custom theme, **mainnet-only copy: no faucet/testnet/test-token strings, money reads USDC; email-SSO button shows "Temporarily unavailable" until the NEAR Auth client id exists (wallet sign-in unaffected)**, NEAR Connect + function-call keys | `pnpm lint && pnpm typecheck && pnpm build` pass (2026-11-13 after the mainnet-only sweep); all routes 200; switcher verified in-browser 2026-11-12 |
+| Frontend (`frontend/`) | Next.js 16.4, 17 routes, bilingual EN/ID UI with a header switcher (English default), Hallmark custom theme, **mainnet-only copy: no faucet/testnet/test-token strings, money reads USDC; email-SSO button shows "Temporarily unavailable" until the NEAR Auth client id exists (wallet sign-in unaffected)**, NEAR Connect + function-call keys. Connect sheet: recommended wallets (HOT, Meteor) directly under the SSO button, other wallets collapsed behind "Other wallet options" | `pnpm lint && pnpm typecheck && pnpm build` pass (2026-11-14 after the connect-sheet UX pass); all routes 200; switcher verified in-browser 2026-11-12 |
 | NEAR AI evidence check | **Live end-to-end** on NEAR AI Cloud, `Qwen/Qwen3-VL-30B-A3B-Instruct` (private TEE tier): upload → vision check → `provider_tee` signature → verify URL (account topped up with $1 credit) | real `POST /api/ai/check` via a signed-in browser session 2026-11-09: 200, verdict+findings+signature stored |
 | NEAR Intents | 1Click proxy, mainnet `dry: true` quotes; partner key configured locally; quote path live-verified (mainnet recipient required — testnet accounts are rejected with a clear message) | `GET /v0/tokens` 200 with key; live dry quote 360 → 359.96 USDC (Base → NEAR) |
 | Scripts / CI | `scripts/00–05`, four GitHub workflows | `bash -n`; CI not yet run (no remote) |
@@ -34,7 +34,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are UTC+
 
 ## [Unreleased]
 
+### Changed
+
+- **Connect sheet restructured around what actually works today.** The two recommended NEAR wallets (HOT, Meteor) now sit directly below the "Continue with email or Google" button; all remaining wallets are collapsed behind an "Other wallet options · N" toggle instead of a wall of logos. The one-time-approval note was shortened in both languages (EN/ID) — "Approve once — verifications and withdrawals then run automatically (fees capped at 0.25 NEAR). Payments and harvest registration still ask each time." Verified in-browser at 390 px and 1024 px.
+
 ### Fixed
+
+- **Modals no longer slide under the sticky navigation.** Drawers/dialogs were `z-50` while the bottom bar and site header sit at `--pt-z-sticky: 200`, so the open connect sheet's footer note rendered behind the nav bar. New `--pt-z-modal: 300` token lifts every dialog/drawer layer above sticky chrome (toasts stay above at 500), and the drawer body now scrolls inside its height cap (`min-h-0 flex-1`), so the last line of the note is always reachable instead of clipped off-screen.
 
 - **Email SSO can no longer half-enable from a placeholder client id.** The live pratala.xyz bundle had `fastauthClientId:"none"` inlined — the hosting env stores the literal string "none" — which is truthy, so the deployed connect sheet showed an enabled "Continue with email or Google" button with a "Recommended" badge instead of the disabled "Temporarily unavailable" label. `lib/env.ts` now treats empty/whitespace/`none`/`null`/`undefined`/`-` as unset, and the shared **testnet** client-id fallback (`np8paq…`) is gone entirely: no fallback id exists, so SSO is enabled only when a real id is configured (`frontend/.env.example` default is now empty). Verified in-browser with `NEXT_PUBLIC_FASTAUTH_CLIENT_ID=none`: disabled button + "Temporarily unavailable" badge + wallet-first lead. Deployed site needs a redeploy to pick this up.
 
